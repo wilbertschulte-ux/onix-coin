@@ -1,15 +1,28 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
-import App from './App.tsx';
-import WebApp from '@twa-dev/sdk';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-WebApp.ready();
-WebApp.expand();
-WebApp.setHeaderColor('#111827');
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: any
+    }
+  }
+}
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+// Инициализация Telegram WebApp
+const tg = window.Telegram?.WebApp
+
+if (tg) {
+  tg.ready()
+  tg.expand()
+  tg.setHeaderColor('#1a1a1a')
+  tg.setBackgroundColor('#000000')
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
     <App />
-  </StrictMode>
-);
+  </React.StrictMode>
+)
