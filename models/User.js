@@ -68,6 +68,11 @@ const userSchema = new mongoose.Schema({
     default: 0,
   },
 
+referredBy: {
+  type: String,
+  default: null,
+},
+
   updatedAt: {
     type: Date,
     default: Date.now,

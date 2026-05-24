@@ -31,9 +31,10 @@ router.get("/:telegramId", async (req, res) => {
 router.post("/create", async (req, res) => {
   try {
     const {
-      telegramId,
-      username,
-    } = req.body;
+  telegramId,
+  username,
+  referredBy,
+} = req.body;
 
     let user =
       await User.findOne({
@@ -44,10 +45,23 @@ router.post("/create", async (req, res) => {
       user = new User({
         telegramId,
         username,
+        referredBy: referredBy || null,
       });
 
       await user.save();
-    }
+
+if (referredBy && referredBy !== telegramId) {
+  const refUser = await User.findOne({
+    telegramId: referredBy,
+  });
+
+  if (refUser) {
+    refUser.balance += 5000;
+    refUser.referralsCount += 1;
+
+    await refUser.save();
+  }
+}
 
     res.json(user);
   } catch (error) {
