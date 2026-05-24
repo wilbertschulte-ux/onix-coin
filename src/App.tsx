@@ -397,21 +397,12 @@ await axios.post(`${API_URL}/create`, {
   };
 
   const copyReferralLink = () => {
-  const telegramId =
-    WebApp.initDataUnsafe.user?.id;
+  const link = `https://t.me/coinonix_bot?start=${getTelegramId()}`;
+  const text = `Заходи в ONIX COIN и получи бонус: ${link}`;
 
-  const link =
-    `https://t.me/coinonix_bot?start=${telegramId}`;
-
-  navigator.clipboard.writeText(link);
-
-  try {
-    WebApp.HapticFeedback?.notificationOccurred(
-      'success'
-    );
-  } catch {}
-
-  alert(`✅ Ссылка скопирована:\n${link}`);
+  WebApp.openTelegramLink(
+    `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`
+  );
 };
 
   const progress = ((totalEarned % coinsPerLevel) / coinsPerLevel) * 100;
@@ -598,7 +589,7 @@ await axios.post(`${API_URL}/create`, {
             onClick={copyReferralLink}
             className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl text-lg active:scale-95 transition"
           >
-            🔗 Скопировать реф. ссылку
+            🔗 Поделиться реф. ссылкой
           </button>
 
           <p className="mt-8 text-lg">
