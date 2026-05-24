@@ -398,11 +398,15 @@ await axios.post(`${API_URL}/create`, {
 
   const copyReferralLink = () => {
   const link = `https://t.me/coinonix_bot?start=${getTelegramId()}`;
-  const text = `Заходи в ONIX COIN и получи бонус: ${link}`;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(
+    'Заходи в ONIX COIN и получи бонус!'
+  )}`;
 
-  WebApp.openTelegramLink(
-    `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`
-  );
+  try {
+    WebApp.openLink(shareUrl);
+  } catch {
+    window.location.href = shareUrl;
+  }
 };
 
   const progress = ((totalEarned % coinsPerLevel) / coinsPerLevel) * 100;
