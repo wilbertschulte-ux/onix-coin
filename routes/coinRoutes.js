@@ -58,8 +58,10 @@ if (referredBy && referredBy !== telegramId) {
   if (refUser) {
     refUser.balance += 5000;
     refUser.referralsCount += 1;
-
     await refUser.save();
+
+    user.balance += 1000;
+    await user.save();
   }
 }
 
