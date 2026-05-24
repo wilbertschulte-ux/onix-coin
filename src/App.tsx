@@ -397,25 +397,22 @@ await axios.post(`${API_URL}/create`, {
   };
 
   const copyReferralLink = () => {
-    const telegramId =
-  WebApp.initDataUnsafe.user?.id;
+  const telegramId =
+    WebApp.initDataUnsafe.user?.id;
 
-const link =
-`https://t.me/coinonix_bot?start=${telegramId}`;
+  const link =
+    `https://t.me/coinonix_bot?start=${telegramId}`;
 
-    const textarea = document.createElement('textarea');
-textarea.value = link;
-document.body.appendChild(textarea);
-textarea.select();
-document.execCommand('copy');
-document.body.removeChild(textarea);
+  navigator.clipboard.writeText(link);
 
-    try {
-      WebApp.HapticFeedback?.notificationOccurred('success');
-    } catch {}
+  try {
+    WebApp.HapticFeedback?.notificationOccurred(
+      'success'
+    );
+  } catch {}
 
-    alert('✅ Реферальная ссылка скопирована!');
-  };
+  alert(`✅ Ссылка скопирована:\n${link}`);
+};
 
   const progress = ((totalEarned % coinsPerLevel) / coinsPerLevel) * 100;
   const isBoostActive = Date.now() < boostEndTime;
