@@ -520,7 +520,8 @@ axios.post(`${API_URL}/save`, {
           </p>
         </div>
       )}
-    </div>
+        </div>
   );
+}
 
 export default App;
