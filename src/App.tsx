@@ -39,6 +39,10 @@ function App() {
     useState<'none' | 'tap' | 'mining'>('none');
   const [boostEndTime, setBoostEndTime] = useState(0);
   const [referralsCount, setReferralsCount] = useState(0);
+  const [tapLevel, setTapLevel] = useState(1);
+  const [minerLevel, setMinerLevel] = useState(1);
+  const [energyLevel, setEnergyLevel] = useState(1);
+  const [rechargeLevel, setRechargeLevel] = useState(1);
 
   const coinsPerLevel = 500;
 
@@ -76,6 +80,10 @@ function App() {
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
+        setTapLevel(user.tapLevel || 1);
+        setMinerLevel(user.minerLevel || 1);
+        setEnergyLevel(user.energyLevel || 1);
+        setRechargeLevel(user.rechargeLevel || 1);
       } catch (error) {
         console.log('Ошибка загрузки пользователя:', error);
       }
@@ -110,6 +118,10 @@ useEffect(() => {
           totalEarned,
           level,
           referralsCount,
+          tapLevel,
+          minerLevel,
+          energyLevel,
+          rechargeLevel,
         },
       };
 
@@ -219,6 +231,10 @@ axios.post(`${API_URL}/save`, {
     totalEarned: newTotalEarned,
     level,
     referralsCount,
+    tapLevel,
+    minerLevel,
+    energyLevel,
+    rechargeLevel,
   },
 });
 
@@ -272,32 +288,47 @@ axios.post(`${API_URL}/save`, {
     alert(`⚡ ${type === 'tap' ? 'Тап' : 'Майнинг'} ×2 на ${minutes} минут!`);
   };
 
-  const buyUpgrade = (cost: number, type: string, value: number) => {
-    if (balance < cost) {
-      alert('Недостаточно ONIX!');
-      return;
-    }
+  const buyUpgrade = (type: 'tap' | 'energy' | 'recharge' | 'miner') => {
+  let cost = 0;
 
-    setBalance((prev) => prev - cost);
+  if (type === 'tap') cost = tapLevel * 150;
+  if (type === 'energy') cost = energyLevel * 200;
+  if (type === 'recharge') cost = rechargeLevel * 180;
+  if (type === 'miner') cost = minerLevel * 300;
 
-    try {
-      WebApp.HapticFeedback?.notificationOccurred('success');
-    } catch {}
+  if (balance < cost) {
+    alert('Недостаточно ONIX!');
+    return;
+  }
 
-    if (type === 'tap') setTapPower((prev) => prev + value);
-    if (type === 'energy') setMaxEnergy((prev) => prev + value);
-    if (type === 'recharge') setEnergyRecharge((prev) => prev + value);
-    if (type === 'miner') setAutoclickers((prev) => prev + value);
-  };
+  const newBalance = balance - cost;
 
-  const copyReferralLink = () => {
-    const link = 'https://t.me/yourbot?start=ref123';
+  setBalance(newBalance);
 
-    navigator.clipboard.writeText(link);
+  if (type === 'tap') {
+    setTapLevel((prev) => prev + 1);
+    setTapPower((prev) => prev + 1);
+  }
 
-    try {
-      WebApp.HapticFeedback?.notificationOccurred('success');
-    } catch {}
+  if (type === 'energy') {
+    setEnergyLevel((prev) => prev + 1);
+    setMaxEnergy((prev) => prev + 500);
+  }
+
+  if (type === 'recharge') {
+    setRechargeLevel((prev) => prev + 1);
+    setEnergyRecharge((prev) => prev + 5);
+  }
+
+  if (type === 'miner') {
+    setMinerLevel((prev) => prev + 1);
+    setAutoclickers((prev) => prev + 2);
+  }
+
+  try {
+    WebApp.HapticFeedback?.notificationOccurred('success');
+  } catch {}
+};
 
     alert('✅ Реферальная ссылка скопирована!');
     setReferralsCount((prev) => prev + 1);
@@ -410,17 +441,21 @@ axios.post(`${API_URL}/save`, {
             <h2 className="text-2xl font-bold mb-4">Постоянные улучшения</h2>
 
             <div className="space-y-3">
-              <div onClick={() => buyUpgrade(100, 'tap', 1)} className="shop-item">
-                🎯 +1 Сила тапа — 100 ONIX
-              </div>
+              <div onClick={() => buyUpgrade('tap')} className="shop-item">
+  🎯 Сила тапа — ур. {tapLevel} — цена {tapLevel * 150} ONIX
+</div>
 
-              <div onClick={() => buyUpgrade(150, 'energy', 500)} className="shop-item">
-                🔋 +500 Макс. энергии — 150 ONIX
-              </div>
+<div onClick={() => buyUpgrade('miner')} className="shop-item">
+  ⛏️ Майнер — ур. {minerLevel} — цена {minerLevel * 300} ONIX
+</div>
 
-              <div onClick={() => buyUpgrade(50, 'miner', 5)} className="shop-item">
-                🔥 Обычный майнер (+5/сек) — 50 ONIX
-              </div>
+<div onClick={() => buyUpgrade('energy')} className="shop-item">
+  🔋 Энергия — ур. {energyLevel} — цена {energyLevel * 200} ONIX
+</div>
+
+<div onClick={() => buyUpgrade('recharge')} className="shop-item">
+  ⚡ Восстановление — ур. {rechargeLevel} — цена {rechargeLevel * 180} ONIX
+</div>
             </div>
           </div>
 
