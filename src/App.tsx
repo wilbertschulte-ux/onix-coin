@@ -199,9 +199,28 @@ useEffect(() => {
       );
     }, 700);
 
-    setBalance((prev) => prev + points);
-    setTotalEarned((prev) => prev + points);
-    setEnergy((prev) => Math.max(0, prev - 1));
+    const newBalance = balance + points;
+const newTotalEarned = totalEarned + points;
+const newEnergy = Math.max(0, energy - 1);
+
+setBalance(newBalance);
+setTotalEarned(newTotalEarned);
+setEnergy(newEnergy);
+
+axios.post(`${API_URL}/save`, {
+  telegramId: "123456789",
+  data: {
+    balance: newBalance,
+    energy: newEnergy,
+    maxEnergy,
+    tapPower,
+    energyRecharge,
+    autoclickers,
+    totalEarned: newTotalEarned,
+    level,
+    referralsCount,
+  },
+});
 
     setIsTapped(true);
     setTimeout(() => setIsTapped(false), 60);
