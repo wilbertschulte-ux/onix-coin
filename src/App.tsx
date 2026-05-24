@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Coins, Zap, Trophy, Users, Home, Star, Gift } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
+import axios from 'axios';
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends';
 type FloatingNumber = { id: number; x: number; y: number; value: number };
@@ -25,45 +26,81 @@ function App() {
 
   const coinsPerLevel = 500;
 
-    // Загрузка данных
-  useEffect(() => {
-    const keys = ['balance', 'energy', 'maxEnergy', 'tapPower', 'energyRecharge', 'autoclickers', 'totalEarned', 'level', 'referralsCount'];
-    
-    keys.forEach(key => {
-      const saved = localStorage.getItem(key);
-      if (saved !== null) {
-        const numValue = Number(saved);
-        
-        if (key === 'balance') setBalance(numValue);
-        if (key === 'energy') setEnergy(numValue);
-        if (key === 'maxEnergy') setMaxEnergy(numValue);
-        if (key === 'tapPower') setTapPower(numValue);
-        if (key === 'energyRecharge') setEnergyRecharge(numValue);
-        if (key === 'autoclickers') setAutoclickers(numValue);
-        if (key === 'totalEarned') setTotalEarned(numValue);
-        if (key === 'level') setLevel(numValue);
-        if (key === 'referralsCount') setReferralsCount(numValue);
-      }
-    });
+    // Загрузка данных с backend
+useEffect(() => {
+  const loadUser = async () => {
+    try {
+      const telegramId = WebApp.initDataUnsafe.user?.id;
+
+      if (!telegramId) return;
+
+      const response = await axios.get(
+        `https://onix-coin.onrender.com/api/coins/${telegramId}`
+      );
+
+      const user = response.data;
+
+      setBalance(user.balance || 0);
+      setEnergy(user.energy || 2000);
+      setMaxEnergy(user.maxEnergy || 2000);
+      setTapPower(user.tapPower || 1);
+      setEnergyRecharge(user.energyRecharge || 10);
+      setAutoclickers(user.autoclickers || 0);
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+    } catch (error) {
+      console.log("Новый пользователь");
+    }
+  };
+
+  loadUser();
+}, []);
 
     // Отдельно для lastRewardDate (строка)
     const savedDate = localStorage.getItem('lastRewardDate');
     if (savedDate) setLastRewardDate(savedDate);
   }, []);
 
-  // Сохранение данных
-  useEffect(() => {
-    localStorage.setItem('balance', balance.toString());
-    localStorage.setItem('energy', energy.toString());
-    localStorage.setItem('maxEnergy', maxEnergy.toString());
-    localStorage.setItem('tapPower', tapPower.toString());
-    localStorage.setItem('energyRecharge', energyRecharge.toString());
-    localStorage.setItem('autoclickers', autoclickers.toString());
-    localStorage.setItem('totalEarned', totalEarned.toString());
-    localStorage.setItem('level', level.toString());
-    localStorage.setItem('lastRewardDate', lastRewardDate);
-    localStorage.setItem('referralsCount', referralsCount.toString());
-  }, [balance, energy, maxEnergy, tapPower, energyRecharge, autoclickers, totalEarned, level, lastRewardDate, referralsCount]);
+  // Сохранение на backend
+useEffect(() => {
+  const saveUser = async () => {
+    try {
+      const telegramId = WebApp.initDataUnsafe.user?.id;
+
+      if (!telegramId) return;
+
+      await axios.post(
+        "https://onix-coin.onrender.com/api/coins/save",
+        {
+          telegramId,
+          data: {
+            balance,
+            energy,
+            maxEnergy,
+            tapPower,
+            energyRecharge,
+            autoclickers,
+            totalEarned,
+            level,
+          },
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  saveUser();
+}, [
+  balance,
+  energy,
+  maxEnergy,
+  tapPower,
+  energyRecharge,
+  autoclickers,
+  totalEarned,
+  level,
+]);
 
   // Автоприбыль
   useEffect(() => {
