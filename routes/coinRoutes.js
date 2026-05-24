@@ -57,28 +57,31 @@ router.post("/create", async (req, res) => {
   }
 });
 
-// SAVE USER
 router.post("/save", async (req, res) => {
   try {
-    const {
-      telegramId,
-      data,
-    } = req.body;
+    const { telegramId, data } = req.body;
 
-    const user =
-      await User.findOneAndUpdate(
-        {
-          telegramId,
+    const user = await User.findOneAndUpdate(
+      { telegramId },
+      {
+        $set: {
+          balance: data.balance,
+          energy: data.energy,
+          maxEnergy: data.maxEnergy,
+          tapPower: data.tapPower,
+          energyRecharge: data.energyRecharge,
+          autoclickers: data.autoclickers,
+          totalEarned: data.totalEarned,
+          level: data.level,
+          referralsCount: data.referralsCount,
+          updatedAt: new Date(),
         },
-        {
-          ...data,
-          updatedAt:
-            new Date(),
-        },
-        {
-          new: true,
-        }
-      );
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
 
     res.json(user);
   } catch (error) {
