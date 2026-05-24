@@ -519,9 +519,9 @@ axios.post(`${API_URL}/save`, {
             <span className="text-yellow-400 font-bold">{referralsCount}</span>
           </p>
         </div>
-           )}
+                 )}
     </div>
-  }
+  );
 }
 
 export default App;
