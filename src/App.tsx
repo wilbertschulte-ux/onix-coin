@@ -83,10 +83,13 @@ function App() {
       try {
         const telegramId = getTelegramId();
 
-        await axios.post(`${API_URL}/create`, {
-          telegramId,
-          username: WebApp?.initDataUnsafe?.user?.username || 'test',
-        });
+        const startParam = WebApp.initDataUnsafe.start_param;
+
+await axios.post(`${API_URL}/create`, {
+  telegramId,
+  username: WebApp?.initDataUnsafe?.user?.username || 'test',
+  referredBy: startParam || null,
+});
 
         const response = await axios.get(`${API_URL}/${telegramId}`);
         const user = response.data;
@@ -390,7 +393,7 @@ function App() {
   };
 
   const copyReferralLink = () => {
-    const link = 'https://t.me/coinonix_bot?start=ref123';
+    const link = `https://t.me/coinonix_bot?start=${getTelegramId()}`;
 
     navigator.clipboard.writeText(link);
 
