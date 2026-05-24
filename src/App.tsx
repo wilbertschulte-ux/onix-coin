@@ -78,7 +78,6 @@ function App() {
         setReferralsCount(user.referralsCount || 0);
       } catch (error) {
         console.log('Ошибка загрузки пользователя:', error);
-        setIsLoaded(true);
       }
     };
 
