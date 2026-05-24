@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react';
-import {
-  Coins,
-  Zap,
-  Trophy,
-  Users,
-  Home,
-  Star,
-  Gift,
-} from 'lucide-react';
+import { Coins, Zap, Trophy, Users, Home, Star, Gift } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends';
+
 type FloatingNumber = {
   id: number;
   x: number;
@@ -20,6 +13,10 @@ type FloatingNumber = {
 };
 
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
+
+function getTelegramId() {
+  return WebApp?.initDataUnsafe?.user?.id?.toString() || '123456789';
+}
 
 function App() {
   const [balance, setBalance] = useState(0);
@@ -35,12 +32,41 @@ function App() {
   const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>([]);
 
   const [lastRewardDate, setLastRewardDate] = useState('');
-  const [activeBoost, setActiveBoost] =
-    useState<'none' | 'tap' | 'mining'>('none');
+  const [activeBoost, setActiveBoost] = useState<'none' | 'tap' | 'mining'>('none');
   const [boostEndTime, setBoostEndTime] = useState(0);
   const [referralsCount, setReferralsCount] = useState(0);
 
+  const [tapLevel, setTapLevel] = useState(1);
+  const [minerLevel, setMinerLevel] = useState(1);
+  const [energyLevel, setEnergyLevel] = useState(1);
+  const [rechargeLevel, setRechargeLevel] = useState(1);
+
   const coinsPerLevel = 500;
+
+  const saveProgress = async (data: {
+    balance: number;
+    energy: number;
+    maxEnergy: number;
+    tapPower: number;
+    energyRecharge: number;
+    autoclickers: number;
+    totalEarned: number;
+    level: number;
+    referralsCount: number;
+    tapLevel: number;
+    minerLevel: number;
+    energyLevel: number;
+    rechargeLevel: number;
+  }) => {
+    try {
+      await axios.post(`${API_URL}/save`, {
+        telegramId: getTelegramId(),
+        data,
+      });
+    } catch (error) {
+      console.log('Ошибка сохранения:', error);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -52,16 +78,14 @@ function App() {
     if (savedDate) setLastRewardDate(savedDate);
   }, []);
 
-  // Загрузка/создание пользователя
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const telegramId =
-  WebApp?.initDataUnsafe?.user?.id?.toString() || "123456789";
+        const telegramId = getTelegramId();
 
         await axios.post(`${API_URL}/create`, {
           telegramId,
-          username: 'test',
+          username: WebApp?.initDataUnsafe?.user?.username || 'test',
         });
 
         const response = await axios.get(`${API_URL}/${telegramId}`);
@@ -76,6 +100,11 @@ function App() {
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
+
+        setTapLevel(user.tapLevel || 1);
+        setMinerLevel(user.minerLevel || 1);
+        setEnergyLevel(user.energyLevel || 1);
+        setRechargeLevel(user.rechargeLevel || 1);
       } catch (error) {
         console.log('Ошибка загрузки пользователя:', error);
       }
@@ -84,70 +113,10 @@ function App() {
     loadUser();
   }, []);
 
-  // Сохранение на backend
-useEffect(() => {
-  const saveUser = async () => {
-    try {
-      const telegramUser = WebApp.initDataUnsafe.user;
-
-      if (!telegramUser?.id) {
-        console.log("Нет telegram id");
-        return;
-      }
-
-      const telegramId =
-  WebApp?.initDataUnsafe?.user?.id?.toString() || "123456789";
-
-      const payload = {
-        telegramId,
-        data: {
-          balance,
-          energy,
-          maxEnergy,
-          tapPower,
-          energyRecharge,
-          autoclickers,
-          totalEarned,
-          level,
-          referralsCount,
-        },
-      };
-
-      console.log("SAVE:", payload);
-
-      await axios.post(
-        "https://onix-coin.onrender.com/api/coins/save",
-        payload
-      );
-
-      console.log("Сохранено");
-    } catch (error) {
-      console.log("Ошибка сохранения:", error);
-    }
-  };
-
-  const timeout = setTimeout(() => {
-    saveUser();
-  }, 500);
-
-  return () => clearTimeout(timeout);
-}, [
-  balance,
-  energy,
-  maxEnergy,
- tapPower,
-  energyRecharge,
-  autoclickers,
-  totalEarned,
-  level,
-  referralsCount,
-]);
-
   useEffect(() => {
     localStorage.setItem('lastRewardDate', lastRewardDate);
   }, [lastRewardDate]);
 
-  // Автоприбыль
   useEffect(() => {
     const interval = setInterval(() => {
       const multiplier =
@@ -156,23 +125,55 @@ useEffect(() => {
       const income = Math.floor(autoclickers * multiplier);
 
       if (income > 0) {
-        setBalance((prev) => prev + income);
-        setTotalEarned((prev) => prev + income);
-      }
+        const newBalance = balance + income;
+        const newTotalEarned = totalEarned + income;
+        const newEnergy = Math.min(maxEnergy, energy + energyRecharge);
+        const newLevel = Math.floor(newTotalEarned / coinsPerLevel) + 1;
 
-      setEnergy((prev) => Math.min(maxEnergy, prev + energyRecharge));
+        setBalance(newBalance);
+        setTotalEarned(newTotalEarned);
+        setEnergy(newEnergy);
+        setLevel(newLevel);
+
+        saveProgress({
+          balance: newBalance,
+          energy: newEnergy,
+          maxEnergy,
+          tapPower,
+          energyRecharge,
+          autoclickers,
+          totalEarned: newTotalEarned,
+          level: newLevel,
+          referralsCount,
+          tapLevel,
+          minerLevel,
+          energyLevel,
+          rechargeLevel,
+        });
+      } else {
+        setEnergy((prev) => Math.min(maxEnergy, prev + energyRecharge));
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [autoclickers, maxEnergy, energyRecharge, activeBoost, boostEndTime]);
+  }, [
+    balance,
+    energy,
+    maxEnergy,
+    energyRecharge,
+    autoclickers,
+    totalEarned,
+    activeBoost,
+    boostEndTime,
+    tapPower,
+    referralsCount,
+    tapLevel,
+    minerLevel,
+    energyLevel,
+    rechargeLevel,
+  ]);
 
-  // Проверка уровня
-  useEffect(() => {
-    const newLevel = Math.floor(totalEarned / coinsPerLevel) + 1;
-    if (newLevel > level) setLevel(newLevel);
-  }, [totalEarned, level]);
-
-  const handleTap = (e: React.MouseEvent) => {
+  const handleTap = (e: React.MouseEvent<HTMLDivElement>) => {
     if (energy <= 0) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -194,20 +195,117 @@ useEffect(() => {
     setFloatingNumbers((prev) => [...prev, newNum]);
 
     setTimeout(() => {
-      setFloatingNumbers((prev) =>
-        prev.filter((n) => n.id !== newNum.id)
-      );
+      setFloatingNumbers((prev) => prev.filter((n) => n.id !== newNum.id));
     }, 700);
 
-    setBalance((prev) => prev + points);
-    setTotalEarned((prev) => prev + points);
-    setEnergy((prev) => Math.max(0, prev - 1));
+    const newBalance = balance + points;
+    const newTotalEarned = totalEarned + points;
+    const newEnergy = Math.max(0, energy - 1);
+    const newLevel = Math.floor(newTotalEarned / coinsPerLevel) + 1;
+
+    setBalance(newBalance);
+    setTotalEarned(newTotalEarned);
+    setEnergy(newEnergy);
+    setLevel(newLevel);
+
+    saveProgress({
+      balance: newBalance,
+      energy: newEnergy,
+      maxEnergy,
+      tapPower,
+      energyRecharge,
+      autoclickers,
+      totalEarned: newTotalEarned,
+      level: newLevel,
+      referralsCount,
+      tapLevel,
+      minerLevel,
+      energyLevel,
+      rechargeLevel,
+    });
 
     setIsTapped(true);
     setTimeout(() => setIsTapped(false), 60);
 
     try {
       WebApp.HapticFeedback?.impactOccurred('medium');
+    } catch {}
+  };
+
+  const buyUpgrade = (type: 'tap' | 'energy' | 'recharge' | 'miner') => {
+    let cost = 0;
+
+    if (type === 'tap') cost = tapLevel * 150;
+    if (type === 'energy') cost = energyLevel * 200;
+    if (type === 'recharge') cost = rechargeLevel * 180;
+    if (type === 'miner') cost = minerLevel * 300;
+
+    if (balance < cost) {
+      alert('Недостаточно ONIX!');
+      return;
+    }
+
+    const newBalance = balance - cost;
+
+    let newTapPower = tapPower;
+    let newMaxEnergy = maxEnergy;
+    let newEnergyRecharge = energyRecharge;
+    let newAutoclickers = autoclickers;
+
+    let newTapLevel = tapLevel;
+    let newMinerLevel = minerLevel;
+    let newEnergyLevel = energyLevel;
+    let newRechargeLevel = rechargeLevel;
+
+    if (type === 'tap') {
+      newTapLevel += 1;
+      newTapPower += 1;
+    }
+
+    if (type === 'energy') {
+      newEnergyLevel += 1;
+      newMaxEnergy += 500;
+    }
+
+    if (type === 'recharge') {
+      newRechargeLevel += 1;
+      newEnergyRecharge += 5;
+    }
+
+    if (type === 'miner') {
+      newMinerLevel += 1;
+      newAutoclickers += 2;
+    }
+
+    setBalance(newBalance);
+    setTapPower(newTapPower);
+    setMaxEnergy(newMaxEnergy);
+    setEnergyRecharge(newEnergyRecharge);
+    setAutoclickers(newAutoclickers);
+
+    setTapLevel(newTapLevel);
+    setMinerLevel(newMinerLevel);
+    setEnergyLevel(newEnergyLevel);
+    setRechargeLevel(newRechargeLevel);
+
+    saveProgress({
+      balance: newBalance,
+      energy,
+      maxEnergy: newMaxEnergy,
+      tapPower: newTapPower,
+      energyRecharge: newEnergyRecharge,
+      autoclickers: newAutoclickers,
+      totalEarned,
+      level,
+      referralsCount,
+      tapLevel: newTapLevel,
+      minerLevel: newMinerLevel,
+      energyLevel: newEnergyLevel,
+      rechargeLevel: newRechargeLevel,
+    });
+
+    try {
+      WebApp.HapticFeedback?.notificationOccurred('success');
     } catch {}
   };
 
@@ -220,10 +318,30 @@ useEffect(() => {
     }
 
     const reward = 500 + level * 100;
+    const newBalance = balance + reward;
+    const newTotalEarned = totalEarned + reward;
+    const newLevel = Math.floor(newTotalEarned / coinsPerLevel) + 1;
 
-    setBalance((prev) => prev + reward);
-    setTotalEarned((prev) => prev + reward);
+    setBalance(newBalance);
+    setTotalEarned(newTotalEarned);
+    setLevel(newLevel);
     setLastRewardDate(today);
+
+    saveProgress({
+      balance: newBalance,
+      energy,
+      maxEnergy,
+      tapPower,
+      energyRecharge,
+      autoclickers,
+      totalEarned: newTotalEarned,
+      level: newLevel,
+      referralsCount,
+      tapLevel,
+      minerLevel,
+      energyLevel,
+      rechargeLevel,
+    });
 
     try {
       WebApp.HapticFeedback?.notificationOccurred('success');
@@ -242,9 +360,27 @@ useEffect(() => {
       return;
     }
 
-    setBalance((prev) => prev - cost);
+    const newBalance = balance - cost;
+
+    setBalance(newBalance);
     setActiveBoost(type);
     setBoostEndTime(Date.now() + minutes * 60000);
+
+    saveProgress({
+      balance: newBalance,
+      energy,
+      maxEnergy,
+      tapPower,
+      energyRecharge,
+      autoclickers,
+      totalEarned,
+      level,
+      referralsCount,
+      tapLevel,
+      minerLevel,
+      energyLevel,
+      rechargeLevel,
+    });
 
     try {
       WebApp.HapticFeedback?.notificationOccurred('success');
@@ -253,35 +389,35 @@ useEffect(() => {
     alert(`⚡ ${type === 'tap' ? 'Тап' : 'Майнинг'} ×2 на ${minutes} минут!`);
   };
 
-  const buyUpgrade = (cost: number, type: string, value: number) => {
-    if (balance < cost) {
-      alert('Недостаточно ONIX!');
-      return;
-    }
-
-    setBalance((prev) => prev - cost);
-
-    try {
-      WebApp.HapticFeedback?.notificationOccurred('success');
-    } catch {}
-
-    if (type === 'tap') setTapPower((prev) => prev + value);
-    if (type === 'energy') setMaxEnergy((prev) => prev + value);
-    if (type === 'recharge') setEnergyRecharge((prev) => prev + value);
-    if (type === 'miner') setAutoclickers((prev) => prev + value);
-  };
-
   const copyReferralLink = () => {
-    const link = 'https://t.me/yourbot?start=ref123';
+    const link = 'https://t.me/coinonix_bot?start=ref123';
 
     navigator.clipboard.writeText(link);
+
+    const newReferralsCount = referralsCount + 1;
+    setReferralsCount(newReferralsCount);
+
+    saveProgress({
+      balance,
+      energy,
+      maxEnergy,
+      tapPower,
+      energyRecharge,
+      autoclickers,
+      totalEarned,
+      level,
+      referralsCount: newReferralsCount,
+      tapLevel,
+      minerLevel,
+      energyLevel,
+      rechargeLevel,
+    });
 
     try {
       WebApp.HapticFeedback?.notificationOccurred('success');
     } catch {}
 
     alert('✅ Реферальная ссылка скопирована!');
-    setReferralsCount((prev) => prev + 1);
   };
 
   const progress = ((totalEarned % coinsPerLevel) / coinsPerLevel) * 100;
@@ -297,7 +433,9 @@ useEffect(() => {
 
         <div className="flex items-center gap-2 bg-[#1f2937] px-4 py-1 rounded-full">
           <Zap className="w-5 h-5 text-yellow-400" />
-          <span>{Math.floor(energy)}/{maxEnergy}</span>
+          <span>
+            {Math.floor(energy)}/{maxEnergy}
+          </span>
         </div>
       </div>
 
@@ -330,9 +468,7 @@ useEffect(() => {
         </p>
 
         {isBoostActive && (
-          <p className="text-emerald-400 text-sm mt-1">
-            ⚡ Буст активен
-          </p>
+          <p className="text-emerald-400 text-sm mt-1">⚡ Буст активен</p>
         )}
       </div>
 
@@ -391,16 +527,21 @@ useEffect(() => {
             <h2 className="text-2xl font-bold mb-4">Постоянные улучшения</h2>
 
             <div className="space-y-3">
-              <div onClick={() => buyUpgrade(100, 'tap', 1)} className="shop-item">
-                🎯 +1 Сила тапа — 100 ONIX
+              <div onClick={() => buyUpgrade('tap')} className="shop-item">
+                🎯 Сила тапа — ур. {tapLevel} — цена {tapLevel * 150} ONIX
               </div>
 
-              <div onClick={() => buyUpgrade(150, 'energy', 500)} className="shop-item">
-                🔋 +500 Макс. энергии — 150 ONIX
+              <div onClick={() => buyUpgrade('miner')} className="shop-item">
+                ⛏️ Майнер — ур. {minerLevel} — цена {minerLevel * 300} ONIX
               </div>
 
-              <div onClick={() => buyUpgrade(50, 'miner', 5)} className="shop-item">
-                🔥 Обычный майнер (+5/сек) — 50 ONIX
+              <div onClick={() => buyUpgrade('energy')} className="shop-item">
+                🔋 Энергия — ур. {energyLevel} — цена {energyLevel * 200} ONIX
+              </div>
+
+              <div onClick={() => buyUpgrade('recharge')} className="shop-item">
+                ⚡ Восстановление — ур. {rechargeLevel} — цена{' '}
+                {rechargeLevel * 180} ONIX
               </div>
             </div>
           </div>
@@ -409,12 +550,18 @@ useEffect(() => {
             <h2 className="text-2xl font-bold mb-4">⚡ Временные бусты</h2>
 
             <div className="grid grid-cols-2 gap-4">
-              <div onClick={() => activateBoost('tap', 10, 300)} className="shop-item">
-                🎯 ×2 Тап (10 мин)
+              <div
+                onClick={() => activateBoost('tap', 10, 300)}
+                className="shop-item"
+              >
+                🎯 ×2 Тап — 10 мин — 300 ONIX
               </div>
 
-              <div onClick={() => activateBoost('mining', 15, 500)} className="shop-item">
-                ⛏️ ×2 Майнинг (15 мин)
+              <div
+                onClick={() => activateBoost('mining', 15, 500)}
+                className="shop-item"
+              >
+                ⛏️ ×2 Майнинг — 15 мин — 500 ONIX
               </div>
             </div>
           </div>
