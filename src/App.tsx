@@ -518,10 +518,10 @@ axios.post(`${API_URL}/save`, {
             Приглашено:{' '}
             <span className="text-yellow-400 font-bold">{referralsCount}</span>
           </p>
-        </div>
-            )}
+                </div>
+      )}
     </div>
   );
-{
+}
 
 export default App;
