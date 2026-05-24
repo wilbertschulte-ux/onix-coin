@@ -39,6 +39,7 @@ function App() {
     useState<'none' | 'tap' | 'mining'>('none');
   const [boostEndTime, setBoostEndTime] = useState(0);
   const [referralsCount, setReferralsCount] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const coinsPerLevel = 500;
 
@@ -56,10 +57,8 @@ function App() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const telegramUser = WebApp.initDataUnsafe.user;
-        const telegramId = telegramUser?.id?.toString();
-
-        if (!telegramId) return;
+        const telegramId =
+  WebApp?.initDataUnsafe?.user?.id?.toString() || "123456789";
 
         await axios.post(`${API_URL}/create`, {
           telegramId,
@@ -77,9 +76,11 @@ function App() {
         setAutoclickers(user.autoclickers || 0);
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
+        setIsLoaded(true);
         setReferralsCount(user.referralsCount || 0);
       } catch (error) {
         console.log('Ошибка загрузки пользователя:', error);
+        setIsLoaded(true);
       }
     };
 
@@ -87,44 +88,63 @@ function App() {
   }, []);
 
   // Сохранение на backend
-  useEffect(() => {
-    const saveUser = async () => {
-      try {
-        const telegramId = WebApp.initDataUnsafe.user?.id?.toString();
+useEffect(() => {
+  const saveUser = async () => {
+    try {
+      const telegramUser = WebApp.initDataUnsafe.user;
 
-        if (!telegramId) return;
-
-        await axios.post(`${API_URL}/save`, {
-          telegramId,
-          data: {
-            balance,
-            energy,
-            maxEnergy,
-            tapPower,
-            energyRecharge,
-            autoclickers,
-            totalEarned,
-            level,
-            referralsCount,
-          },
-        });
-      } catch (error) {
-        console.log('Ошибка сохранения:', error);
+      if (!telegramUser?.id) {
+        console.log("Нет telegram id");
+        return;
       }
-    };
 
+      const telegramId =
+  WebApp?.initDataUnsafe?.user?.id?.toString() || "123456789";
+
+      const payload = {
+        telegramId,
+        data: {
+          balance,
+          energy,
+          maxEnergy,
+          tapPower,
+          energyRecharge,
+          autoclickers,
+          totalEarned,
+          level,
+          referralsCount,
+        },
+      };
+
+      console.log("SAVE:", payload);
+
+      await axios.post(
+        "https://onix-coin.onrender.com/api/coins/save",
+        payload
+      );
+
+      console.log("Сохранено");
+    } catch (error) {
+      console.log("Ошибка сохранения:", error);
+    }
+  };
+
+  const timeout = setTimeout(() => {
     saveUser();
-  }, [
-    balance,
-    energy,
-    maxEnergy,
-    tapPower,
-    energyRecharge,
-    autoclickers,
-    totalEarned,
-    level,
-    referralsCount,
-  ]);
+  }, 500);
+
+  return () => clearTimeout(timeout);
+}, [
+  balance,
+  energy,
+  maxEnergy,
+ tapPower,
+  energyRecharge,
+  autoclickers,
+  totalEarned,
+  level,
+  referralsCount,
+]);
 
   useEffect(() => {
     localStorage.setItem('lastRewardDate', lastRewardDate);
