@@ -39,7 +39,6 @@ function App() {
     useState<'none' | 'tap' | 'mining'>('none');
   const [boostEndTime, setBoostEndTime] = useState(0);
   const [referralsCount, setReferralsCount] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   const coinsPerLevel = 500;
 
@@ -62,7 +61,7 @@ function App() {
 
         await axios.post(`${API_URL}/create`, {
           telegramId,
-          username: telegramUser?.username || '',
+          username: 'test',
         });
 
         const response = await axios.get(`${API_URL}/${telegramId}`);
@@ -76,7 +75,6 @@ function App() {
         setAutoclickers(user.autoclickers || 0);
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
-        setIsLoaded(true);
         setReferralsCount(user.referralsCount || 0);
       } catch (error) {
         console.log('Ошибка загрузки пользователя:', error);
