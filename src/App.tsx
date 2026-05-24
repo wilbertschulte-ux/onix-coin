@@ -521,6 +521,7 @@ axios.post(`${API_URL}/save`, {
         </div>
                  )}
       )}
+    </div>
   );
 }
 
