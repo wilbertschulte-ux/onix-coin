@@ -401,28 +401,14 @@ await axios.post(`${API_URL}/create`, {
   WebApp.initDataUnsafe.user?.id;
 
 const link =
-  `https://t.me/iconinix_bot?start=${telegramId}`;
+`https://t.me/coinonix_bot?start=${telegramId}`;
 
-    navigator.clipboard.writeText(link);
-
-    const newReferralsCount = referralsCount + 1;
-    setReferralsCount(newReferralsCount);
-
-    saveProgress({
-      balance,
-      energy,
-      maxEnergy,
-      tapPower,
-      energyRecharge,
-      autoclickers,
-      totalEarned,
-      level,
-      referralsCount: newReferralsCount,
-      tapLevel,
-      minerLevel,
-      energyLevel,
-      rechargeLevel,
-    });
+    const textarea = document.createElement('textarea');
+textarea.value = link;
+document.body.appendChild(textarea);
+textarea.select();
+document.execCommand('copy');
+document.body.removeChild(textarea);
 
     try {
       WebApp.HapticFeedback?.notificationOccurred('success');
