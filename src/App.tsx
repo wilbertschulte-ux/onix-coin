@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Coins, Zap, Trophy, Users, Home, Star } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
+
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -19,12 +20,11 @@ type FloatingNumber = {
 };
 
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function getTelegramId() {
   const tg = window.Telegram?.WebApp;
-
   if (!tg) return '';
-
   return tg.initDataUnsafe?.user?.id?.toString() || '';
 }
 
@@ -41,7 +41,6 @@ function App() {
   const [isTapped, setIsTapped] = useState(false);
   const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>([]);
 
-  const [lastRewardDate, setLastRewardDate] = useState('');
   const [activeBoost, setActiveBoost] = useState<'none' | 'tap' | 'mining'>('none');
   const [boostEndTime, setBoostEndTime] = useState(0);
   const [referralsCount, setReferralsCount] = useState(0);
@@ -86,53 +85,60 @@ function App() {
       WebApp.ready();
       WebApp.expand();
     } catch {}
-
-    const savedDate = localStorage.getItem('lastRewardDate');
-    if (savedDate) setLastRewardDate(savedDate);
   }, []);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const telegramId =
-  window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+          window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
         const startParam =
-  window.Telegram?.WebApp?.initDataUnsafe?.start_param || null;
+          window.Telegram?.WebApp?.initDataUnsafe?.start_param || null;
 
-await axios.post(`${API_URL}/create`, {
-  telegramId,
-  username:
-  `${window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || ''} ${
-    window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || ''
-  }`.trim() || 'Пользователь',
-  referredBy: startParam,
-});
+        await axios.post(`${API_URL}/create`, {
+          telegramId,
+          username:
+            `${window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || ''} ${
+              window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || ''
+            }`.trim() || 'Пользователь',
+          referredBy: startParam,
+        });
 
         const response = await axios.get(`${API_URL}/${telegramId}`);
-const user = response.data;
+        const user = response.data;
 
-if (localStorage.getItem('channelJoined') === 'true') {
-  setChannelJoined(true);
-}
+        if (localStorage.getItem('channelJoined') === 'true') {
+          setChannelJoined(true);
+        }
 
-const lastDaily =
-  user.dailyRewardLastClaim || user.lastDailyRewardDate;
+        const savedCooldown = localStorage.getItem('dailyCooldownEnd');
 
-if (lastDaily) {
-  const lastClaim = new Date(
-  lastDaily
-).getTime();
+        if (savedCooldown) {
+          const diff = Number(savedCooldown) - Date.now();
 
-  const now = Date.now();
+          if (diff > 0) {
+            setDailyCooldown(diff);
+          } else {
+            localStorage.removeItem('dailyCooldownEnd');
+          }
+        } else {
+          const lastDaily =
+            user.dailyRewardLastClaim || user.lastDailyRewardDate;
 
-  const diff =
-    24 * 60 * 60 * 1000 - (now - lastClaim);
+          if (lastDaily) {
+            const lastClaim = new Date(lastDaily).getTime();
+            const diff = DAY_MS - (Date.now() - lastClaim);
 
-  if (diff > 0) {
-    setDailyCooldown(diff);
-  }
-}
+            if (diff > 0) {
+              setDailyCooldown(diff);
+              localStorage.setItem(
+                'dailyCooldownEnd',
+                (Date.now() + diff).toString()
+              );
+            }
+          }
+        }
 
         setBalance(user.balance || 0);
         setEnergy(user.energy || 2000);
@@ -149,28 +155,27 @@ if (lastDaily) {
         const newRefs = user.referralsCount || 0;
 
         if (newRefs > oldRefs) {
-  alert(
-    `🎉 По вашей ссылке перешёл ${user.lastReferralUsername || 'новый пользователь'}! Вы получили +5000 ONIX`
-  );
-}
+          alert(
+            `🎉 По вашей ссылке перешёл ${
+              user.lastReferralUsername || 'новый пользователь'
+            }! Вы получили +5000 ONIX`
+          );
+        }
 
         localStorage.setItem('knownReferrals', newRefs.toString());
 
-if (
-  user.referredBy &&
-  !localStorage.getItem(
-    `referralWelcomeShown_${user.telegramId}`
-  )
-) {
-  alert(
-    `🎁 Вы получили +1000 ONIX за вход по ссылке пользователя ${user.referredByUsername || 'друга'}!`
-  );
+        if (
+          user.referredBy &&
+          !localStorage.getItem(`referralWelcomeShown_${user.telegramId}`)
+        ) {
+          alert(
+            `🎁 Вы получили +1000 ONIX за вход по ссылке пользователя ${
+              user.referredByUsername || 'друга'
+            }!`
+          );
 
-  localStorage.setItem(
-    `referralWelcomeShown_${user.telegramId}`,
-    'true'
-  );
-}
+          localStorage.setItem(`referralWelcomeShown_${user.telegramId}`, 'true');
+        }
 
         setTapLevel(user.tapLevel || 1);
         setMinerLevel(user.minerLevel || 1);
@@ -185,8 +190,22 @@ if (
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('lastRewardDate', lastRewardDate);
-  }, [lastRewardDate]);
+    if (dailyCooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setDailyCooldown((prev) => {
+        if (prev <= 1000) {
+          localStorage.removeItem('dailyCooldownEnd');
+          clearInterval(timer);
+          return 0;
+        }
+
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [dailyCooldown]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -306,10 +325,10 @@ if (
   const buyUpgrade = (type: 'tap' | 'energy' | 'recharge' | 'miner') => {
     let cost = 0;
 
-    if (type === 'tap') cost = tapLevel * 150;
-    if (type === 'energy') cost = energyLevel * 200;
-    if (type === 'recharge') cost = rechargeLevel * 180;
-    if (type === 'miner') cost = minerLevel * 300;
+    if (type === 'tap') cost = (tapLevel + 1) * 150;
+    if (type === 'energy') cost = (energyLevel + 1) * 200;
+    if (type === 'recharge') cost = (rechargeLevel + 1) * 180;
+    if (type === 'miner') cost = (minerLevel + 1) * 300;
 
     if (balance < cost) {
       alert('Недостаточно ONIX!');
@@ -420,63 +439,39 @@ if (
   };
 
   const copyReferralLink = async () => {
-  const telegramId = getTelegramId();
+    const telegramId = getTelegramId();
 
-  const link = telegramId
-    ? `https://t.me/coinonix_bot/onix?startapp=${telegramId}`
-    : 'https://t.me/coinonix_bot/onix';
+    const link = telegramId
+      ? `https://t.me/coinonix_bot/onix?startapp=${telegramId}`
+      : 'https://t.me/coinonix_bot/onix';
 
-  try {
-    await navigator.clipboard.writeText(link);
+    try {
+      await navigator.clipboard.writeText(link);
+      alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = link;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
 
-    alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
-  } catch {
-    const textarea = document.createElement('textarea');
-    textarea.value = link;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
+      alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
+    }
+  };
 
-    alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
-  }
-};
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
-  const progress = ((totalEarned % coinsPerLevel) / coinsPerLevel) * 100;
+    return `${hours}ч ${minutes}м ${seconds}с`;
+  };
+
+  const currentLevelCoins = totalEarned - (level - 1) * coinsPerLevel;
+  const progress = (currentLevelCoins / coinsPerLevel) * 100;
   const isBoostActive = Date.now() < boostEndTime;
-
-useEffect(() => {
-  if (dailyCooldown <= 0) return;
-
-  const timer = setInterval(() => {
-    setDailyCooldown((prev) => {
-      if (prev <= 1000) {
-        clearInterval(timer);
-        return 0;
-      }
-
-      return prev - 1000;
-    });
-  }, 1000);
-
-  return () => clearInterval(timer);
-}, [dailyCooldown]);
-
-const formatTime = (ms: number) => {
-  const totalSeconds = Math.floor(ms / 1000);
-
-  const hours = Math.floor(
-    totalSeconds / 3600
-  );
-
-  const minutes = Math.floor(
-    (totalSeconds % 3600) / 60
-  );
-
-  const seconds = totalSeconds % 60;
-
-  return `${hours}ч ${minutes}м ${seconds}с`;
-};
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
@@ -502,15 +497,15 @@ const formatTime = (ms: number) => {
           </div>
 
           <span className="text-sm text-gray-400">
-            {totalEarned.toLocaleString('ru-RU')} /{' '}
-            {(level * coinsPerLevel).toLocaleString('ru-RU')}
+            {currentLevelCoins.toLocaleString('ru-RU')} /{' '}
+            {coinsPerLevel.toLocaleString('ru-RU')}
           </span>
         </div>
 
         <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-yellow-400 transition-all"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
       </div>
@@ -583,20 +578,20 @@ const formatTime = (ms: number) => {
 
             <div className="space-y-3">
               <div onClick={() => buyUpgrade('tap')} className="shop-item">
-                🎯 Сила тапа — ур. {tapLevel} — цена {tapLevel * 150} ONIX
+                🎯 Сила тапа — ур. {tapLevel} — цена {(tapLevel + 1) * 150} ONIX
               </div>
 
               <div onClick={() => buyUpgrade('miner')} className="shop-item">
-                ⛏️ Майнер — ур. {minerLevel} — цена {minerLevel * 300} ONIX
+                ⛏️ Майнер — ур. {minerLevel} — цена {(minerLevel + 1) * 300} ONIX
               </div>
 
               <div onClick={() => buyUpgrade('energy')} className="shop-item">
-                🔋 Энергия — ур. {energyLevel} — цена {energyLevel * 200} ONIX
+                🔋 Энергия — ур. {energyLevel} — цена {(energyLevel + 1) * 200} ONIX
               </div>
 
               <div onClick={() => buyUpgrade('recharge')} className="shop-item">
                 ⚡ Восстановление — ур. {rechargeLevel} — цена{' '}
-                {rechargeLevel * 180} ONIX
+                {(rechargeLevel + 1) * 180} ONIX
               </div>
             </div>
           </div>
@@ -623,217 +618,164 @@ const formatTime = (ms: number) => {
         </div>
       )}
 
-            {activeTab === 'tasks' && (
-  <div className="px-5 mt-8 space-y-4">
-    <h2 className="text-2xl font-bold mb-6">
-      📋 Задания
-    </h2>
+      {activeTab === 'tasks' && (
+        <div className="px-5 mt-8 space-y-4">
+          <h2 className="text-2xl font-bold mb-6">📋 Задания</h2>
 
-    {/* DAILY */}
-    <div
-      onClick={async () => {
-        if (dailyCooldown > 0) return;
+          <div
+            onClick={async () => {
+              if (dailyCooldown > 0) return;
 
-        try {
-          const response = await axios.post(
-            `${API_URL}/claim-task`,
-            {
-              telegramId: getTelegramId(),
-              task: 'daily',
-            }
-          );
+              try {
+                const response = await axios.post(`${API_URL}/claim-task`, {
+                  telegramId: getTelegramId(),
+                  task: 'daily',
+                });
 
-          const user = response.data;
+                const user = response.data;
+                const cooldown = DAY_MS;
 
-          setBalance(user.balance);
-          setTotalEarned(user.totalEarned);
+                setBalance(user.balance);
+                setTotalEarned(user.totalEarned);
+                setLevel(user.level);
+                setDailyCooldown(cooldown);
 
-          setDailyCooldown(24 * 60 * 60 * 1000);
+                localStorage.setItem(
+                  'dailyCooldownEnd',
+                  (Date.now() + cooldown).toString()
+                );
 
-          alert(
-            `🎁 Вы получили +${
-              500 + user.level * 100
-            } ONIX`
-          );
-        } catch (error: any) {
-          alert(
-            error?.response?.data?.message
-          );
-        }
-      }}
-      className={`shop-item ${
-        dailyCooldown > 0
-          ? 'opacity-50 cursor-not-allowed'
-          : ''
-      }`}
-    >
-      <div>
-        <p className="font-bold">
-          🎁 Ежедневная награда
-        </p>
+                alert(`🎁 Вы получили +${500 + user.level * 100} ONIX`);
+              } catch (error: any) {
+                alert(error?.response?.data?.message || 'Ошибка получения награды');
+              }
+            }}
+            className={`shop-item ${
+              dailyCooldown > 0 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <div>
+              <p className="font-bold">🎁 Ежедневная награда</p>
+              <p className="text-gray-400">+{500 + level * 100} ONIX</p>
+            </div>
 
-        <p className="text-gray-400">
-          +{500 + level * 100} ONIX
-        </p>
-      </div>
+            <span className="text-emerald-400 font-bold">
+              {dailyCooldown > 0 ? formatTime(dailyCooldown) : 'Забрать'}
+            </span>
+          </div>
 
-      <span className="text-emerald-400 font-bold">
-        {dailyCooldown > 0
-          ? formatTime(dailyCooldown)
-          : 'Забрать'}
-      </span>
-    </div>
+          <div
+            onClick={async () => {
+              if (completedTasks.includes('channel')) return;
 
-    {/* CHANNEL */}
-    <div
-      onClick={async () => {
-        if (
-          completedTasks.includes('channel')
-        )
-          return;
+              if (!channelJoined) {
+                window.open('https://t.me/+LEfKu_gQS_o4YTVh', '_blank');
+                localStorage.setItem('channelJoined', 'true');
+                setChannelJoined(true);
+                return;
+              }
 
-        if (!channelJoined) {
-  localStorage.setItem('channelJoined', 'true');
-  setChannelJoined(true);
+              try {
+                const response = await axios.post(`${API_URL}/claim-task`, {
+                  telegramId: getTelegramId(),
+                  task: 'channel',
+                });
 
-  window.location.href = 'https://t.me/+LEfKu_gQS_o4YTVh';
+                const user = response.data;
 
-  return;
-}
+                setBalance(user.balance);
+                setTotalEarned(user.totalEarned);
+                setLevel(user.level);
+                setCompletedTasks(user.completedTasks || []);
 
-        try {
-          const response = await axios.post(
-            `${API_URL}/claim-task`,
-            {
-              telegramId: getTelegramId(),
-              task: 'channel',
-            }
-          );
+                alert('🎉 Подписка подтверждена! +2000 ONIX');
+              } catch (error: any) {
+                alert(error?.response?.data?.message || 'Сначала подпишитесь на канал');
+              }
+            }}
+            className={`shop-item ${
+              completedTasks.includes('channel')
+                ? 'opacity-50 cursor-not-allowed'
+                : ''
+            }`}
+          >
+            <div>
+              <p className="font-bold">📢 Подписаться на канал</p>
+              <p className="text-gray-400">+2000 ONIX</p>
+            </div>
 
-          const user = response.data;
+            <span className="text-emerald-400 font-bold">
+              {completedTasks.includes('channel')
+                ? 'Выполнено'
+                : channelJoined
+                ? 'Проверить'
+                : 'Подписаться'}
+            </span>
+          </div>
 
-          setBalance(user.balance);
-          setTotalEarned(user.totalEarned);
+          <div
+            onClick={async () => {
+              if (completedTasks.includes('inviteFriend')) return;
 
-          setCompletedTasks(
-            user.completedTasks || []
-          );
+              if (referralsCount < 1) {
+                const currentTelegramId =
+                  window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() ||
+                  getTelegramId();
 
-          alert(
-            '🎉 Подписка подтверждена! +2000 ONIX'
-          );
-        } catch (error: any) {
-          alert(
-            error?.response?.data?.message
-          );
-        }
-      }}
-      className={`shop-item ${
-        completedTasks.includes('channel')
-          ? 'opacity-50'
-          : ''
-      }`}
-    >
-      <div>
-        <p className="font-bold">
-          📢 Подписаться на канал
-        </p>
+                if (!currentTelegramId) {
+                  alert('Не удалось получить Telegram ID');
+                  return;
+                }
 
-        <p className="text-gray-400">
-          +2000 ONIX
-        </p>
-      </div>
+                const link = `https://t.me/coinonix_bot/onix?startapp=${currentTelegramId}`;
 
-      <span className="text-emerald-400 font-bold">
-        {completedTasks.includes(
-          'channel'
-        )
-          ? 'Выполнено'
-          : channelJoined
-          ? 'Проверить'
-          : 'Перейти'}
-      </span>
-    </div>
+                try {
+                  await navigator.clipboard.writeText(link);
+                } catch {}
 
-    {/* INVITE FRIEND */}
-    <div
-      onClick={async () => {
-        if (
-          completedTasks.includes(
-            'inviteFriend'
-          )
-        )
-          return;
+                alert('🔗 Ссылка скопирована! Пригласите друга.');
+                return;
+              }
 
-        if (referralsCount < 1) {
-          const link = `https://t.me/coinonix_bot/onix?startapp=${getTelegramId()}`;
+              try {
+                const response = await axios.post(`${API_URL}/claim-task`, {
+                  telegramId: getTelegramId(),
+                  task: 'inviteFriend',
+                });
 
-          navigator.clipboard.writeText(
-            link
-          );
+                const user = response.data;
 
-          alert(
-            '🔗 Ссылка скопирована! Пригласите друга.'
-          );
+                setBalance(user.balance);
+                setTotalEarned(user.totalEarned);
+                setLevel(user.level);
+                setCompletedTasks(user.completedTasks || []);
 
-          return;
-        }
+                alert('🎉 Вы получили +3000 ONIX!');
+              } catch (error: any) {
+                alert(error?.response?.data?.message || 'Сначала пригласите друга');
+              }
+            }}
+            className={`shop-item ${
+              completedTasks.includes('inviteFriend')
+                ? 'opacity-50 cursor-not-allowed'
+                : ''
+            }`}
+          >
+            <div>
+              <p className="font-bold">👥 Пригласить друга</p>
+              <p className="text-gray-400">+3000 ONIX</p>
+            </div>
 
-        try {
-          const response = await axios.post(
-            `${API_URL}/claim-task`,
-            {
-              telegramId: getTelegramId(),
-              task: 'inviteFriend',
-            }
-          );
-
-          const user = response.data;
-
-          setBalance(user.balance);
-          setTotalEarned(user.totalEarned);
-
-          setCompletedTasks(
-            user.completedTasks || []
-          );
-
-          alert(
-            '🎉 Вы получили +3000 ONIX!'
-          );
-        } catch (error: any) {
-          alert(
-            error?.response?.data?.message
-          );
-        }
-      }}
-      className={`shop-item ${
-  completedTasks.includes('inviteFriend')
-    ? 'opacity-50 cursor-not-allowed'
-    : ''
-}`}
-    >
-      <div>
-        <p className="font-bold">
-          👥 Пригласить друга
-        </p>
-
-        <p className="text-gray-400">
-          +3000 ONIX
-        </p>
-      </div>
-
-      <span className="text-emerald-400 font-bold">
-        {completedTasks.includes(
-          'inviteFriend'
-        )
-          ? 'Выполнено'
-          : referralsCount >= 1
-          ? 'Забрать'
-          : 'Пригласить'}
-      </span>
-    </div>
-  </div>
-)}
+            <span className="text-emerald-400 font-bold">
+              {completedTasks.includes('inviteFriend')
+                ? 'Выполнено'
+                : referralsCount >= 1
+                ? 'Забрать'
+                : 'Пригласить'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'friends' && (
         <div className="px-5 mt-8 text-center">
