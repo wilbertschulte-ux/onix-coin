@@ -1,3 +1,5 @@
+const axios = require('axios');
+
 const express = require("express");
 
 const router = express.Router();
@@ -169,6 +171,137 @@ router.post("/claim-task", async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// CLAIM TASK
+router.post('/claim-task', async (req, res) => {
+  try {
+    const { telegramId, task } = req.body;
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    // DAILY REWARD
+    if (task === 'daily') {
+      const now = new Date();
+
+      if (user.dailyRewardLastClaim) {
+        const diff =
+          now - new Date(user.dailyRewardLastClaim);
+
+        const hours24 = 24 * 60 * 60 * 1000;
+
+        if (diff < hours24) {
+          return res.status(400).json({
+            message:
+              'Награда уже получена',
+          });
+        }
+      }
+
+      const reward = 500 + user.level * 100;
+
+      user.balance += reward;
+      user.totalEarned += reward;
+      user.dailyRewardLastClaim = now;
+
+      await user.save();
+
+      return res.json(user);
+    }
+
+    // CHANNEL SUBSCRIBE
+    if (task === 'channel') {
+      if (
+        user.completedTasks.includes('channel')
+      ) {
+        return res.status(400).json({
+          message:
+            'Задание уже выполнено',
+        });
+      }
+
+      const response = await axios.get(
+        `https://api.telegram.org/bot${process.env.BOT_TOKEN}/getChatMember`,
+        {
+          params: {
+            chat_id: process.env.CHANNEL_ID,
+            user_id: telegramId,
+          },
+        }
+      );
+
+      const status =
+        response.data.result.status;
+
+      const isSubscribed = [
+        'member',
+        'administrator',
+        'creator',
+      ].includes(status);
+
+      if (!isSubscribed) {
+        return res.status(400).json({
+          message:
+            'Сначала подпишитесь на канал',
+        });
+      }
+
+      user.balance += 2000;
+      user.totalEarned += 2000;
+
+      user.completedTasks.push('channel');
+
+      await user.save();
+
+      return res.json(user);
+    }
+
+    // INVITE FRIEND
+    if (task === 'inviteFriend') {
+      if (
+        user.completedTasks.includes(
+          'inviteFriend'
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            'Награда уже получена',
+        });
+      }
+
+      if (user.referralsCount < 1) {
+        return res.status(400).json({
+          message:
+            'Сначала пригласите друга',
+        });
+      }
+
+      user.balance += 3000;
+      user.totalEarned += 3000;
+
+      user.completedTasks.push(
+        'inviteFriend'
+      );
+
+      await user.save();
+
+      return res.json(user);
+    }
+
+    res.status(400).json({
+      message: 'Unknown task',
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
   }
 });
 

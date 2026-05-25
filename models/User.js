@@ -8,6 +8,16 @@ const userSchema = new mongoose.Schema({
 
   username: String,
 
+  dailyRewardLastClaim: {
+    type: Date,
+    default: null,
+  },
+
+  completedTasks: {
+    type: [String],
+    default: [],
+  },
+
   referredByUsername: {
     type: String,
     default: null,
