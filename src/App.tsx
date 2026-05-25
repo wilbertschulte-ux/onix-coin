@@ -396,16 +396,27 @@ await axios.post(`${API_URL}/create`, {
     alert(`⚡ ${type === 'tap' ? 'Тап' : 'Майнинг'} ×2 на ${minutes} минут!`);
   };
 
-  const copyReferralLink = () => {
+  const copyReferralLink = async () => {
   const telegramId = getTelegramId();
 
-  const link = `https://t.me/coinonix_bot/onix?startapp=${telegramId}`;
+  const link = telegramId
+    ? `https://t.me/coinonix_bot/onix?startapp=${telegramId}`
+    : 'https://t.me/coinonix_bot/onix';
 
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(
-    '🚀 Играй в ONIX COIN и получи стартовый бонус!'
-  )}`;
+  try {
+    await navigator.clipboard.writeText(link);
 
-  WebApp.openLink(shareUrl);
+    alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
+  } catch {
+    const textarea = document.createElement('textarea');
+    textarea.value = link;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
+  }
 };
 
   const progress = ((totalEarned % coinsPerLevel) / coinsPerLevel) * 100;
