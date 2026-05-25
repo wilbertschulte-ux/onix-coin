@@ -53,7 +53,7 @@ router.post("/create", async (req, res) => {
     await refUser.save();
 
     user.balance += 1000;
-    user.referredByUsername = refUser.username || "пользователя";
+    user.referredByUsername = refUser.username || "друга";
   }
 }
 
