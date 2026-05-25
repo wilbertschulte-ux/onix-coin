@@ -404,7 +404,7 @@ await axios.post(`${API_URL}/create`, {
     return;
   }
 
-  const link = `https://t.me/coinonix_bot?start=${telegramId}`;
+  const link = `https://t.me/coinonix_bot/onix?startapp=${telegramId}`;
 
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(
     '🚀 Играй в ONIX COIN и получи стартовый бонус!'
