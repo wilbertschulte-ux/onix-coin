@@ -95,15 +95,12 @@ function App() {
   window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
         const startParam =
-  WebApp.initDataUnsafe.start_param;
+  window.Telegram?.WebApp?.initDataUnsafe?.start_param || null;
 
 await axios.post(`${API_URL}/create`, {
   telegramId,
-  username:
-    WebApp.initDataUnsafe.user?.username ||
-    'user',
-
-  referredBy: startParam || null,
+  username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'user',
+  referredBy: startParam,
 });
 
         const response = await axios.get(`${API_URL}/${telegramId}`);
