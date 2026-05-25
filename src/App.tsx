@@ -110,12 +110,19 @@ await axios.post(`${API_URL}/create`, {
 });
 
         const response = await axios.get(`${API_URL}/${telegramId}`);
-        const user = response.data;
+const user = response.data;
 
-if (user.dailyRewardLastClaim) {
+if (localStorage.getItem('channelJoined') === 'true') {
+  setChannelJoined(true);
+}
+
+const lastDaily =
+  user.dailyRewardLastClaim || user.lastDailyRewardDate;
+
+if (lastDaily) {
   const lastClaim = new Date(
-    user.dailyRewardLastClaim
-  ).getTime();
+  lastDaily
+).getTime();
 
   const now = Date.now();
 
@@ -688,12 +695,12 @@ const formatTime = (ms: number) => {
           return;
 
         if (!channelJoined) {
-          window.open(
-            'https://t.me/+LEfKu_gQS_o4YTVh',
-            '_blank'
-          );
+          WebApp.openTelegramLink(
+  'https://t.me/+LEfKu_gQS_o4YTVh'
+);
 
-          setChannelJoined(true);
+          localStorage.setItem('channelJoined', 'true');
+setChannelJoined(true);
 
           return;
         }
