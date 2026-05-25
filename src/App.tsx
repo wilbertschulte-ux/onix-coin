@@ -15,7 +15,32 @@ type FloatingNumber = {
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 
 function getTelegramId() {
-  return WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+  try {
+    const user = WebApp.initDataUnsafe?.user;
+
+    if (user?.id) {
+      return user.id.toString();
+    }
+
+    const raw = WebApp.initData;
+
+    if (raw) {
+      const params = new URLSearchParams(raw);
+      const userData = params.get('user');
+
+      if (userData) {
+        const parsed = JSON.parse(userData);
+
+        if (parsed.id) {
+          return parsed.id.toString();
+        }
+      }
+    }
+
+    return '';
+  } catch {
+    return '';
+  }
 }
 
 function App() {
