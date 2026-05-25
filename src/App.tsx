@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { Coins, Zap, Trophy, Users, Home, Star, Gift } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
+const tg = window.Telegram?.WebApp;
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends';
 
@@ -15,32 +21,11 @@ type FloatingNumber = {
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 
 function getTelegramId() {
-  try {
-    const user = WebApp.initDataUnsafe?.user;
+  const tg = window.Telegram?.WebApp;
 
-    if (user?.id) {
-      return user.id.toString();
-    }
+  if (!tg) return '';
 
-    const raw = WebApp.initData;
-
-    if (raw) {
-      const params = new URLSearchParams(raw);
-      const userData = params.get('user');
-
-      if (userData) {
-        const parsed = JSON.parse(userData);
-
-        if (parsed.id) {
-          return parsed.id.toString();
-        }
-      }
-    }
-
-    return '';
-  } catch {
-    return '';
-  }
+  return tg.initDataUnsafe?.user?.id?.toString() || '';
 }
 
 function App() {
@@ -106,7 +91,8 @@ function App() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const telegramId = getTelegramId();
+        const telegramId =
+  window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
         alert(`TG ID: ${telegramId}`);
 
