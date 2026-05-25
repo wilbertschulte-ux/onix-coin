@@ -9,14 +9,14 @@ const userSchema = new mongoose.Schema({
   username: String,
 
   dailyRewardLastClaim: {
-    type: Date,
-    default: null,
-  },
+  type: Number,
+  default: null,
+},
 
   completedTasks: {
-    type: [String],
-    default: [],
-  },
+  type: [String],
+  default: [],
+},
 
   referredByUsername: {
     type: String,

@@ -126,18 +126,25 @@ router.post("/claim-task", async (req, res) => {
       };
     }
 
-    const today = new Date().toISOString().split("T")[0];
-
     if (task === "daily") {
-      if (user.lastDailyRewardDate === today) {
-        return res.status(400).json({ message: "Daily reward already claimed" });
-      }
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
 
-      user.balance += 500;
-      user.totalEarned += 500;
-      user.lastDailyRewardDate = today;
-      user.tasks.daily = true;
-    }
+  if (
+    user.dailyRewardLastClaim &&
+    now - Number(user.dailyRewardLastClaim) < dayMs
+  ) {
+    return res.status(400).json({
+      message: "Daily reward already claimed",
+    });
+  }
+
+  const reward = 500 + user.level * 100;
+
+  user.balance += reward;
+  user.totalEarned += reward;
+  user.dailyRewardLastClaim = now;
+}
 
     if (task === "channel") {
       if (user.tasks.channel) {
