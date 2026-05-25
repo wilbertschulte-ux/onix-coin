@@ -15,7 +15,7 @@ type FloatingNumber = {
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 
 function getTelegramId() {
-  return WebApp?.initDataUnsafe?.user?.id?.toString() || '123456789';
+  return WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 }
 
 function App() {
@@ -397,16 +397,20 @@ await axios.post(`${API_URL}/create`, {
   };
 
   const copyReferralLink = () => {
-  const link = `https://t.me/coinonix_bot?start=${getTelegramId()}`;
+  const telegramId = getTelegramId();
+
+  if (!telegramId) {
+    alert('Открой приложение внутри Telegram, чтобы получить реферальную ссылку');
+    return;
+  }
+
+  const link = `https://t.me/coinonix_bot?start=${telegramId}`;
+
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(
-    'Заходи в ONIX COIN и получи бонус!'
+    '🚀 Играй в ONIX COIN и получи стартовый бонус!'
   )}`;
 
-  try {
-    WebApp.openLink(shareUrl);
-  } catch {
-    window.location.href = shareUrl;
-  }
+  WebApp.openLink(shareUrl);
 };
 
   const progress = ((totalEarned % coinsPerLevel) / coinsPerLevel) * 100;
