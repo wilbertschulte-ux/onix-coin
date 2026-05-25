@@ -120,10 +120,26 @@ await axios.post(`${API_URL}/create`, {
         const newRefs = user.referralsCount || 0;
 
         if (newRefs > oldRefs) {
-           alert(`🎉 Новый реферал! Вы получили +5000 ONIX`);
-        }
+  alert(
+    `🎉 По вашей ссылке перешёл ${user.lastReferralUsername || 'новый пользователь'}! Вы получили +5000 ONIX`
+  );
+}
 
         localStorage.setItem('knownReferrals', newRefs.toString());
+
+const referralWelcomeShown =
+  localStorage.getItem('referralWelcomeShown');
+
+if (user.referredBy && !referralWelcomeShown) {
+  alert(
+    `🎁 Вы получили +1000 ONIX за вход по ссылке пользователя ${user.referredByUsername || 'друга'}!`
+  );
+
+  localStorage.setItem(
+    'referralWelcomeShown',
+    'true'
+  );
+}
 
         setTapLevel(user.tapLevel || 1);
         setMinerLevel(user.minerLevel || 1);
