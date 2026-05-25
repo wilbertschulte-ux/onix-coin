@@ -94,8 +94,6 @@ function App() {
         const telegramId =
   window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
-        alert(`TG ID: ${telegramId}`);
-
         const startParam =
   WebApp.initDataUnsafe.start_param;
 
