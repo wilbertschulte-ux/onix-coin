@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Coins, Zap, Trophy, Users, Home, Star, Gift } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
+
+WebApp.ready();
+WebApp.expand();
 import axios from 'axios';
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends';
@@ -15,7 +18,7 @@ type FloatingNumber = {
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 
 function getTelegramId() {
-  return WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+  return WebApp?.initDataUnsafe?.user?.id?.toString() || 'test_user';
 }
 
 function App() {
@@ -398,11 +401,6 @@ await axios.post(`${API_URL}/create`, {
 
   const copyReferralLink = () => {
   const telegramId = getTelegramId();
-
-  if (!telegramId) {
-    alert('Открой приложение внутри Telegram, чтобы получить реферальную ссылку');
-    return;
-  }
 
   const link = `https://t.me/coinonix_bot/onix?startapp=${telegramId}`;
 
