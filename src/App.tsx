@@ -133,13 +133,18 @@ await axios.post(`${API_URL}/create`, {
 const referralWelcomeShown =
   localStorage.getItem('referralWelcomeShown');
 
-if (user.referredBy && !referralWelcomeShown) {
+if (
+  user.referredBy &&
+  !localStorage.getItem(
+    `referralWelcomeShown_${user.telegramId}`
+  )
+) {
   alert(
     `🎁 Вы получили +1000 ONIX за вход по ссылке пользователя ${user.referredByUsername || 'друга'}!`
   );
 
   localStorage.setItem(
-    'referralWelcomeShown',
+    `referralWelcomeShown_${user.telegramId}`,
     'true'
   );
 }
