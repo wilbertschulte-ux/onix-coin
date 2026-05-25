@@ -648,9 +648,7 @@ const formatTime = (ms: number) => {
           setBalance(user.balance);
           setTotalEarned(user.totalEarned);
 
-          setDailyCooldown(
-            24 * 60 * 60 * 1000
-          );
+          setDailyCooldown(24 * 60 * 60 * 1000);
 
           alert(
             `🎁 Вы получили +${
@@ -695,15 +693,13 @@ const formatTime = (ms: number) => {
           return;
 
         if (!channelJoined) {
-          WebApp.openTelegramLink(
-  'https://t.me/+LEfKu_gQS_o4YTVh'
-);
+  localStorage.setItem('channelJoined', 'true');
+  setChannelJoined(true);
 
-          localStorage.setItem('channelJoined', 'true');
-setChannelJoined(true);
+  window.location.href = 'https://t.me/+LEfKu_gQS_o4YTVh';
 
-          return;
-        }
+  return;
+}
 
         try {
           const response = await axios.post(
@@ -811,12 +807,10 @@ setChannelJoined(true);
         }
       }}
       className={`shop-item ${
-        completedTasks.includes(
-          'inviteFriend'
-        )
-          ? 'opacity-50'
-          : ''
-      }`}
+  completedTasks.includes('inviteFriend')
+    ? 'opacity-50 cursor-not-allowed'
+    : ''
+}`}
     >
       <div>
         <p className="font-bold">
