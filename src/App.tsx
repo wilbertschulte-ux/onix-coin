@@ -108,6 +108,8 @@ function App() {
       try {
         const telegramId = getTelegramId();
 
+        alert(`TG ID: ${telegramId}`);
+
         const startParam =
   WebApp.initDataUnsafe.start_param;
 
