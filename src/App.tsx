@@ -116,6 +116,15 @@ await axios.post(`${API_URL}/create`, {
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
 
+        const oldRefs = Number(localStorage.getItem('knownReferrals') || 0);
+        const newRefs = user.referralsCount || 0;
+
+        if (newRefs > oldRefs) {
+           alert(`🎉 Новый реферал! Вы получили +5000 ONIX`);
+        }
+
+        localStorage.setItem('knownReferrals', newRefs.toString());
+
         setTapLevel(user.tapLevel || 1);
         setMinerLevel(user.minerLevel || 1);
         setEnergyLevel(user.energyLevel || 1);
