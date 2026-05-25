@@ -83,6 +83,28 @@ referredBy: {
   default: null,
 },
 
+tasks: {
+  daily: {
+    type: Boolean,
+    default: false,
+  },
+
+  channel: {
+    type: Boolean,
+    default: false,
+  },
+
+  inviteFriend: {
+    type: Boolean,
+    default: false,
+  },
+},
+
+lastDailyRewardDate: {
+  type: String,
+  default: null,
+},
+
   updatedAt: {
     type: Date,
     default: Date.now,
