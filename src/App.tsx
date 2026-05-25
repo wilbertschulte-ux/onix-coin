@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Coins, Zap, Trophy, Users, Home, Star, Gift } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
-
-WebApp.ready();
-WebApp.expand();
 import axios from 'axios';
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends';
@@ -18,7 +15,7 @@ type FloatingNumber = {
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 
 function getTelegramId() {
-  return WebApp?.initDataUnsafe?.user?.id?.toString() || 'test_user';
+  return WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 }
 
 function App() {
