@@ -8,6 +8,16 @@ const userSchema = new mongoose.Schema({
 
   username: String,
 
+  referredByUsername: {
+    type: String,
+    default: null,
+  },
+
+  lastReferralUsername: {
+    type: String,
+    default: null,
+  },
+
   balance: {
     type: Number,
     default: 0,

@@ -42,18 +42,20 @@ router.post("/create", async (req, res) => {
       });
 
       if (referredBy && referredBy !== telegramId) {
-        const refUser = await User.findOne({
-          telegramId: referredBy,
-        });
+  const refUser = await User.findOne({
+    telegramId: referredBy,
+  });
 
-        if (refUser) {
-          refUser.balance += 5000;
-          refUser.referralsCount += 1;
-          await refUser.save();
+  if (refUser) {
+    refUser.balance += 5000;
+    refUser.referralsCount += 1;
+    refUser.lastReferralUsername = username || "новый пользователь";
+    await refUser.save();
 
-          user.balance += 1000;
-        }
-      }
+    user.balance += 1000;
+    user.referredByUsername = refUser.username || "пользователя";
+  }
+}
 
       await user.save();
     }
