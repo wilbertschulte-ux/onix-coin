@@ -99,7 +99,10 @@ function App() {
 
 await axios.post(`${API_URL}/create`, {
   telegramId,
-  username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'user',
+  username:
+  `${window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || ''} ${
+    window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || ''
+  }`.trim() || 'Пользователь',
   referredBy: startParam,
 });
 
