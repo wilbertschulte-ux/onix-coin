@@ -609,52 +609,141 @@ if (
       )}
 
       {activeTab === 'tasks' && (
-        <div className="px-5 mt-8">
-          <h2 className="text-2xl font-bold mb-6">📋 Задания</h2>
+  <div className="px-5 mt-8 space-y-4">
+    <h2 className="text-2xl font-bold mb-6">📋 Задания</h2>
 
-          <div
-            onClick={claimDailyReward}
-            className="shop-item flex justify-between items-center cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <Gift className="w-8 h-8 text-yellow-400" />
+    <div
+      onClick={claimDailyReward}
+      className="shop-item flex justify-between items-center cursor-pointer"
+    >
+      <div className="flex items-center gap-3">
+        <Gift className="w-8 h-8 text-yellow-400" />
 
-              <div>
-                <p className="font-bold">Ежедневная награда</p>
-                <p className="text-gray-400">+{500 + level * 100} ONIX</p>
-              </div>
-            </div>
-
-            <span className="text-emerald-400 font-bold">Забрать</span>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'friends' && (
-        <div className="px-5 mt-8 text-center">
-          <Users className="w-16 h-16 mx-auto text-yellow-400 mb-4" />
-
-          <h2 className="text-2xl font-bold mb-2">Приглашай друзей</h2>
-
-          <p className="text-gray-400 mb-6">
-            Получай бонусы за каждого приглашённого
-          </p>
-
-          <button
-            onClick={copyReferralLink}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl text-lg active:scale-95 transition"
-          >
-            🔗 Поделиться реф. ссылкой
-          </button>
-
-          <p className="mt-8 text-lg">
-            Приглашено:{' '}
-            <span className="text-yellow-400 font-bold">{referralsCount}</span>
+        <div>
+          <p className="font-bold">Ежедневная награда</p>
+          <p className="text-gray-400">
+            +{500 + level * 100} ONIX
           </p>
         </div>
-      )}
+      </div>
+
+      <span className="text-emerald-400 font-bold">
+        Забрать
+      </span>
     </div>
-  );
-}
+
+    <div className="shop-item flex justify-between items-center">
+      <div>
+        <p className="font-bold">
+          📢 Подписаться на канал
+        </p>
+
+        <p className="text-gray-400">
+          +2000 ONIX
+        </p>
+      </div>
+
+      <button
+        onClick={() => {
+          window.open(
+            'https://t.me/+LEfKu_gQS_o4YTVh',
+            '_blank'
+          );
+        }}
+        className="bg-yellow-400 text-black px-4 py-2 rounded-xl font-bold"
+      >
+        Перейти
+      </button>
+    </div>
+
+    <div
+      onClick={async () => {
+        try {
+          const response = await axios.post(
+            `${API_URL}/claim-task`,
+            {
+              telegramId: getTelegramId(),
+              task: 'channel',
+            }
+          );
+
+          const user = response.data;
+
+          setBalance(user.balance);
+          setTotalEarned(user.totalEarned);
+          setLevel(user.level);
+
+          alert(
+            '🎉 Вы получили +2000 ONIX за подписку!'
+          );
+        } catch (error: any) {
+          alert(
+            error?.response?.data?.message ||
+              'Задание уже выполнено'
+          );
+        }
+      }}
+      className="shop-item flex justify-between items-center cursor-pointer"
+    >
+      <div>
+        <p className="font-bold">
+          ✅ Проверить подписку
+        </p>
+
+        <p className="text-gray-400">
+          Получить награду
+        </p>
+      </div>
+
+      <span className="text-emerald-400 font-bold">
+        Проверить
+      </span>
+    </div>
+
+    <div
+      onClick={async () => {
+        try {
+          const response = await axios.post(
+            `${API_URL}/claim-task`,
+            {
+              telegramId: getTelegramId(),
+              task: 'inviteFriend',
+            }
+          );
+
+          const user = response.data;
+
+          setBalance(user.balance);
+          setTotalEarned(user.totalEarned);
+          setLevel(user.level);
+
+          alert(
+            '🎉 Вы получили +3000 ONIX за приглашение друга!'
+          );
+        } catch (error: any) {
+          alert(
+            error?.response?.data?.message ||
+              'Пригласите друга сначала'
+          );
+        }
+      }}
+      className="shop-item flex justify-between items-center cursor-pointer"
+    >
+      <div>
+        <p className="font-bold">
+          👥 Пригласить друга
+        </p>
+
+        <p className="text-gray-400">
+          +3000 ONIX
+        </p>
+      </div>
+
+      <span className="text-emerald-400 font-bold">
+        Получить
+      </span>
+    </div>
+  </div>
+)}
 
 export default App;
