@@ -610,21 +610,24 @@ if (
 
       {activeTab === 'tasks' && (
   <div className="px-5 mt-8 space-y-4">
-    <h2 className="text-2xl font-bold mb-6">📋 Задания</h2>
+    <h2 className="text-2xl font-bold mb-6">
+      📋 Задания
+    </h2>
+
+    {/* DAILY */}
 
     <div
       onClick={claimDailyReward}
-      className="shop-item flex justify-between items-center cursor-pointer"
+      className="shop-item"
     >
-      <div className="flex items-center gap-3">
-        <Gift className="w-8 h-8 text-yellow-400" />
+      <div>
+        <p className="font-bold">
+          🎁 Ежедневная награда
+        </p>
 
-        <div>
-          <p className="font-bold">Ежедневная награда</p>
-          <p className="text-gray-400">
-            +{500 + level * 100} ONIX
-          </p>
-        </div>
+        <p className="text-gray-400">
+          +{500 + level * 100} ONIX
+        </p>
       </div>
 
       <span className="text-emerald-400 font-bold">
@@ -632,10 +635,12 @@ if (
       </span>
     </div>
 
-    <div className="shop-item flex justify-between items-center">
+    {/* CHANNEL */}
+
+    <div className="shop-item">
       <div>
         <p className="font-bold">
-          📢 Подписаться на канал
+          📢 Подписка на канал
         </p>
 
         <p className="text-gray-400">
@@ -652,7 +657,7 @@ if (
         }}
         className="bg-yellow-400 text-black px-4 py-2 rounded-xl font-bold"
       >
-        Перейти
+        Канал
       </button>
     </div>
 
@@ -674,16 +679,16 @@ if (
           setLevel(user.level);
 
           alert(
-            '🎉 Вы получили +2000 ONIX за подписку!'
+            '🎉 Вы получили +2000 ONIX!'
           );
         } catch (error: any) {
           alert(
             error?.response?.data?.message ||
-              'Задание уже выполнено'
+              'Награда уже получена'
           );
         }
       }}
-      className="shop-item flex justify-between items-center cursor-pointer"
+      className="shop-item"
     >
       <div>
         <p className="font-bold">
@@ -699,6 +704,8 @@ if (
         Проверить
       </span>
     </div>
+
+    {/* FRIEND */}
 
     <div
       onClick={async () => {
@@ -718,16 +725,16 @@ if (
           setLevel(user.level);
 
           alert(
-            '🎉 Вы получили +3000 ONIX за приглашение друга!'
+            '🎉 Вы получили +3000 ONIX!'
           );
         } catch (error: any) {
           alert(
             error?.response?.data?.message ||
-              'Пригласите друга сначала'
+              'Сначала пригласите друга'
           );
         }
       }}
-      className="shop-item flex justify-between items-center cursor-pointer"
+      className="shop-item"
     >
       <div>
         <p className="font-bold">
