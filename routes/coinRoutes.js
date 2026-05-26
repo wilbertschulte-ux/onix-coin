@@ -58,6 +58,17 @@ function normalizeUserFields(user) {
     user.boostEndTime = 0;
   }
 
+  if (!user.activeBoost) user.activeBoost = 'none';
+  if (!user.boostEndTime) user.boostEndTime = 0;
+
+  if (
+    user.activeBoost !== 'none' &&
+    Number(user.boostEndTime || 0) <= Date.now()
+) {
+  user.activeBoost = 'none';
+  user.boostEndTime = 0;
+}
+
   return user;
 }
 
