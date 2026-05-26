@@ -814,7 +814,7 @@ function App() {
   };
 
 
-  const buyPerk = async (perkId: 'offline_pro') => {
+  const buyPerk = async (perkId: 'offline_pro' | 'energy_saver' | 'daily_plus' | 'miner_plus') => {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
@@ -1175,10 +1175,29 @@ function App() {
 
   const miningMultiplier =
     activeBoostValue === 'mining' && isBoostActive ? 2 : 1;
-  const minerIncomePerSecond = Number((autoclickers * miningMultiplier).toFixed(2));
+  const minerBaseMultiplier = ownedPerks.includes('miner_plus') ? 1.05 : 1;
+  const minerIncomePerSecond = Number(
+    (autoclickers * minerBaseMultiplier * miningMultiplier).toFixed(2)
+  );
   const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
   const hasOfflinePro = ownedPerks.includes('offline_pro');
+  const hasEnergySaver = ownedPerks.includes('energy_saver');
+  const hasDailyPlus = ownedPerks.includes('daily_plus');
+  const hasMinerPlus = ownedPerks.includes('miner_plus');
+
   const offlineProCost = 100000;
+  const energySaverCost = 150000;
+  const dailyPlusCost = 200000;
+  const minerPlusCost = 250000;
+
+  const effectiveTapEnergyCost = Math.max(
+    1,
+    Number((tapPower * (hasEnergySaver ? 0.9 : 1)).toFixed(2))
+  );
+  const baseDailyPreview = getDailyReward(level);
+  const effectiveDailyPreview = Math.round(
+    baseDailyPreview * (hasDailyPlus ? 1.1 : 1)
+  );
   const maxOfflineHours = hasOfflinePro ? 4 : 3;
   const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
 
@@ -1291,7 +1310,10 @@ function App() {
       ? 1
       : Number(dailyStreak || 0) + 1;
 
-  const dailyRewardPreview = getDailyRewardWithStreak(level, nextDailyStreakDay);
+  const dailyRewardPreview = Math.round(
+    getDailyRewardWithStreak(level, nextDailyStreakDay) *
+      (hasDailyPlus ? 1.1 : 1)
+  );
   const dailyStreakMultiplier = getDailyStreakMultiplier(nextDailyStreakDay);
 
   const boostCards: Array<{
@@ -1518,63 +1540,122 @@ function App() {
           </div>
 
 
+
           <div>
             <h2 className="text-2xl font-bold mb-4">🧩 Перки</h2>
 
-            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
-                    🧲
+            <div className="space-y-4">
+              {[
+                {
+                  id: 'offline_pro' as const,
+                  icon: '🧲',
+                  title: 'Offline Pro',
+                  description: 'Увеличивает максимум оффлайн-дохода с 3 до 4 часов',
+                  cost: offlineProCost,
+                  owned: hasOfflinePro,
+                  current: hasOfflinePro ? '4 часа' : '3 часа',
+                  next: '4 часа оффлайн',
+                },
+                {
+                  id: 'energy_saver' as const,
+                  icon: '🔋',
+                  title: 'Energy Saver',
+                  description: 'Снижает расход энергии на тап на 10%',
+                  cost: energySaverCost,
+                  owned: hasEnergySaver,
+                  current: `${formatOnix(effectiveTapEnergyCost)} энергии/тап`,
+                  next: `${formatOnix(Math.max(1, tapPower * 0.9))} энергии/тап`,
+                },
+                {
+                  id: 'daily_plus' as const,
+                  icon: '🎁',
+                  title: 'Daily Plus',
+                  description: 'Увеличивает ежедневную награду на 10%',
+                  cost: dailyPlusCost,
+                  owned: hasDailyPlus,
+                  current: `+${formatOnix(effectiveDailyPreview)} ONIX`,
+                  next: `+${formatOnix(Math.round(baseDailyPreview * 1.1))} ONIX`,
+                },
+                {
+                  id: 'miner_plus' as const,
+                  icon: '⛏️',
+                  title: 'Miner Plus',
+                  description: 'Увеличивает доход майнера на 5% навсегда',
+                  cost: minerPlusCost,
+                  owned: hasMinerPlus,
+                  current: `+${formatOnix(minerIncomePerSecond)} ONIX/сек`,
+                  next: `+${formatOnix(Number((autoclickers * 1.05 * miningMultiplier).toFixed(2)))} ONIX/сек`,
+                },
+              ].map((perk) => (
+                <div
+                  key={perk.id}
+                  className={`rounded-3xl border p-5 shadow-xl ${
+                    perk.owned
+                      ? 'border-emerald-400/30 bg-emerald-500/10'
+                      : 'border-yellow-400/20 bg-[#111827]'
+                  }`}
+                >
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${
+                          perk.owned ? 'bg-emerald-400' : 'bg-yellow-400'
+                        }`}
+                      >
+                        {perk.icon}
+                      </div>
+
+                      <div>
+                        <h3 className="text-xl font-bold text-white">
+                          {perk.title}
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          {perk.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                      <p className="text-xs text-gray-400">Тип</p>
+                      <p className="font-bold text-yellow-400">Навсегда</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-xl font-bold text-white">Offline Pro</h3>
-                    <p className="text-sm text-gray-400">
-                      Увеличивает максимум оффлайн-дохода с 3 до 4 часов
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                      <p className="text-xs text-gray-400">Сейчас</p>
+                      <p className="mt-1 text-sm font-bold text-white">
+                        {perk.current}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                      <p className="text-xs text-gray-400">После покупки</p>
+                      <p className="mt-1 text-sm font-bold text-emerald-400">
+                        {perk.next}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
-                  <p className="text-xs text-gray-400">Тип</p>
-                  <p className="font-bold text-yellow-400">Навсегда</p>
+                  <button
+                    onClick={() => buyPerk(perk.id)}
+                    disabled={perk.owned || balance < perk.cost}
+                    className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
+                      perk.owned
+                        ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed'
+                        : balance >= perk.cost
+                        ? 'bg-yellow-400 text-black active:scale-95'
+                        : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {perk.owned
+                      ? 'Куплено'
+                      : balance >= perk.cost
+                      ? `Купить за ${perk.cost.toLocaleString('ru-RU')} ONIX`
+                      : `Не хватает ${(perk.cost - balance).toLocaleString('ru-RU')} ONIX`}
+                  </button>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-[#0a0f1c] p-4">
-                  <p className="text-xs text-gray-400">Сейчас</p>
-                  <p className="mt-1 text-sm font-bold text-white">
-                    {hasOfflinePro ? '4 часа' : '3 часа'}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-[#0a0f1c] p-4">
-                  <p className="text-xs text-gray-400">После покупки</p>
-                  <p className="mt-1 text-sm font-bold text-emerald-400">
-                    4 часа оффлайн
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => buyPerk('offline_pro')}
-                disabled={hasOfflinePro || balance < offlineProCost}
-                className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
-                  hasOfflinePro
-                    ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed'
-                    : balance >= offlineProCost
-                    ? 'bg-yellow-400 text-black active:scale-95'
-                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                {hasOfflinePro
-                  ? 'Куплено'
-                  : balance >= offlineProCost
-                  ? `Купить за ${offlineProCost.toLocaleString('ru-RU')} ONIX`
-                  : `Не хватает ${(offlineProCost - balance).toLocaleString('ru-RU')} ONIX`}
-              </button>
+              ))}
             </div>
           </div>
 
