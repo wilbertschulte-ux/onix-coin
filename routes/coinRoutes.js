@@ -62,6 +62,10 @@ function normalizeUserFields(user) {
     user.lastMineTickAt = 0;
   }
 
+  if (user.lastUpgradeBuyAt === undefined || user.lastUpgradeBuyAt === null) {
+    user.lastUpgradeBuyAt = 0;
+  }
+
   if (!user.activeBoost) user.activeBoost = 'none';
   if (!user.boostEndTime) user.boostEndTime = 0;
 
@@ -185,6 +189,7 @@ router.post('/create', async (req, res) => {
 
         lastSeenAt: Date.now(),
         lastMineTickAt: 0,
+        lastUpgradeBuyAt: 0,
         lastOfflineIncome: 0,
         lastOfflineSeconds: 0,
         pendingOfflineIncome: 0,
@@ -295,6 +300,7 @@ router.post('/save', async (req, res) => {
           activeBoost: 'none',
           boostEndTime: 0,
           lastMineTickAt: 0,
+          lastUpgradeBuyAt: 0,
         },
       },
       {
@@ -345,6 +351,17 @@ router.post('/buy-upgrade', async (req, res) => {
 
     normalizeUserFields(user);
 
+    const now = Date.now();
+    const lastUpgradeBuyAt = Number(user.lastUpgradeBuyAt || 0);
+    const elapsedMs = now - lastUpgradeBuyAt;
+
+    if (lastUpgradeBuyAt > 0 && elapsedMs < 500) {
+      return res.status(429).json({
+        message: 'Upgrade purchase cooldown',
+        retryAfterMs: 500 - elapsedMs,
+      });
+    }
+
     let cost = 0;
 
     if (type === 'tap') cost = (Number(user.tapLevel || 1) + 1) * 150;
@@ -381,8 +398,9 @@ router.post('/buy-upgrade', async (req, res) => {
       user.autoclickers = Number(user.autoclickers || 0) + 2;
     }
 
+    user.lastUpgradeBuyAt = now;
     user.updatedAt = new Date();
-    user.lastSeenAt = Date.now();
+    user.lastSeenAt = now;
 
     await user.save();
 
