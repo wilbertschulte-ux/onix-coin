@@ -81,7 +81,11 @@ router.get('/:telegramId', async (req, res) => {
     const lastSeenAt = user.lastSeenAt || now;
     const offlineSeconds = Math.floor((now - lastSeenAt) / 1000);
 
-    if (user.autoclickers > 0 && offlineSeconds > 10) {
+    if (
+  user.autoclickers > 0 &&
+  offlineSeconds > 10 &&
+  Number(user.pendingOfflineIncome || 0) <= 0
+) {
       const countedSeconds = Math.min(offlineSeconds, MAX_OFFLINE_SECONDS);
 
       offlineSecondsForPopup = countedSeconds;
