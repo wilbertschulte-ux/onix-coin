@@ -9,6 +9,7 @@ const LEVEL_COINS = 500;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_OFFLINE_SECONDS = 3 * 60 * 60;
 const MAX_TAPS_PER_SECOND = 12;
+const MAX_PAID_REFERRALS_PER_DAY = 10;
 const DEFAULT_ENERGY = 500;
 const DEFAULT_MAX_ENERGY = 500;
 const DEFAULT_TAP_POWER = 1;
@@ -235,6 +236,27 @@ function addTransaction(user, type, amount, title, status = 'completed') {
   });
 
   user.transactions = user.transactions.slice(0, 50);
+}
+
+function prepareReferralBonusWindow(user, now = Date.now()) {
+  const todayKey = getUtcDayKey(now);
+
+  if (user.lastReferralBonusDay !== todayKey) {
+    user.lastReferralBonusDay = todayKey;
+    user.dailyReferralBonusCount = 0;
+  }
+
+  if (user.dailyReferralBonusCount === undefined || user.dailyReferralBonusCount === null) {
+    user.dailyReferralBonusCount = 0;
+  }
+
+  return todayKey;
+}
+
+function canReceivePaidReferralBonus(user, now = Date.now()) {
+  prepareReferralBonusWindow(user, now);
+
+  return Number(user.dailyReferralBonusCount || 0) < MAX_PAID_REFERRALS_PER_DAY;
 }
 
 function getTapUpgradeCost(tapLevel) {
@@ -488,6 +510,8 @@ router.post('/create', async (req, res) => {
         level: 1,
 
         referralsCount: 0,
+        dailyReferralBonusCount: 0,
+        lastReferralBonusDay: null,
 
         tapLevel: 1,
         minerLevel: 1,
@@ -513,24 +537,49 @@ router.post('/create', async (req, res) => {
         if (refUser) {
           normalizeUserFields(refUser);
 
-          refUser.balance += 75000;
-          refUser.totalEarned += 75000;
+          const now = Date.now();
+          const isPaidReferralAllowed = canReceivePaidReferralBonus(refUser, now);
+
           refUser.referralsCount += 1;
-          addTransaction(refUser, 'income_referral', 75000, 'Реферальный бонус');
-          const refAchievementBonuses = applyAchievements(refUser);
-          applyRankBonuses(refUser);
-          refUser.level = calculateLevel(refUser.totalEarned);
           refUser.lastReferralUsername = username || 'новый пользователь';
           refUser.updatedAt = new Date();
 
-          await refUser.save();
+          if (isPaidReferralAllowed) {
+            refUser.dailyReferralBonusCount =
+              Number(refUser.dailyReferralBonusCount || 0) + 1;
 
-          user.balance += 15000;
-          user.totalEarned += 15000;
-          addTransaction(user, 'income_referral', 15000, 'Бонус за вход по ссылке');
-          applyRankBonuses(user);
-          user.level = calculateLevel(user.totalEarned);
+            refUser.balance = roundOnix(Number(refUser.balance || 0) + 75000);
+            refUser.totalEarned = roundOnix(Number(refUser.totalEarned || 0) + 75000);
+
+            addTransaction(
+              refUser,
+              'income_referral',
+              75000,
+              `Реферальный бонус ${refUser.dailyReferralBonusCount}/${MAX_PAID_REFERRALS_PER_DAY}`
+            );
+
+            const refAchievementBonuses = applyAchievements(refUser);
+            const refRankBonuses = applyRankBonuses(refUser);
+            refUser.level = calculateLevel(refUser.totalEarned);
+
+            user.balance = roundOnix(Number(user.balance || 0) + 15000);
+            user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 15000);
+
+            addTransaction(
+              user,
+              'income_referral',
+              15000,
+              'Бонус за вход по ссылке'
+            );
+
+            const achievementBonuses = applyAchievements(user);
+            const rankBonuses = applyRankBonuses(user);
+            user.level = calculateLevel(user.totalEarned);
+          }
+
           user.referredByUsername = refUser.username || 'пользователя';
+
+          await refUser.save();
         }
       }
 
@@ -607,6 +656,8 @@ router.post('/save', async (req, res) => {
         level: 1,
 
         referralsCount: 0,
+        dailyReferralBonusCount: 0,
+        lastReferralBonusDay: null,
 
         tapLevel: 1,
         minerLevel: 1,
