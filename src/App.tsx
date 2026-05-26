@@ -151,6 +151,17 @@ function App() {
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
 
+if (
+  user.lastOfflineIncome &&
+  user.lastOfflineIncome > 0
+) {
+  alert(
+    `⛏️ Пока вас не было, майнер заработал +${user.lastOfflineIncome.toLocaleString(
+      'ru-RU'
+    )} ONIX`
+  );
+}
+
         const oldRefs = Number(localStorage.getItem('knownReferrals') || 0);
         const newRefs = user.referralsCount || 0;
 
