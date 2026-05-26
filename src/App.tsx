@@ -579,6 +579,12 @@ function App() {
   const progress = (currentLevelCoins / coinsPerLevel) * 100;
   const isBoostActive = Date.now() < boostEndTime;
 
+  const miningMultiplier = activeBoost === 'mining' && isBoostActive ? 2 : 1;
+  const minerIncomePerSecond = Math.floor(autoclickers * miningMultiplier);
+  const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
+  const maxOfflineHours = 3;
+  const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
+
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
       <div className="bg-[#111827] p-4 flex justify-between items-center sticky top-0 z-50">
@@ -679,6 +685,57 @@ function App() {
 
       {activeTab === 'boosts' && (
         <div className="px-5 mt-8 space-y-8">
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
+                ⛏️
+              </div>
+
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  Статистика майнера
+                </h2>
+                <p className="text-sm text-gray-400">Твой пассивный доход</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Доход в секунду</p>
+                <p className="mt-1 text-lg font-bold text-yellow-400">
+                  +{minerIncomePerSecond.toLocaleString('ru-RU')}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Доход в час</p>
+                <p className="mt-1 text-lg font-bold text-yellow-400">
+                  +{minerIncomePerHour.toLocaleString('ru-RU')}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Макс. оффлайн</p>
+                <p className="mt-1 text-lg font-bold text-white">
+                  {maxOfflineHours} часа
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Макс. доход</p>
+                <p className="mt-1 text-lg font-bold text-yellow-400">
+                  +{maxOfflineIncome.toLocaleString('ru-RU')}
+                </p>
+              </div>
+            </div>
+
+            {isBoostActive && activeBoost === 'mining' && (
+              <p className="mt-4 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-400">
+                ⚡ Активен буст майнинга ×2
+              </p>
+            )}
+          </div>
+
           <div>
             <h2 className="text-2xl font-bold mb-4">Постоянные улучшения</h2>
 
