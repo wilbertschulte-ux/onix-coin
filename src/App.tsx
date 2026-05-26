@@ -1075,13 +1075,6 @@ function App() {
 
   const canWithdraw = balance >= MIN_WITHDRAW_ONIX;
 
-  const referralProgress = Math.min(
-    (Number(referralLimit.used || 0) / Number(referralLimit.max || 10)) * 100,
-    100
-  );
-
-  const referralResetTime = formatTime(referralLimit.secondsUntilReset * 1000);
-
   const nextDailyStreakDay =
     dailyCooldown > 0
       ? Math.max(1, Number(dailyStreak || 1))
@@ -1678,22 +1671,7 @@ function App() {
               if (completedTasks.includes('inviteFriend')) return;
 
               if (referralsCount < 1) {
-                const currentTelegramId =
-                  window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() ||
-                  getTelegramId();
-
-                if (!currentTelegramId) {
-                  alert('Не удалось получить Telegram ID');
-                  return;
-                }
-
-                const link = `https://t.me/coinonix_bot/onix?startapp=${currentTelegramId}`;
-
-                try {
-                  await navigator.clipboard.writeText(link);
-                } catch {}
-
-                alert('🔗 Ссылка скопирована! Пригласите друга.');
+                setReferralModalVisible(true);
                 return;
               }
 
