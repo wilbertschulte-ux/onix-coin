@@ -154,13 +154,18 @@ function App() {
 
         setTimeout(() => {
           const offlineIncome = Number(user.lastOfflineIncome || 0);
+const offlineSeconds = Number(user.lastOfflineSeconds || 0);
 
-          console.log('OFFLINE INCOME:', offlineIncome);
+console.log('OFFLINE INCOME:', offlineIncome);
+console.log('OFFLINE SECONDS:', offlineSeconds);
 
-          if (offlineIncome > 0) {
-            const message = `⛏️ Пока вас не было, майнер заработал +${offlineIncome.toLocaleString(
-              'ru-RU'
-            )} ONIX`;
+if (offlineIncome > 0) {
+  const offlineTimeText =
+    offlineSeconds > 0 ? ` ${formatOfflineTime(offlineSeconds)}` : '';
+
+  const message = `⛏️ Пока вас не было${offlineTimeText}, майнер заработал +${offlineIncome.toLocaleString(
+    'ru-RU'
+  )} ONIX`;
 
             if (window.Telegram?.WebApp?.showAlert) {
               window.Telegram.WebApp.showAlert(message);
@@ -500,6 +505,22 @@ function App() {
     const seconds = totalSeconds % 60;
 
     return `${hours}ч ${minutes}м ${seconds}с`;
+  };
+
+  const formatOfflineTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}ч ${minutes}м`;
+    }
+
+    if (minutes > 0) {
+      return `${minutes}м ${secs}с`;
+    }
+
+    return `${secs}с`;
   };
 
   const currentLevelCoins = totalEarned - (level - 1) * coinsPerLevel;
