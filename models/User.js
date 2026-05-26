@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
   default: null,
 },
 
+lastSeenAt: {
+  type: Number,
+  default: Date.now,
+},
+
 lastTapAt: {
   type: Number,
   default: 0,

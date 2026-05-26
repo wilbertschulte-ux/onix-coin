@@ -23,6 +23,25 @@ router.get('/:telegramId', async (req, res) => {
       await user.save();
     }
 
+const now = Date.now();
+const lastSeenAt = user.lastSeenAt || now;
+const offlineSeconds = Math.floor((now - lastSeenAt) / 1000);
+
+if (user.autoclickers > 0 && offlineSeconds > 10) {
+  const maxOfflineSeconds = 3 * 60 * 60;
+  const countedSeconds = Math.min(offlineSeconds, maxOfflineSeconds);
+  const offlineIncome = Math.floor(user.autoclickers * countedSeconds);
+
+  if (offlineIncome > 0) {
+    user.balance += offlineIncome;
+    user.totalEarned += offlineIncome;
+    user.level = Math.floor(user.totalEarned / 500) + 1;
+  }
+}
+
+user.lastSeenAt = now;
+await user.save();
+
     res.json(user);
   } catch (error) {
     res.status(500).json({
@@ -114,6 +133,7 @@ router.post('/save', async (req, res) => {
           rechargeLevel: data.rechargeLevel || 1,
 
           updatedAt: new Date(),
+          lastSeenAt: Date.now(),
         },
         $setOnInsert: {
           completedTasks: [],
