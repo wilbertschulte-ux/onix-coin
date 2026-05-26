@@ -14,6 +14,127 @@ const DEFAULT_MAX_ENERGY = 500;
 const DEFAULT_TAP_POWER = 1;
 const DEFAULT_ENERGY_RECHARGE = 0.5;
 const DEFAULT_MINER_INCOME = 0.5;
+
+const ACHIEVEMENTS = [
+  {
+    id: 'first_tap',
+    title: 'Первый тап',
+    description: 'Сделайте первый тап по монете',
+    reward: 500,
+    goal: 1,
+  },
+  {
+    id: 'taps_100',
+    title: '100 тапов',
+    description: 'Сделайте 100 тапов',
+    reward: 2500,
+    goal: 100,
+  },
+  {
+    id: 'taps_1000',
+    title: '1 000 тапов',
+    description: 'Сделайте 1 000 тапов',
+    reward: 10000,
+    goal: 1000,
+  },
+  {
+    id: 'first_upgrade',
+    title: 'Первое улучшение',
+    description: 'Купите любое улучшение',
+    reward: 2500,
+    goal: 1,
+  },
+  {
+    id: 'miner_level_5',
+    title: 'Майнер ур. 5',
+    description: 'Прокачайте майнер до 5 уровня',
+    reward: 10000,
+    goal: 5,
+  },
+  {
+    id: 'first_boost',
+    title: 'Первый буст',
+    description: 'Активируйте любой временный буст',
+    reward: 5000,
+    goal: 1,
+  },
+  {
+    id: 'first_offline_claim',
+    title: 'Первый оффлайн-доход',
+    description: 'Заберите оффлайн-доход майнера',
+    reward: 5000,
+    goal: 1,
+  },
+  {
+    id: 'first_friend',
+    title: 'Первый друг',
+    description: 'Пригласите первого друга',
+    reward: 25000,
+    goal: 1,
+  },
+];
+
+function getAchievementProgressValue(user, achievementId) {
+  if (achievementId === 'first_tap') return Number(user.totalTaps || 0);
+  if (achievementId === 'taps_100') return Number(user.totalTaps || 0);
+  if (achievementId === 'taps_1000') return Number(user.totalTaps || 0);
+  if (achievementId === 'first_upgrade') return Number(user.totalUpgradesBought || 0);
+  if (achievementId === 'miner_level_5') return Number(user.minerLevel || 1);
+  if (achievementId === 'first_boost') return Number(user.totalBoostsUsed || 0);
+  if (achievementId === 'first_offline_claim') return Number(user.offlineClaimsCount || 0);
+  if (achievementId === 'first_friend') return Number(user.referralsCount || 0);
+
+  return 0;
+}
+
+function getAchievementsPayload(user) {
+  if (!user.completedAchievements) user.completedAchievements = [];
+
+  return ACHIEVEMENTS.map((achievement) => {
+    const progress = getAchievementProgressValue(user, achievement.id);
+    const isCompleted = user.completedAchievements.includes(achievement.id);
+
+    return {
+      ...achievement,
+      progress: Math.min(progress, achievement.goal),
+      isCompleted,
+    };
+  });
+}
+
+function applyAchievements(user) {
+  if (!user.completedAchievements) user.completedAchievements = [];
+
+  const awarded = [];
+
+  for (const achievement of ACHIEVEMENTS) {
+    if (user.completedAchievements.includes(achievement.id)) continue;
+
+    const progress = getAchievementProgressValue(user, achievement.id);
+
+    if (progress >= achievement.goal) {
+      user.completedAchievements.push(achievement.id);
+      user.balance = roundOnix(Number(user.balance || 0) + achievement.reward);
+      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + achievement.reward);
+
+      addTransaction(
+        user,
+        'income_achievement',
+        achievement.reward,
+        `Достижение: ${achievement.title}`
+      );
+
+      awarded.push({
+        id: achievement.id,
+        title: achievement.title,
+        reward: achievement.reward,
+      });
+    }
+  }
+
+  return awarded;
+}
+
 const RANKS = [
   { id: 'bronze_1', name: 'Bronze I', threshold: 0, bonus: 0 },
   { id: 'bronze_2', name: 'Bronze II', threshold: 25000, bonus: 2500 },
@@ -186,6 +307,11 @@ function normalizeUserFields(user) {
   if (user.energyLevel === undefined || user.energyLevel === null) user.energyLevel = 1;
   if (user.rechargeLevel === undefined || user.rechargeLevel === null) user.rechargeLevel = 1;
 
+  if (user.totalTaps === undefined || user.totalTaps === null) user.totalTaps = 0;
+  if (user.totalBoostsUsed === undefined || user.totalBoostsUsed === null) user.totalBoostsUsed = 0;
+  if (user.totalUpgradesBought === undefined || user.totalUpgradesBought === null) user.totalUpgradesBought = 0;
+  if (user.offlineClaimsCount === undefined || user.offlineClaimsCount === null) user.offlineClaimsCount = 0;
+
   if (user.dailyStreak === undefined || user.dailyStreak === null) user.dailyStreak = 0;
   if (user.lastDailyClaimDay === undefined || user.lastDailyClaimDay === null) {
     user.lastDailyClaimDay = null;
@@ -310,7 +436,10 @@ router.get('/:telegramId', async (req, res) => {
 
     await user.save();
 
-    return res.json(user);
+    return res.json({
+      ...user.toObject(),
+      achievements: getAchievementsPayload(user),
+    });
   } catch (error) {
     return res.status(500).json({
       error: error.message,
@@ -337,8 +466,13 @@ router.post('/create', async (req, res) => {
         username: username || 'Пользователь',
         referredBy: referredBy || null,
         completedTasks: [],
+        completedAchievements: [],
         claimedRankBonuses: [],
         transactions: [],
+        totalTaps: 0,
+        totalBoostsUsed: 0,
+        totalUpgradesBought: 0,
+        offlineClaimsCount: 0,
         dailyStreak: 0,
         lastDailyClaimDay: null,
         tapTimestamps: [],
@@ -383,6 +517,7 @@ router.post('/create', async (req, res) => {
           refUser.totalEarned += 75000;
           refUser.referralsCount += 1;
           addTransaction(refUser, 'income_referral', 75000, 'Реферальный бонус');
+          const refAchievementBonuses = applyAchievements(refUser);
           applyRankBonuses(refUser);
           refUser.level = calculateLevel(refUser.totalEarned);
           refUser.lastReferralUsername = username || 'новый пользователь';
@@ -450,8 +585,13 @@ router.post('/save', async (req, res) => {
       user = new User({
         telegramId,
         completedTasks: [],
+        completedAchievements: [],
         claimedRankBonuses: [],
         transactions: [],
+        totalTaps: 0,
+        totalBoostsUsed: 0,
+        totalUpgradesBought: 0,
+        offlineClaimsCount: 0,
         dailyStreak: 0,
         lastDailyClaimDay: null,
         tapTimestamps: [],
@@ -600,6 +740,11 @@ router.post('/buy-upgrade', async (req, res) => {
       user.autoclickers = roundOnix(Number(user.autoclickers || DEFAULT_MINER_INCOME) + 0.5);
     }
 
+    user.totalUpgradesBought = Number(user.totalUpgradesBought || 0) + 1;
+    const achievementBonuses = applyAchievements(user);
+    applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+
     user.lastUpgradeBuyAt = now;
     user.updatedAt = new Date();
     user.lastSeenAt = now;
@@ -607,7 +752,12 @@ router.post('/buy-upgrade', async (req, res) => {
     await user.save();
 
     return res.json({
-      user,
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+      },
+      achievements: getAchievementsPayload(user),
+      achievementBonuses,
       upgrade: {
         type,
         cost,
@@ -697,6 +847,7 @@ router.post('/claim-task', async (req, res) => {
 
       return res.json({
         ...user.toObject(),
+        achievements: getAchievementsPayload(user),
         claimedDailyReward: reward,
         rankBonuses,
         dailyStreak: nextStreak,
@@ -752,7 +903,10 @@ router.post('/claim-task', async (req, res) => {
 
       await user.save();
 
-      return res.json(user);
+      return res.json({
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+      });
     }
 
     // INVITE FRIEND
@@ -781,7 +935,10 @@ router.post('/claim-task', async (req, res) => {
 
       await user.save();
 
-      return res.json(user);
+      return res.json({
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+      });
     }
 
     return res.status(400).json({
@@ -827,6 +984,8 @@ router.post('/claim-offline-income', async (req, res) => {
     user.balance = roundOnix(Number(user.balance || 0) + claimedAmount);
     user.totalEarned = roundOnix(Number(user.totalEarned || 0) + claimedAmount);
     addTransaction(user, 'income_offline', claimedAmount, 'Оффлайн-майнинг');
+    user.offlineClaimsCount = Number(user.offlineClaimsCount || 0) + 1;
+    const achievementBonuses = applyAchievements(user);
     applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
 
@@ -842,7 +1001,12 @@ router.post('/claim-offline-income', async (req, res) => {
     await user.save();
 
     return res.json({
-      user,
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+      },
+      achievements: getAchievementsPayload(user),
+      achievementBonuses,
       claimedAmount,
       claimedSeconds,
     });
@@ -925,7 +1089,11 @@ router.post('/mine-tick', async (req, res) => {
     await user.save();
 
     return res.json({
-      user,
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+      },
+      achievements: getAchievementsPayload(user),
       income,
       multiplier,
       isMiningBoostActive,
@@ -1001,13 +1169,22 @@ router.post('/activate-boost', async (req, res) => {
     );
     user.activeBoost = type;
     user.boostEndTime = now + durationConfig[type];
+    user.totalBoostsUsed = Number(user.totalBoostsUsed || 0) + 1;
+    const achievementBonuses = applyAchievements(user);
+    applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
     user.updatedAt = new Date();
     user.lastSeenAt = now;
 
     await user.save();
 
     return res.json({
-      user,
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+      },
+      achievements: getAchievementsPayload(user),
+      achievementBonuses,
       boost: {
         type,
         cost,
@@ -1083,7 +1260,9 @@ router.post('/tap', async (req, res) => {
     user.balance = roundOnix(Number(user.balance || 0) + points);
     user.totalEarned = roundOnix(Number(user.totalEarned || 0) + points);
     user.energy = Math.max(0, roundOnix(Number(user.energy || 0) - energyCost));
+    user.totalTaps = Number(user.totalTaps || 0) + 1;
 
+    const achievementBonuses = applyAchievements(user);
     applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
     user.updatedAt = new Date();
@@ -1092,7 +1271,12 @@ router.post('/tap', async (req, res) => {
     await user.save();
 
     return res.json({
-      user,
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+      },
+      achievements: getAchievementsPayload(user),
+      achievementBonuses,
       points,
     });
   } catch (error) {

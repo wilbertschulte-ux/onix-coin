@@ -99,6 +99,31 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    completedAchievements: {
+      type: [String],
+      default: [],
+    },
+
+    totalTaps: {
+      type: Number,
+      default: 0,
+    },
+
+    totalBoostsUsed: {
+      type: Number,
+      default: 0,
+    },
+
+    totalUpgradesBought: {
+      type: Number,
+      default: 0,
+    },
+
+    offlineClaimsCount: {
+      type: Number,
+      default: 0,
+    },
+
     claimedRankBonuses: {
       type: [String],
       default: [],
