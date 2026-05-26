@@ -119,6 +119,16 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    pendingOfflineIncome: {
+      type: Number,
+      default: 0,
+    },
+
+    pendingOfflineSeconds: {
+      type: Number,
+      default: 0,
+    },
+
     lastSeenAt: {
       type: Number,
       default: Date.now,

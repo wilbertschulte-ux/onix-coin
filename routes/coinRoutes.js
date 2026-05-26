@@ -18,21 +18,37 @@ function normalizeUserFields(user) {
   if (!user.completedTasks) user.completedTasks = [];
   if (!user.tapTimestamps) user.tapTimestamps = [];
 
-  if (!user.balance) user.balance = 0;
-  if (!user.energy) user.energy = 2000;
-  if (!user.maxEnergy) user.maxEnergy = 2000;
-  if (!user.tapPower) user.tapPower = 1;
-  if (!user.energyRecharge) user.energyRecharge = 10;
-  if (!user.autoclickers) user.autoclickers = 0;
-  if (!user.totalEarned) user.totalEarned = 0;
-  if (!user.level) user.level = calculateLevel(user.totalEarned);
+  if (user.balance === undefined || user.balance === null) user.balance = 0;
+  if (user.energy === undefined || user.energy === null) user.energy = 2000;
+  if (user.maxEnergy === undefined || user.maxEnergy === null) user.maxEnergy = 2000;
+  if (user.tapPower === undefined || user.tapPower === null) user.tapPower = 1;
+  if (user.energyRecharge === undefined || user.energyRecharge === null) user.energyRecharge = 10;
+  if (user.autoclickers === undefined || user.autoclickers === null) user.autoclickers = 0;
+  if (user.totalEarned === undefined || user.totalEarned === null) user.totalEarned = 0;
+  if (user.level === undefined || user.level === null) user.level = calculateLevel(user.totalEarned);
 
-  if (!user.referralsCount) user.referralsCount = 0;
+  if (user.referralsCount === undefined || user.referralsCount === null) user.referralsCount = 0;
 
-  if (!user.tapLevel) user.tapLevel = 1;
-  if (!user.minerLevel) user.minerLevel = 1;
-  if (!user.energyLevel) user.energyLevel = 1;
-  if (!user.rechargeLevel) user.rechargeLevel = 1;
+  if (user.tapLevel === undefined || user.tapLevel === null) user.tapLevel = 1;
+  if (user.minerLevel === undefined || user.minerLevel === null) user.minerLevel = 1;
+  if (user.energyLevel === undefined || user.energyLevel === null) user.energyLevel = 1;
+  if (user.rechargeLevel === undefined || user.rechargeLevel === null) user.rechargeLevel = 1;
+
+  if (user.lastOfflineIncome === undefined || user.lastOfflineIncome === null) {
+    user.lastOfflineIncome = 0;
+  }
+
+  if (user.lastOfflineSeconds === undefined || user.lastOfflineSeconds === null) {
+    user.lastOfflineSeconds = 0;
+  }
+
+  if (user.pendingOfflineIncome === undefined || user.pendingOfflineIncome === null) {
+    user.pendingOfflineIncome = 0;
+  }
+
+  if (user.pendingOfflineSeconds === undefined || user.pendingOfflineSeconds === null) {
+    user.pendingOfflineSeconds = 0;
+  }
 
   return user;
 }
@@ -72,14 +88,13 @@ router.get('/:telegramId', async (req, res) => {
       offlineIncome = Math.floor(user.autoclickers * countedSeconds);
 
       if (offlineIncome > 0) {
-        user.balance += offlineIncome;
-        user.totalEarned += offlineIncome;
-        user.level = calculateLevel(user.totalEarned);
+        user.pendingOfflineIncome += offlineIncome;
+        user.pendingOfflineSeconds += offlineSecondsForPopup;
       }
     }
 
-    user.lastOfflineIncome = offlineIncome;
-    user.lastOfflineSeconds = offlineSecondsForPopup;
+    user.lastOfflineIncome = user.pendingOfflineIncome;
+    user.lastOfflineSeconds = user.pendingOfflineSeconds;
     user.lastSeenAt = now;
     user.updatedAt = new Date();
 
@@ -133,6 +148,9 @@ router.post('/create', async (req, res) => {
 
         lastSeenAt: Date.now(),
         lastOfflineIncome: 0,
+        lastOfflineSeconds: 0,
+        pendingOfflineIncome: 0,
+        pendingOfflineSeconds: 0,
       });
 
       if (referredBy && referredBy !== telegramId) {
@@ -231,6 +249,9 @@ router.post('/save', async (req, res) => {
           tapTimestamps: [],
           dailyRewardLastClaim: null,
           lastOfflineIncome: 0,
+          lastOfflineSeconds: 0,
+          pendingOfflineIncome: 0,
+          pendingOfflineSeconds: 0,
         },
       },
       {
@@ -384,6 +405,63 @@ router.post('/claim-task', async (req, res) => {
 
     return res.status(400).json({
       message: 'Unknown task',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
+// CLAIM OFFLINE INCOME
+router.post('/claim-offline-income', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({
+        message: 'Telegram ID is required',
+      });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    normalizeUserFields(user);
+
+    const claimedAmount = Number(user.pendingOfflineIncome || 0);
+    const claimedSeconds = Number(user.pendingOfflineSeconds || 0);
+
+    if (claimedAmount <= 0) {
+      return res.status(400).json({
+        message: 'No offline income to claim',
+      });
+    }
+
+    user.balance += claimedAmount;
+    user.totalEarned += claimedAmount;
+    user.level = calculateLevel(user.totalEarned);
+
+    user.lastOfflineIncome = claimedAmount;
+    user.lastOfflineSeconds = claimedSeconds;
+
+    user.pendingOfflineIncome = 0;
+    user.pendingOfflineSeconds = 0;
+
+    user.updatedAt = new Date();
+    user.lastSeenAt = Date.now();
+
+    await user.save();
+
+    return res.json({
+      user,
+      claimedAmount,
+      claimedSeconds,
     });
   } catch (error) {
     return res.status(500).json({
