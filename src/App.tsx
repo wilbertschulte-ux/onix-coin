@@ -592,6 +592,68 @@ function App() {
   );
   const minerIncomeIncrease = nextMinerIncomePerSecond - minerIncomePerSecond;
 
+  const nextTapCost = (tapLevel + 1) * 150;
+  const nextEnergyCost = (energyLevel + 1) * 200;
+  const nextRechargeCost = (rechargeLevel + 1) * 180;
+
+  const upgradeCards: Array<{
+    type: 'tap' | 'energy' | 'recharge' | 'miner';
+    icon: string;
+    title: string;
+    level: number;
+    currentLabel: string;
+    currentValue: string;
+    nextLabel: string;
+    nextValue: string;
+    cost: number;
+  }> = [
+    {
+      type: 'tap',
+      icon: '🎯',
+      title: 'Сила тапа',
+      level: tapLevel,
+      currentLabel: 'Сейчас',
+      currentValue: `+${tapPower.toLocaleString('ru-RU')} ONIX/тап`,
+      nextLabel: 'После апгрейда',
+      nextValue: `+${(tapPower + 1).toLocaleString('ru-RU')} ONIX/тап`,
+      cost: nextTapCost,
+    },
+    {
+      type: 'miner',
+      icon: '⛏️',
+      title: 'Майнер',
+      level: minerLevel,
+      currentLabel: 'Доход сейчас',
+      currentValue: `+${minerIncomePerSecond.toLocaleString('ru-RU')} ONIX/сек`,
+      nextLabel: 'После апгрейда',
+      nextValue: `+${nextMinerIncomePerSecond.toLocaleString('ru-RU')} ONIX/сек`,
+      cost: nextMinerCost,
+    },
+    {
+      type: 'energy',
+      icon: '🔋',
+      title: 'Энергия',
+      level: energyLevel,
+      currentLabel: 'Максимум сейчас',
+      currentValue: `${maxEnergy.toLocaleString('ru-RU')} энергии`,
+      nextLabel: 'После апгрейда',
+      nextValue: `${(maxEnergy + 500).toLocaleString('ru-RU')} энергии`,
+      cost: nextEnergyCost,
+    },
+    {
+      type: 'recharge',
+      icon: '⚡',
+      title: 'Восстановление',
+      level: rechargeLevel,
+      currentLabel: 'Сейчас',
+      currentValue: `+${energyRecharge.toLocaleString('ru-RU')} энергии/сек`,
+      nextLabel: 'После апгрейда',
+      nextValue: `+${(energyRecharge + 5).toLocaleString('ru-RU')} энергии/сек`,
+      cost: nextRechargeCost,
+    },
+  ];
+
+  
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
       <div className="bg-[#111827] p-4 flex justify-between items-center sticky top-0 z-50">
@@ -734,31 +796,114 @@ function App() {
                   +{maxOfflineIncome.toLocaleString('ru-RU')}
                 </p>
               </div>
+            </d<div>
+            <h2 className="text-2xl font-bold mb-4">Постоянные улучшения</h2>
+
+            <div className="space-y-4">
+              {upgradeCards.map((upgrade) => {
+                const canBuy = balance >= upgrade.cost;
+                const progressToBuy = Math.min(
+                  (balance / upgrade.cost) * 100,
+                  100
+                );
+
+                return (
+                  <div
+                    key={upgrade.type}
+                    className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl"
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
+                          {upgrade.icon}
+                        </div>
+
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {upgrade.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            Уровень {upgrade.level}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                        <p className="text-xs text-gray-400">Цена</p>
+                        <p className="font-bold text-yellow-400">
+                          {upgrade.cost.toLocaleString('ru-RU')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">
+                          {upgrade.currentLabel}
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-white">
+                          {upgrade.currentValue}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">
+                          {upgrade.nextLabel}
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-emerald-400">
+                          {upgrade.nextValue}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="text-gray-400">
+                          {Math.min(balance, upgrade.cost).toLocaleString(
+                            'ru-RU'
+                          )}{' '}
+                          / {upgrade.cost.toLocaleString('ru-RU')} ONIX
+                        </span>
+
+                        <span
+                          className={
+                            canBuy
+                              ? 'font-bold text-emerald-400'
+                              : 'font-bold text-gray-400'
+                          }
+                        >
+                          {canBuy
+                            ? 'Готово к покупке'
+                            : `Не хватает ${(
+                                upgrade.cost - balance
+                              ).toLocaleString('ru-RU')}`}
+                        </span>
+                      </div>
+
+                      <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-yellow-400 transition-all"
+                          style={{ width: `${progressToBuy}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => buyUpgrade(upgrade.type)}
+                      disabled={!canBuy}
+                      className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
+                        canBuy
+                          ? 'bg-yellow-400 text-black active:scale-95'
+                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {canBuy ? 'Купить улучшение' : 'Недостаточно ONIX'}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
-
-            <div className="mt-4 rounded-2xl bg-[#0a0f1c] p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs text-gray-400">
-                    Следующий уровень майнера
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-white">
-                    Ур. {minerLevel + 1}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-xs text-gray-400">Цена</p>
-                  <p className="mt-1 text-lg font-bold text-yellow-400">
-                    {nextMinerCost.toLocaleString('ru-RU')} ONIX
-                  </p>
-                </div>
-              </div>
-
-              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
-                <div
-                  className="h-full rounded-full bg-yellow-400 transition-all"
-                  style={{ width: `${minerUpgradeProgress}%` }}
+          </div>{ width: `${minerUpgradeProgress}%` }}
                 />
               </div>
 
