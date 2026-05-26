@@ -37,6 +37,12 @@ type Achievement = {
   isCompleted: boolean;
 };
 
+type RewardPopupItem = {
+  icon: string;
+  title: string;
+  amount: number;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ONIX_EUR_RATE = 0.68 / 1000;
@@ -282,6 +288,8 @@ function App() {
   const [offlineRewardAmount, setOfflineRewardAmount] = useState(0);
   const [offlineRewardTime, setOfflineRewardTime] = useState('');
   const [isClaimingOfflineReward, setIsClaimingOfflineReward] = useState(false);
+  const [rewardPopupItems, setRewardPopupItems] = useState<RewardPopupItem[]>([]);
+  const [rewardPopupVisible, setRewardPopupVisible] = useState(false);
 
   useEffect(() => {
     try {
@@ -548,6 +556,7 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      showRewardPopupFromResponse(response.data);
 
       const newNum: FloatingNumber = {
         id: Date.now(),
@@ -619,6 +628,7 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      showRewardPopupFromResponse(response.data);
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
@@ -668,6 +678,7 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      showRewardPopupFromResponse(response.data);
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
@@ -765,6 +776,7 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      showRewardPopupFromResponse(response.data);
 
       setOfflineRewardVisible(false);
       setOfflineRewardAmount(0);
@@ -777,6 +789,50 @@ function App() {
       alert(error?.response?.data?.message || 'Не удалось забрать доход майнера');
     } finally {
       setIsClaimingOfflineReward(false);
+    }
+  };
+
+
+  const showRewardPopupFromResponse = (data: any) => {
+    const items: RewardPopupItem[] = [];
+
+    const rankBonuses = data?.rankBonuses || data?.user?.rankBonuses || [];
+    const achievementBonuses =
+      data?.achievementBonuses || data?.user?.achievementBonuses || [];
+
+    if (Array.isArray(rankBonuses)) {
+      rankBonuses.forEach((bonus: { name?: string; bonus?: number }) => {
+        if (Number(bonus.bonus || 0) > 0) {
+          items.push({
+            icon: '🏆',
+            title: `Новый ранг: ${bonus.name || 'Ранг'}`,
+            amount: Number(bonus.bonus || 0),
+          });
+        }
+      });
+    }
+
+    if (Array.isArray(achievementBonuses)) {
+      achievementBonuses.forEach(
+        (achievement: { title?: string; reward?: number }) => {
+          if (Number(achievement.reward || 0) > 0) {
+            items.push({
+              icon: '✅',
+              title: `Достижение: ${achievement.title || 'Выполнено'}`,
+              amount: Number(achievement.reward || 0),
+            });
+          }
+        }
+      );
+    }
+
+    if (items.length > 0) {
+      setRewardPopupItems(items);
+      setRewardPopupVisible(true);
+
+      try {
+        WebApp.HapticFeedback?.notificationOccurred('success');
+      } catch {}
     }
   };
 
@@ -881,7 +937,7 @@ function App() {
 
   const completedAchievementsCount = achievements.filter(
     (item: Achievement) => item.isCompleted
-   ).length;
+  ).length;
 
   const visibleAchievements = achievements.filter(
     (item: Achievement) => !item.isCompleted
@@ -1382,6 +1438,8 @@ function App() {
                   (Date.now() + cooldown).toString()
                 );
 
+                showRewardPopupFromResponse(response.data);
+
                 const rankBonusText =
                   Array.isArray(response.data.rankBonuses) && response.data.rankBonuses.length
                     ? `\n🏆 Бонус ранга: +${formatOnix(
@@ -1445,6 +1503,9 @@ function App() {
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
+                setTransactions(user.transactions || []);
+                setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
+                showRewardPopupFromResponse(response.data);
 
                 alert('🎉 Подписка подтверждена! +25000 ONIX');
               } catch (error: any) {
@@ -1765,6 +1826,53 @@ function App() {
             <p className="mt-4 text-center text-xs text-gray-500">
               Раздел вывода находится в подготовке. Сейчас это расчётный баланс по ориентировочному курсу.
             </p>
+          </div>
+        </div>
+      )}
+
+
+      {rewardPopupVisible && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
+              🎉
+            </div>
+
+            <h2 className="text-2xl font-bold text-white">
+              Получены награды
+            </h2>
+
+            <div className="mt-5 space-y-3">
+              {rewardPopupItems.map((item, index) => (
+                <div
+                  key={`${item.title}-${index}`}
+                  className="rounded-2xl bg-[#0a0f1c] p-4 text-left"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="text-2xl">{item.icon}</span>
+                      <p className="truncate text-sm font-bold text-white">
+                        {item.title}
+                      </p>
+                    </div>
+
+                    <p className="shrink-0 text-sm font-bold text-yellow-400">
+                      +{formatOnix(item.amount)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                setRewardPopupVisible(false);
+                setRewardPopupItems([]);
+              }}
+              className="mt-6 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+            >
+              Забрать
+            </button>
           </div>
         </div>
       )}
