@@ -585,6 +585,13 @@ function App() {
   const maxOfflineHours = 3;
   const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
 
+  const nextMinerCost = (minerLevel + 1) * 300;
+  const minerUpgradeProgress = Math.min((balance / nextMinerCost) * 100, 100);
+  const nextMinerIncomePerSecond = Math.floor(
+    (autoclickers + 2) * miningMultiplier
+  );
+  const minerIncomeIncrease = nextMinerIncomePerSecond - minerIncomePerSecond;
+
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
       <div className="bg-[#111827] p-4 flex justify-between items-center sticky top-0 z-50">
@@ -726,6 +733,44 @@ function App() {
                 <p className="mt-1 text-lg font-bold text-yellow-400">
                   +{maxOfflineIncome.toLocaleString('ru-RU')}
                 </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-[#0a0f1c] p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-gray-400">
+                    Следующий уровень майнера
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-white">
+                    Ур. {minerLevel + 1}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xs text-gray-400">Цена</p>
+                  <p className="mt-1 text-lg font-bold text-yellow-400">
+                    {nextMinerCost.toLocaleString('ru-RU')} ONIX
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  style={{ width: `${minerUpgradeProgress}%` }}
+                />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-gray-400">
+                  {Math.min(balance, nextMinerCost).toLocaleString('ru-RU')} /{' '}
+                  {nextMinerCost.toLocaleString('ru-RU')} ONIX
+                </span>
+
+                <span className="font-bold text-emerald-400">
+                  +{minerIncomeIncrease.toLocaleString('ru-RU')} ONIX/сек
+                </span>
               </div>
             </div>
 
