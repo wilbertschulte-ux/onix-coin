@@ -1075,6 +1075,13 @@ function App() {
 
   const canWithdraw = balance >= MIN_WITHDRAW_ONIX;
 
+  const referralProgress = Math.min(
+    (Number(referralLimit.used || 0) / Number(referralLimit.max || 10)) * 100,
+    100
+  );
+
+  const referralResetTime = formatTime(referralLimit.secondsUntilReset * 1000);
+
   const nextDailyStreakDay =
     dailyCooldown > 0
       ? Math.max(1, Number(dailyStreak || 1))
