@@ -1,9 +1,38 @@
 const axios = require('axios');
 const express = require('express');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
 const User = require('../models/User');
+
+const WeeklyPrizeSchema = new mongoose.Schema({
+  week: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  awardedAt: {
+    type: Number,
+    default: Date.now,
+  },
+  winners: {
+    type: [
+      {
+        place: Number,
+        telegramId: String,
+        username: String,
+        weeklyEarned: Number,
+        prize: Number,
+      },
+    ],
+    default: [],
+  },
+});
+
+const WeeklyPrize =
+  mongoose.models.WeeklyPrize || mongoose.model('WeeklyPrize', WeeklyPrizeSchema);
+
 
 const LEVEL_COINS = 500;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -489,6 +518,116 @@ function normalizeUserFields(user) {
 }
 
 
+
+
+// ADMIN: AWARD WEEKLY SEASON PRIZES
+router.post('/admin-award-weekly-prizes', async (req, res) => {
+  try {
+    const { secret, confirm, week } = req.body;
+
+    if (!process.env.ADMIN_SECRET) {
+      return res.status(500).json({
+        message: 'ADMIN_SECRET is not configured',
+      });
+    }
+
+    if (secret !== process.env.ADMIN_SECRET) {
+      return res.status(403).json({
+        message: 'Forbidden',
+      });
+    }
+
+    if (confirm !== 'AWARD_WEEKLY_PRIZES') {
+      return res.status(400).json({
+        message: 'Confirmation is required',
+      });
+    }
+
+    const targetWeek = week || getWeekKey();
+
+    const alreadyAwarded = await WeeklyPrize.findOne({ week: targetWeek });
+
+    if (alreadyAwarded) {
+      return res.status(400).json({
+        message: 'Weekly prizes already awarded',
+        week: targetWeek,
+        winners: alreadyAwarded.winners,
+      });
+    }
+
+    const prizes = [250000, 150000, 75000];
+
+    const topUsers = await User.find({
+      weeklyEarnedWeek: targetWeek,
+      weeklyEarned: { $gt: 0 },
+    })
+      .sort({ weeklyEarned: -1 })
+      .limit(3);
+
+    if (!topUsers.length) {
+      return res.status(400).json({
+        message: 'No eligible users for this week',
+        week: targetWeek,
+      });
+    }
+
+    const winners = [];
+
+    for (let i = 0; i < topUsers.length; i += 1) {
+      const user = topUsers[i];
+      const prize = prizes[i];
+
+      normalizeUserFields(user);
+
+      user.balance = roundOnix(Number(user.balance || 0) + prize);
+      addEarnings(user, prize);
+
+      addTransaction(
+        user,
+        'income_season_prize',
+        prize,
+        `Приз сезона: ${i + 1} место`
+      );
+
+      const rankBonuses = applyRankBonuses(user);
+      user.level = calculateLevel(user.totalEarned);
+      user.updatedAt = new Date();
+
+      await user.save();
+
+      winners.push({
+        place: i + 1,
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        prize,
+        rankBonuses,
+      });
+    }
+
+    await WeeklyPrize.create({
+      week: targetWeek,
+      awardedAt: Date.now(),
+      winners,
+    });
+
+    return res.json({
+      message: 'Weekly prizes awarded',
+      week: targetWeek,
+      winners,
+    });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      return res.status(400).json({
+        message: 'Weekly prizes already awarded',
+      });
+    }
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
 
 // PUBLIC ECONOMY CONFIG
 router.get('/config', async (req, res) => {
