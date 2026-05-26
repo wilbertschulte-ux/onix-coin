@@ -116,7 +116,7 @@ function applyAchievements(user) {
     if (progress >= achievement.goal) {
       user.completedAchievements.push(achievement.id);
       user.balance = roundOnix(Number(user.balance || 0) + achievement.reward);
-      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + achievement.reward);
+      addEarnings(user, achievement.reward);
 
       addTransaction(
         user,
@@ -198,7 +198,7 @@ function applyRankBonuses(user) {
 
       if (Number(user.totalEarned || 0) >= rank.threshold) {
         user.balance = roundOnix(Number(user.balance || 0) + rank.bonus);
-        user.totalEarned = roundOnix(Number(user.totalEarned || 0) + rank.bonus);
+        addEarnings(user, rank.bonus);
         user.claimedRankBonuses.push(rank.id);
         addTransaction(
           user,
@@ -283,6 +283,34 @@ function getUtcDayKey(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
 
+function getWeekKey(timestamp = Date.now()) {
+  const date = new Date(timestamp);
+  const utcDate = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+
+  const day = utcDate.getUTCDay() || 7;
+  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day);
+
+  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((utcDate - yearStart) / 86400000 + 1) / 7);
+
+  return `${utcDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+function addEarnings(user, amount) {
+  const value = roundOnix(amount);
+  const currentWeek = getWeekKey();
+
+  if (!user.weeklyEarnedWeek || user.weeklyEarnedWeek !== currentWeek) {
+    user.weeklyEarnedWeek = currentWeek;
+    user.weeklyEarned = 0;
+  }
+
+  user.totalEarned = roundOnix(Number(user.totalEarned || 0) + value);
+  user.weeklyEarned = roundOnix(Number(user.weeklyEarned || 0) + value);
+}
+
 function getDailyStreakMultiplier(streakDay) {
   const day = Number(streakDay || 1);
 
@@ -320,6 +348,14 @@ function normalizeUserFields(user) {
   if (user.energyRecharge === undefined || user.energyRecharge === null) user.energyRecharge = DEFAULT_ENERGY_RECHARGE;
   if (user.autoclickers === undefined || user.autoclickers === null) user.autoclickers = DEFAULT_MINER_INCOME;
   if (user.totalEarned === undefined || user.totalEarned === null) user.totalEarned = 0;
+  if (user.weeklyEarned === undefined || user.weeklyEarned === null) user.weeklyEarned = 0;
+  if (user.weeklyEarnedWeek === undefined || user.weeklyEarnedWeek === null) {
+    user.weeklyEarnedWeek = getWeekKey();
+  }
+  if (user.weeklyEarnedWeek !== getWeekKey()) {
+    user.weeklyEarnedWeek = getWeekKey();
+    user.weeklyEarned = 0;
+  }
   if (user.level === undefined || user.level === null) user.level = calculateLevel(user.totalEarned);
 
   if (user.referralsCount === undefined || user.referralsCount === null) user.referralsCount = 0;
@@ -384,6 +420,45 @@ function normalizeUserFields(user) {
 
   return user;
 }
+
+
+// WEEKLY LEADERBOARD
+router.get('/leaderboard/weekly', async (req, res) => {
+  try {
+    const currentWeek = getWeekKey();
+
+    await User.updateMany(
+      {
+        weeklyEarnedWeek: { $ne: currentWeek },
+      },
+      {
+        $set: {
+          weeklyEarnedWeek: currentWeek,
+          weeklyEarned: 0,
+        },
+      }
+    );
+
+    const users = await User.find({})
+      .sort({ weeklyEarned: -1 })
+      .limit(20)
+      .select('telegramId username weeklyEarned totalEarned');
+
+    return res.json({
+      week: currentWeek,
+      leaderboard: users.map((user, index) => ({
+        place: index + 1,
+        username: user.username || 'Пользователь',
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        totalEarned: roundOnix(user.totalEarned || 0),
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
 
 // GET USER
 router.get('/:telegramId', async (req, res) => {
@@ -507,6 +582,8 @@ router.post('/create', async (req, res) => {
         autoclickers: DEFAULT_MINER_INCOME,
 
         totalEarned: 0,
+        weeklyEarned: 0,
+        weeklyEarnedWeek: getWeekKey(),
         level: 1,
 
         referralsCount: 0,
@@ -563,7 +640,7 @@ router.post('/create', async (req, res) => {
             refUser.level = calculateLevel(refUser.totalEarned);
 
             user.balance = roundOnix(Number(user.balance || 0) + 15000);
-            user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 15000);
+            addEarnings(user, 15000);
 
             addTransaction(
               user,
@@ -653,6 +730,8 @@ router.post('/save', async (req, res) => {
         autoclickers: DEFAULT_MINER_INCOME,
 
         totalEarned: 0,
+        weeklyEarned: 0,
+        weeklyEarnedWeek: getWeekKey(),
         level: 1,
 
         referralsCount: 0,
@@ -883,7 +962,7 @@ router.post('/claim-task', async (req, res) => {
       const reward = getDailyRewardWithStreak(user.level, nextStreak);
 
       user.balance = roundOnix(Number(user.balance || 0) + reward);
-      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + reward);
+      addEarnings(user, reward);
       user.dailyRewardLastClaim = now;
       user.lastDailyClaimDay = todayKey;
       user.dailyStreak = nextStreak;
@@ -944,7 +1023,7 @@ router.post('/claim-task', async (req, res) => {
       }
 
       user.balance = roundOnix(Number(user.balance || 0) + 25000);
-      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 25000);
+      addEarnings(user, 25000);
       user.completedTasks.push('channel');
       addTransaction(user, 'income_task', 25000, 'Задание: подписка на канал');
 
@@ -978,7 +1057,7 @@ router.post('/claim-task', async (req, res) => {
       }
 
       user.balance = roundOnix(Number(user.balance || 0) + 75000);
-      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 75000);
+      addEarnings(user, 75000);
       user.completedTasks.push('inviteFriend');
       addTransaction(user, 'income_task', 75000, 'Задание: пригласить друга');
 
@@ -1038,7 +1117,7 @@ router.post('/claim-offline-income', async (req, res) => {
     }
 
     user.balance = roundOnix(Number(user.balance || 0) + claimedAmount);
-    user.totalEarned = roundOnix(Number(user.totalEarned || 0) + claimedAmount);
+    addEarnings(user, claimedAmount);
     addTransaction(user, 'income_offline', claimedAmount, 'Оффлайн-майнинг');
     user.offlineClaimsCount = Number(user.offlineClaimsCount || 0) + 1;
     const achievementBonuses = applyAchievements(user);
@@ -1129,7 +1208,7 @@ router.post('/mine-tick', async (req, res) => {
 
     if (income > 0) {
       user.balance = roundOnix(Number(user.balance || 0) + income);
-      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + income);
+      addEarnings(user, income);
       applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
     }
@@ -1316,7 +1395,7 @@ router.post('/tap', async (req, res) => {
     const points = roundOnix(Number(user.tapPower || DEFAULT_TAP_POWER) * (isTapBoostActive ? 2 : 1));
 
     user.balance = roundOnix(Number(user.balance || 0) + points);
-    user.totalEarned = roundOnix(Number(user.totalEarned || 0) + points);
+    addEarnings(user, points);
     user.energy = Math.max(0, roundOnix(Number(user.energy || 0) - energyCost));
     user.totalTaps = Number(user.totalTaps || 0) + 1;
 

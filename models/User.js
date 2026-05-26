@@ -54,6 +54,16 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    weeklyEarned: {
+      type: Number,
+      default: 0,
+    },
+
+    weeklyEarnedWeek: {
+      type: String,
+      default: null,
+    },
+
     tapLevel: {
       type: Number,
       default: 1,
