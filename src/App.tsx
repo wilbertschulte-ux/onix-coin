@@ -41,7 +41,9 @@ function App() {
   const [isTapped, setIsTapped] = useState(false);
   const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>([]);
 
-  const [activeBoost, setActiveBoost] = useState<'none' | 'tap' | 'mining'>('none');
+  const [activeBoost, setActiveBoost] = useState<'none' | 'tap' | 'mining'>(
+    'none'
+  );
   const [boostEndTime, setBoostEndTime] = useState(0);
   const [referralsCount, setReferralsCount] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
@@ -123,8 +125,7 @@ function App() {
             localStorage.removeItem('dailyCooldownEnd');
           }
         } else {
-          const lastDaily =
-            user.dailyRewardLastClaim || user.lastDailyRewardDate;
+          const lastDaily = user.dailyRewardLastClaim || user.lastDailyRewardDate;
 
           if (lastDaily) {
             const lastClaim = new Date(lastDaily).getTime();
@@ -151,23 +152,23 @@ function App() {
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
 
-setTimeout(() => {
-  const offlineIncome = Number(user.lastOfflineIncome || 0);
+        setTimeout(() => {
+          const offlineIncome = Number(user.lastOfflineIncome || 0);
 
-  console.log('OFFLINE INCOME:', offlineIncome);
+          console.log('OFFLINE INCOME:', offlineIncome);
 
-  if (offlineIncome > 0) {
-    const message = `⛏️ Пока вас не было, майнер заработал +${offlineIncome.toLocaleString(
-      'ru-RU'
-    )} ONIX`;
+          if (offlineIncome > 0) {
+            const message = `⛏️ Пока вас не было, майнер заработал +${offlineIncome.toLocaleString(
+              'ru-RU'
+            )} ONIX`;
 
-    if (window.Telegram?.WebApp?.showAlert) {
-      window.Telegram.WebApp.showAlert(message);
-    } else {
-      alert(message);
-    }
-  }
-}, 1000);
+            if (window.Telegram?.WebApp?.showAlert) {
+              window.Telegram.WebApp.showAlert(message);
+            } else {
+              alert(message);
+            }
+          }
+        }, 1000);
 
         const oldRefs = Number(localStorage.getItem('knownReferrals') || 0);
         const newRefs = user.referralsCount || 0;
@@ -281,99 +282,77 @@ setTimeout(() => {
     rechargeLevel,
   ]);
 
-  const handleTap = async (
-  e: React.MouseEvent<HTMLDivElement>
-) => {
-  if (!userData) return;
+  const handleTap = async (e: React.MouseEvent<HTMLDivElement>) => {
+    const telegramId = getTelegramId();
 
-  try {
-    const rect =
-      e.currentTarget.getBoundingClientRect();
+    if (!telegramId) {
+      alert('Не удалось получить Telegram ID');
+      return;
+    }
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const response = await fetch(
-      `${API_URL}/api/coins/tap`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) return;
-
-    setUserData(data.user);
-
-    const newNum: FloatingNumber = {
-      id: Date.now(),
-      x,
-      y,
-      value: data.points,
-    };
-
-    setFloatingNumbers((prev) => [
-      ...prev,
-      newNum,
-    ]);
-
-    setTimeout(() => {
-      setFloatingNumbers((prev) =>
-        prev.filter(
-          (n) => n.id !== newNum.id
-        )
-      );
-    }, 800);
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-    setFloatingNumbers((prev) => [...prev, newNum]);
-
-    setTimeout(() => {
-      setFloatingNumbers((prev) => prev.filter((n) => n.id !== newNum.id));
-    }, 700);
-
-    const newBalance = balance + points;
-    const newTotalEarned = totalEarned + points;
-    const newEnergy = Math.max(0, energy - 1);
-    const newLevel = Math.floor(newTotalEarned / coinsPerLevel) + 1;
-
-    setBalance(newBalance);
-    setTotalEarned(newTotalEarned);
-    setEnergy(newEnergy);
-    setLevel(newLevel);
-
-    saveProgress({
-      balance: newBalance,
-      energy: newEnergy,
-      maxEnergy,
-      tapPower,
-      energyRecharge,
-      autoclickers,
-      totalEarned: newTotalEarned,
-      level: newLevel,
-      referralsCount,
-      tapLevel,
-      minerLevel,
-      energyLevel,
-      rechargeLevel,
-    });
-
-    setIsTapped(true);
-    setTimeout(() => setIsTapped(false), 60);
+    if (energy <= 0) return;
 
     try {
-      WebApp.HapticFeedback?.impactOccurred('medium');
-    } catch {}
+      const rect = e.currentTarget.getBoundingClientRect();
+
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const response = await axios.post(`${API_URL}/tap`, {
+        telegramId,
+      });
+
+      const user = response.data.user;
+      const points = response.data.points || user.tapPower || tapPower || 1;
+
+      setBalance(user.balance || 0);
+      setEnergy(user.energy || 0);
+      setMaxEnergy(user.maxEnergy || 2000);
+      setTapPower(user.tapPower || 1);
+      setEnergyRecharge(user.energyRecharge || 10);
+      setAutoclickers(user.autoclickers || 0);
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+      setReferralsCount(user.referralsCount || 0);
+      setCompletedTasks(user.completedTasks || []);
+
+      setTapLevel(user.tapLevel || 1);
+      setMinerLevel(user.minerLevel || 1);
+      setEnergyLevel(user.energyLevel || 1);
+      setRechargeLevel(user.rechargeLevel || 1);
+
+      const newNum: FloatingNumber = {
+        id: Date.now(),
+        x,
+        y,
+        value: points,
+      };
+
+      setFloatingNumbers((prev) => [...prev, newNum]);
+
+      setTimeout(() => {
+        setFloatingNumbers((prev) => prev.filter((n) => n.id !== newNum.id));
+      }, 700);
+
+      setIsTapped(true);
+      setTimeout(() => setIsTapped(false), 60);
+
+      try {
+        WebApp.HapticFeedback?.impactOccurred('medium');
+      } catch {}
+    } catch (error: any) {
+      if (error?.response?.status === 429) {
+        console.log('Слишком много тапов');
+        return;
+      }
+
+      if (error?.response?.status === 400) {
+        console.log(error?.response?.data?.message || 'Ошибка тапа');
+        return;
+      }
+
+      console.log('Ошибка тапа:', error);
+    }
   };
 
   const buyUpgrade = (type: 'tap' | 'energy' | 'recharge' | 'miner') => {
@@ -636,11 +615,13 @@ setTimeout(() => {
               </div>
 
               <div onClick={() => buyUpgrade('miner')} className="shop-item">
-                ⛏️ Майнер — ур. {minerLevel} — цена {(minerLevel + 1) * 300} ONIX
+                ⛏️ Майнер — ур. {minerLevel} — цена {(minerLevel + 1) * 300}{' '}
+                ONIX
               </div>
 
               <div onClick={() => buyUpgrade('energy')} className="shop-item">
-                🔋 Энергия — ур. {energyLevel} — цена {(energyLevel + 1) * 200} ONIX
+                🔋 Энергия — ур. {energyLevel} — цена {(energyLevel + 1) * 200}{' '}
+                ONIX
               </div>
 
               <div onClick={() => buyUpgrade('recharge')} className="shop-item">
