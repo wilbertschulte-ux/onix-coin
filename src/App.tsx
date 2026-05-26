@@ -27,10 +27,95 @@ type Transaction = {
   createdAt?: number;
 };
 
+type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  reward: number;
+  goal: number;
+  progress: number;
+  isCompleted: boolean;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ONIX_EUR_RATE = 0.68 / 1000;
 const MIN_WITHDRAW_ONIX = 750000;
+
+const ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'first_tap',
+    title: 'Первый тап',
+    description: 'Сделайте первый тап по монете',
+    reward: 500,
+    goal: 1,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'taps_100',
+    title: '100 тапов',
+    description: 'Сделайте 100 тапов',
+    reward: 2500,
+    goal: 100,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'taps_1000',
+    title: '1 000 тапов',
+    description: 'Сделайте 1 000 тапов',
+    reward: 10000,
+    goal: 1000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'first_upgrade',
+    title: 'Первое улучшение',
+    description: 'Купите любое улучшение',
+    reward: 2500,
+    goal: 1,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'miner_level_5',
+    title: 'Майнер ур. 5',
+    description: 'Прокачайте майнер до 5 уровня',
+    reward: 10000,
+    goal: 5,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'first_boost',
+    title: 'Первый буст',
+    description: 'Активируйте любой временный буст',
+    reward: 5000,
+    goal: 1,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'first_offline_claim',
+    title: 'Первый оффлайн-доход',
+    description: 'Заберите оффлайн-доход майнера',
+    reward: 5000,
+    goal: 1,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'first_friend',
+    title: 'Первый друг',
+    description: 'Пригласите первого друга',
+    reward: 25000,
+    goal: 1,
+    progress: 0,
+    isCompleted: false,
+  },
+];
 
 function formatOnix(value: number) {
   return Number(value || 0).toLocaleString('ru-RU', {
@@ -185,6 +270,7 @@ function App() {
   const [dailyCooldown, setDailyCooldown] = useState(0);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
   const [channelJoined, setChannelJoined] = useState(false);
 
   const [tapLevel, setTapLevel] = useState(1);
@@ -268,6 +354,7 @@ function App() {
         setCompletedTasks(user.completedTasks || []);
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
+        setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
         setActiveBoost(normalizeBoost(user.activeBoost));
         setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -400,6 +487,7 @@ function App() {
         setCompletedTasks(user.completedTasks || []);
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
+        setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
         setActiveBoost(normalizeBoost(user.activeBoost));
         setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -452,6 +540,7 @@ function App() {
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
+      setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -522,6 +611,7 @@ function App() {
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
+      setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -570,6 +660,7 @@ function App() {
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
+      setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -666,6 +757,7 @@ function App() {
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
+      setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -1431,6 +1523,78 @@ function App() {
                 : 'Пригласить'}
             </span>
           </div>
+
+          <div className="mt-8">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold">🏆 Достижения</h2>
+              <span className="rounded-full bg-[#111827] px-3 py-1 text-sm font-bold text-yellow-400">
+                {completedAchievementsCount} / {achievements.length}
+              </span>
+            </div>
+
+            {visibleAchievements.length > 0 ? (
+              <div className="space-y-4">
+                {visibleAchievements.map((achievement) => {
+                  const progressPercent = Math.min(
+                    (Number(achievement.progress || 0) /
+                      Number(achievement.goal || 1)) *
+                      100,
+                    100
+                  );
+
+                  return (
+                    <div
+                      key={achievement.id}
+                      className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl"
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-lg font-bold text-white">
+                            {achievement.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {achievement.description}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                          <p className="text-xs text-gray-400">Награда</p>
+                          <p className="font-bold text-yellow-400">
+                            +{formatOnix(achievement.reward)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="text-gray-400">Прогресс</span>
+                        <span className="font-bold text-emerald-400">
+                          {formatOnix(achievement.progress)} /{' '}
+                          {formatOnix(achievement.goal)}
+                        </span>
+                      </div>
+
+                      <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-yellow-400 transition-all"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-emerald-400/20 bg-emerald-500/10 p-5 text-center">
+                <p className="text-lg font-bold text-emerald-400">
+                  Все достижения выполнены 🎉
+                </p>
+                <p className="mt-1 text-sm text-gray-400">
+                  Новые достижения появятся в будущих обновлениях.
+                </p>
+              </div>
+            )}
+          </div>
+
         </div>
       )}
 
