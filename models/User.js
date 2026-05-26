@@ -129,6 +129,17 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    activeBoost: {
+      type: String,
+      enum: ['none', 'tap', 'mining'],
+      default: 'none',
+    },
+
+    boostEndTime: {
+      type: Number,
+      default: 0,
+    },
+
     lastSeenAt: {
       type: Number,
       default: Date.now,

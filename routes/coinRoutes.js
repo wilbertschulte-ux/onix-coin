@@ -50,6 +50,14 @@ function normalizeUserFields(user) {
     user.pendingOfflineSeconds = 0;
   }
 
+  if (!user.activeBoost) {
+    user.activeBoost = 'none';
+  }
+
+  if (user.boostEndTime === undefined || user.boostEndTime === null) {
+    user.boostEndTime = 0;
+  }
+
   return user;
 }
 
@@ -74,10 +82,20 @@ router.get('/:telegramId', async (req, res) => {
 
     normalizeUserFields(user);
 
+    const now = Date.now();
+
+    if (
+      user.activeBoost &&
+      user.activeBoost !== 'none' &&
+      Number(user.boostEndTime || 0) <= now
+    ) {
+      user.activeBoost = 'none';
+      user.boostEndTime = 0;
+    }
+
     let offlineIncome = 0;
     let offlineSecondsForPopup = 0;
 
-    const now = Date.now();
     const lastSeenAt = user.lastSeenAt || now;
     const offlineSeconds = Math.floor((now - lastSeenAt) / 1000);
 
@@ -155,6 +173,8 @@ router.post('/create', async (req, res) => {
         lastOfflineSeconds: 0,
         pendingOfflineIncome: 0,
         pendingOfflineSeconds: 0,
+        activeBoost: 'none',
+        boostEndTime: 0,
       });
 
       if (referredBy && referredBy !== telegramId) {
@@ -256,6 +276,8 @@ router.post('/save', async (req, res) => {
           lastOfflineSeconds: 0,
           pendingOfflineIncome: 0,
           pendingOfflineSeconds: 0,
+          activeBoost: 'none',
+          boostEndTime: 0,
         },
       },
       {
@@ -474,6 +496,89 @@ router.post('/claim-offline-income', async (req, res) => {
   }
 });
 
+
+// ACTIVATE BOOST
+router.post('/activate-boost', async (req, res) => {
+  try {
+    const { telegramId, type } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({
+        message: 'Telegram ID is required',
+      });
+    }
+
+    const boostConfig = {
+      tap: {
+        cost: 300,
+        durationMs: 10 * 60 * 1000,
+      },
+      mining: {
+        cost: 500,
+        durationMs: 15 * 60 * 1000,
+      },
+    };
+
+    const config = boostConfig[type];
+
+    if (!config) {
+      return res.status(400).json({
+        message: 'Unknown boost type',
+      });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    normalizeUserFields(user);
+
+    const now = Date.now();
+
+    if (
+      user.activeBoost &&
+      user.activeBoost !== 'none' &&
+      Number(user.boostEndTime || 0) > now
+    ) {
+      return res.status(400).json({
+        message: 'Boost already active',
+      });
+    }
+
+    if (user.balance < config.cost) {
+      return res.status(400).json({
+        message: 'Not enough ONIX',
+      });
+    }
+
+    user.balance -= config.cost;
+    user.activeBoost = type;
+    user.boostEndTime = now + config.durationMs;
+    user.updatedAt = new Date();
+    user.lastSeenAt = now;
+
+    await user.save();
+
+    return res.json({
+      user,
+      boost: {
+        type,
+        cost: config.cost,
+        boostEndTime: user.boostEndTime,
+        durationMs: config.durationMs,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
 // TAP COIN — BACKEND ANTI-CHEAT
 router.post('/tap', async (req, res) => {
   try {
@@ -516,7 +621,19 @@ router.post('/tap', async (req, res) => {
 
     user.tapTimestamps.push(now);
 
-    const points = user.tapPower || 1;
+    if (
+      user.activeBoost &&
+      user.activeBoost !== 'none' &&
+      Number(user.boostEndTime || 0) <= now
+    ) {
+      user.activeBoost = 'none';
+      user.boostEndTime = 0;
+    }
+
+    const isTapBoostActive =
+      user.activeBoost === 'tap' && Number(user.boostEndTime || 0) > now;
+
+    const points = Math.floor((user.tapPower || 1) * (isTapBoostActive ? 2 : 1));
 
     user.balance += points;
     user.totalEarned += points;
