@@ -71,7 +71,7 @@ type EconomyConfig = {
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_ONIX_EUR_PER_1000 = 0.68;
-const DEFAULT_MIN_WITHDRAW_ONIX = economyConfig.referralReward0;
+const DEFAULT_MIN_WITHDRAW_ONIX = 750000;
 
 const ACHIEVEMENTS: Achievement[] = [
   {
@@ -198,11 +198,11 @@ function getMiningBoostCost(autoclickers: number) {
 const RANKS = [
   { id: 'bronze_1', name: 'Bronze I', threshold: 0, bonus: 0 },
   { id: 'bronze_2', name: 'Bronze II', threshold: 25000, bonus: 2500 },
-  { id: 'bronze_3', name: 'Bronze III', threshold: economyConfig.referralReward, bonus: 7500 },
+  { id: 'bronze_3', name: 'Bronze III', threshold: 75000, bonus: 7500 },
   { id: 'silver_1', name: 'Silver I', threshold: 150000, bonus: 15000 },
   { id: 'silver_2', name: 'Silver II', threshold: 300000, bonus: 30000 },
   { id: 'silver_3', name: 'Silver III', threshold: 500000, bonus: 50000 },
-  { id: 'gold_1', name: 'Gold I', threshold: economyConfig.referralReward0, bonus: economyConfig.referralReward },
+  { id: 'gold_1', name: 'Gold I', threshold: 750000, bonus: 75000 },
   { id: 'gold_2', name: 'Gold II', threshold: 1000000, bonus: 100000 },
   { id: 'gold_3', name: 'Gold III', threshold: 1500000, bonus: 150000 },
   { id: 'platinum', name: 'Platinum', threshold: 2500000, bonus: 250000 },
@@ -284,7 +284,7 @@ function App() {
   const [economyConfig, setEconomyConfig] = useState<EconomyConfig>({
     onixEurPer1000: DEFAULT_ONIX_EUR_PER_1000,
     minWithdrawOnix: DEFAULT_MIN_WITHDRAW_ONIX,
-    referralReward: economyConfig.referralReward,
+    referralReward: 75000,
     referredUserReward: 15000,
     maxPaidReferralsPerDay: 10,
   });
