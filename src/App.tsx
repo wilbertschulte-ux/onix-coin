@@ -156,6 +156,8 @@ function App() {
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
+        setActiveBoost(user.activeBoost || 'none');
+        setBoostEndTime(Number(user.boostEndTime || 0));
 
         setTimeout(() => {
           const offlineIncome = Number(
@@ -323,6 +325,8 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setActiveBoost(user.activeBoost || 'none');
+      setBoostEndTime(Number(user.boostEndTime || 0));
 
       setTapLevel(user.tapLevel || 1);
       setMinerLevel(user.minerLevel || 1);
@@ -440,43 +444,52 @@ function App() {
     } catch {}
   };
 
-  const activateBoost = (
+  const activateBoost = async (
     type: 'tap' | 'mining',
-    minutes: number,
-    cost: number
+    _minutes: number,
+    _cost: number
   ) => {
-    if (balance < cost) {
-      alert('Недостаточно ONIX!');
+    const telegramId = getTelegramId();
+
+    if (!telegramId) {
+      alert('Не удалось получить Telegram ID');
       return;
     }
 
-    const newBalance = balance - cost;
-
-    setBalance(newBalance);
-    setActiveBoost(type);
-    setBoostEndTime(Date.now() + minutes * 60000);
-
-    saveProgress({
-      balance: newBalance,
-      energy,
-      maxEnergy,
-      tapPower,
-      energyRecharge,
-      autoclickers,
-      totalEarned,
-      level,
-      referralsCount,
-      tapLevel,
-      minerLevel,
-      energyLevel,
-      rechargeLevel,
-    });
-
     try {
-      WebApp.HapticFeedback?.notificationOccurred('success');
-    } catch {}
+      const response = await axios.post(`${API_URL}/activate-boost`, {
+        telegramId,
+        type,
+      });
 
-    alert(`⚡ ${type === 'tap' ? 'Тап' : 'Майнинг'} ×2 на ${minutes} минут!`);
+      const user = response.data.user;
+
+      setBalance(user.balance || 0);
+      setEnergy(user.energy || 0);
+      setMaxEnergy(user.maxEnergy || 2000);
+      setTapPower(user.tapPower || 1);
+      setEnergyRecharge(user.energyRecharge || 10);
+      setAutoclickers(user.autoclickers || 0);
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+      setReferralsCount(user.referralsCount || 0);
+      setCompletedTasks(user.completedTasks || []);
+      setActiveBoost(user.activeBoost || 'none');
+      setBoostEndTime(Number(user.boostEndTime || 0));
+
+      setTapLevel(user.tapLevel || 1);
+      setMinerLevel(user.minerLevel || 1);
+      setEnergyLevel(user.energyLevel || 1);
+      setRechargeLevel(user.rechargeLevel || 1);
+
+      try {
+        WebApp.HapticFeedback?.notificationOccurred('success');
+      } catch {}
+
+      alert(`⚡ ${type === 'tap' ? 'Тап' : 'Майнинг'} ×2 активирован!`);
+    } catch (error: any) {
+      alert(error?.response?.data?.message || 'Не удалось активировать буст');
+    }
   };
 
   const copyReferralLink = async () => {
@@ -555,6 +568,8 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setActiveBoost(user.activeBoost || 'none');
+      setBoostEndTime(Number(user.boostEndTime || 0));
 
       setTapLevel(user.tapLevel || 1);
       setMinerLevel(user.minerLevel || 1);
