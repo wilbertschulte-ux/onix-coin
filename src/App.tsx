@@ -246,13 +246,14 @@ function App() {
   }, [dailyCooldown]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    let isRequestRunning = false;
+
+    const interval = setInterval(async () => {
+      const telegramId = getTelegramId();
+
       const now = Date.now();
       const currentBoost = normalizeBoost(activeBoost);
       const currentBoostEndTime = Number(boostEndTime || 0);
-
-      const isMiningBoostActive =
-        currentBoost === 'mining' && currentBoostEndTime > now;
 
       if (
         currentBoost !== 'none' &&
@@ -263,57 +264,53 @@ function App() {
         setBoostEndTime(0);
       }
 
-      const multiplier = isMiningBoostActive ? 2 : 1;
-      const income = Math.floor(Number(autoclickers || 0) * multiplier);
-
-      if (income > 0) {
-        const newBalance = balance + income;
-        const newTotalEarned = totalEarned + income;
-        const newEnergy = Math.min(maxEnergy, energy + energyRecharge);
-        const newLevel = Math.floor(newTotalEarned / coinsPerLevel) + 1;
-
-        setBalance(newBalance);
-        setTotalEarned(newTotalEarned);
-        setEnergy(newEnergy);
-        setLevel(newLevel);
-
-        saveProgress({
-          balance: newBalance,
-          energy: newEnergy,
-          maxEnergy,
-          tapPower,
-          energyRecharge,
-          autoclickers,
-          totalEarned: newTotalEarned,
-          level: newLevel,
-          referralsCount,
-          tapLevel,
-          minerLevel,
-          energyLevel,
-          rechargeLevel,
-        });
-      } else {
+      if (!telegramId) {
         setEnergy((prev) => Math.min(maxEnergy, prev + energyRecharge));
+        return;
+      }
+
+      if (Number(autoclickers || 0) <= 0) {
+        setEnergy((prev) => Math.min(maxEnergy, prev + energyRecharge));
+        return;
+      }
+
+      if (isRequestRunning) return;
+
+      try {
+        isRequestRunning = true;
+
+        const response = await axios.post(`${API_URL}/mine-tick`, {
+          telegramId,
+        });
+
+        const user = response.data.user;
+
+        setBalance(user.balance || 0);
+        setEnergy(user.energy || 0);
+        setMaxEnergy(user.maxEnergy || 2000);
+        setTapPower(user.tapPower || 1);
+        setEnergyRecharge(user.energyRecharge || 10);
+        setAutoclickers(user.autoclickers || 0);
+        setTotalEarned(user.totalEarned || 0);
+        setLevel(user.level || 1);
+        setReferralsCount(user.referralsCount || 0);
+        setCompletedTasks(user.completedTasks || []);
+        setActiveBoost(normalizeBoost(user.activeBoost));
+        setBoostEndTime(Number(user.boostEndTime || 0));
+
+        setTapLevel(user.tapLevel || 1);
+        setMinerLevel(user.minerLevel || 1);
+        setEnergyLevel(user.energyLevel || 1);
+        setRechargeLevel(user.rechargeLevel || 1);
+      } catch (error) {
+        console.log('Ошибка майнинга:', error);
+      } finally {
+        isRequestRunning = false;
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [
-    balance,
-    energy,
-    maxEnergy,
-    energyRecharge,
-    autoclickers,
-    totalEarned,
-    activeBoost,
-    boostEndTime,
-    tapPower,
-    referralsCount,
-    tapLevel,
-    minerLevel,
-    energyLevel,
-    rechargeLevel,
-  ]);
+  }, [autoclickers, activeBoost, boostEndTime, maxEnergy, energyRecharge]);
 
   const handleTap = async (e: React.MouseEvent<HTMLDivElement>) => {
     const telegramId = getTelegramId();
