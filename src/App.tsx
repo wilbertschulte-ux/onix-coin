@@ -2067,7 +2067,7 @@ function App() {
                             {item.username}
                           </p>
                           <p className="text-xs text-gray-500">
-                            всего {formatOnix(item.totalEarned)} ONIX
+                            за неделю {formatOnix(item.weeklyEarned)} ONIX
                           </p>
                         </div>
                       </div>
