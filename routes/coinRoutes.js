@@ -52,6 +52,24 @@ const PERKS = {
     cost: 100000,
     maxOfflineSecondsBonus: 60 * 60,
   },
+  energy_saver: {
+    id: 'energy_saver',
+    title: 'Energy Saver',
+    cost: 150000,
+    energyCostMultiplier: 0.9,
+  },
+  daily_plus: {
+    id: 'daily_plus',
+    title: 'Daily Plus',
+    cost: 200000,
+    dailyRewardMultiplier: 1.1,
+  },
+  miner_plus: {
+    id: 'miner_plus',
+    title: 'Miner Plus',
+    cost: 250000,
+    minerIncomeMultiplier: 1.05,
+  },
 };
 
 function getMaxOfflineSeconds(user) {
@@ -60,6 +78,45 @@ function getMaxOfflineSeconds(user) {
   return ownedPerks.includes('offline_pro')
     ? MAX_OFFLINE_SECONDS + PERKS.offline_pro.maxOfflineSecondsBonus
     : MAX_OFFLINE_SECONDS;
+}
+
+function hasPerk(user, perkId) {
+  const ownedPerks = Array.isArray(user.ownedPerks) ? user.ownedPerks : [];
+
+  return ownedPerks.includes(perkId);
+}
+
+function getEnergyCost(user) {
+  const baseCost = Number(user.tapPower || DEFAULT_TAP_POWER);
+  const multiplier = hasPerk(user, 'energy_saver')
+    ? PERKS.energy_saver.energyCostMultiplier
+    : 1;
+
+  return Math.max(1, roundOnix(baseCost * multiplier));
+}
+
+function getDailyRewardForUser(user) {
+  const baseReward = getDailyReward(user.level);
+  const multiplier = hasPerk(user, 'daily_plus')
+    ? PERKS.daily_plus.dailyRewardMultiplier
+    : 1;
+
+  return Math.round(baseReward * multiplier);
+}
+
+function getDailyRewardWithStreakForUser(user, streakDay) {
+  return Math.round(
+    getDailyRewardForUser(user) * getDailyStreakMultiplier(streakDay)
+  );
+}
+
+function getMinerIncome(user) {
+  const baseIncome = Number(user.autoclickers || DEFAULT_MINER_INCOME);
+  const multiplier = hasPerk(user, 'miner_plus')
+    ? PERKS.miner_plus.minerIncomeMultiplier
+    : 1;
+
+  return roundOnix(baseIncome * multiplier);
 }
 function getNumberEnv(name, fallback) {
   const value = Number(process.env[name]);
@@ -834,7 +891,7 @@ router.get('/:telegramId', async (req, res) => {
       const countedSeconds = Math.min(offlineSeconds, getMaxOfflineSeconds(user));
 
       offlineSecondsForPopup = countedSeconds;
-      offlineIncome = roundOnix(Number(user.autoclickers || 0) * countedSeconds);
+      offlineIncome = roundOnix(getMinerIncome(user) * countedSeconds);
 
       if (offlineIncome > 0) {
         user.pendingOfflineIncome += offlineIncome;
@@ -1361,7 +1418,7 @@ router.post('/claim-task', async (req, res) => {
         nextStreak = 1;
       }
 
-      const reward = getDailyRewardWithStreak(user.level, nextStreak);
+      const reward = getDailyRewardWithStreakForUser(user, nextStreak);
 
       user.balance = roundOnix(Number(user.balance || 0) + reward);
       addEarnings(user, reward);
@@ -1617,7 +1674,7 @@ router.post('/mine-tick', async (req, res) => {
       user.activeBoost === 'mining' && Number(user.boostEndTime || 0) > now;
 
     const multiplier = isMiningBoostActive ? 2 : 1;
-    const income = roundOnix(Number(user.autoclickers || 0) * multiplier);
+    const income = roundOnix(getMinerIncome(user) * multiplier);
 
     if (income > 0) {
       user.balance = roundOnix(Number(user.balance || 0) + income);
@@ -1773,7 +1830,7 @@ router.post('/tap', async (req, res) => {
 
     normalizeUserFields(user);
 
-    const energyCost = Math.max(1, Number(user.tapPower || DEFAULT_TAP_POWER));
+    const energyCost = getEnergyCost(user);
 
     if (Number(user.energy || 0) < energyCost) {
       return res.status(400).json({
