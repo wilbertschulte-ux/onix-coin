@@ -263,24 +263,60 @@ function App() {
     rechargeLevel,
   ]);
 
-  const handleTap = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (energy <= 0) return;
+  const handleTap = async (
+  e: React.MouseEvent<HTMLDivElement>
+) => {
+  if (!userData) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
+  try {
+    const rect =
+      e.currentTarget.getBoundingClientRect();
+
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    const multiplier =
-      activeBoost === 'tap' && Date.now() < boostEndTime ? 2 : 1;
+    const response = await fetch(
+      `${API_URL}/api/coins/tap`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telegramId,
+        }),
+      }
+    );
 
-    const points = tapPower * multiplier;
+    const data = await response.json();
+
+    if (!response.ok) return;
+
+    setUserData(data.user);
 
     const newNum: FloatingNumber = {
       id: Date.now(),
       x,
       y,
-      value: points,
+      value: data.points,
     };
+
+    setFloatingNumbers((prev) => [
+      ...prev,
+      newNum,
+    ]);
+
+    setTimeout(() => {
+      setFloatingNumbers((prev) =>
+        prev.filter(
+          (n) => n.id !== newNum.id
+        )
+      );
+    }, 800);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
     setFloatingNumbers((prev) => [...prev, newNum]);
 
