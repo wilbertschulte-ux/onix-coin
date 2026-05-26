@@ -55,6 +55,11 @@ function App() {
   const [energyLevel, setEnergyLevel] = useState(1);
   const [rechargeLevel, setRechargeLevel] = useState(1);
 
+  const [offlineRewardVisible, setOfflineRewardVisible] = useState(false);
+  const [offlineRewardAmount, setOfflineRewardAmount] = useState(0);
+  const [offlineRewardTime, setOfflineRewardTime] = useState('');
+  const [isClaimingOfflineReward, setIsClaimingOfflineReward] = useState(false);
+
   const coinsPerLevel = 500;
 
   const saveProgress = async (data: {
@@ -153,25 +158,23 @@ function App() {
         setCompletedTasks(user.completedTasks || []);
 
         setTimeout(() => {
-          const offlineIncome = Number(user.lastOfflineIncome || 0);
-const offlineSeconds = Number(user.lastOfflineSeconds || 0);
+          const offlineIncome = Number(
+            user.pendingOfflineIncome || user.lastOfflineIncome || 0
+          );
 
-console.log('OFFLINE INCOME:', offlineIncome);
-console.log('OFFLINE SECONDS:', offlineSeconds);
+          const offlineSeconds = Number(
+            user.pendingOfflineSeconds || user.lastOfflineSeconds || 0
+          );
 
-if (offlineIncome > 0) {
-  const offlineTimeText =
-    offlineSeconds > 0 ? ` ${formatOfflineTime(offlineSeconds)}` : '';
+          console.log('PENDING OFFLINE INCOME:', offlineIncome);
+          console.log('PENDING OFFLINE SECONDS:', offlineSeconds);
 
-  const message = `⛏️ Пока вас не было${offlineTimeText}, майнер заработал +${offlineIncome.toLocaleString(
-    'ru-RU'
-  )} ONIX`;
-
-            if (window.Telegram?.WebApp?.showAlert) {
-              window.Telegram.WebApp.showAlert(message);
-            } else {
-              alert(message);
-            }
+          if (offlineIncome > 0) {
+            setOfflineRewardAmount(offlineIncome);
+            setOfflineRewardTime(
+              offlineSeconds > 0 ? formatOfflineTime(offlineSeconds) : ''
+            );
+            setOfflineRewardVisible(true);
           }
         }, 1000);
 
@@ -523,6 +526,55 @@ if (offlineIncome > 0) {
     return `${secs}с`;
   };
 
+  const claimOfflineReward = async () => {
+    if (isClaimingOfflineReward) return;
+
+    const telegramId = getTelegramId();
+
+    if (!telegramId) {
+      alert('Не удалось получить Telegram ID');
+      return;
+    }
+
+    try {
+      setIsClaimingOfflineReward(true);
+
+      const response = await axios.post(`${API_URL}/claim-offline-income`, {
+        telegramId,
+      });
+
+      const user = response.data.user;
+
+      setBalance(user.balance || 0);
+      setEnergy(user.energy || 0);
+      setMaxEnergy(user.maxEnergy || 2000);
+      setTapPower(user.tapPower || 1);
+      setEnergyRecharge(user.energyRecharge || 10);
+      setAutoclickers(user.autoclickers || 0);
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+      setReferralsCount(user.referralsCount || 0);
+      setCompletedTasks(user.completedTasks || []);
+
+      setTapLevel(user.tapLevel || 1);
+      setMinerLevel(user.minerLevel || 1);
+      setEnergyLevel(user.energyLevel || 1);
+      setRechargeLevel(user.rechargeLevel || 1);
+
+      setOfflineRewardVisible(false);
+      setOfflineRewardAmount(0);
+      setOfflineRewardTime('');
+
+      try {
+        WebApp.HapticFeedback?.notificationOccurred('success');
+      } catch {}
+    } catch (error: any) {
+      alert(error?.response?.data?.message || 'Не удалось забрать доход майнера');
+    } finally {
+      setIsClaimingOfflineReward(false);
+    }
+  };
+
   const currentLevelCoins = totalEarned - (level - 1) * coinsPerLevel;
   const progress = (currentLevelCoins / coinsPerLevel) * 100;
   const isBoostActive = Date.now() < boostEndTime;
@@ -854,6 +906,42 @@ if (offlineIncome > 0) {
             Приглашено:{' '}
             <span className="text-yellow-400 font-bold">{referralsCount}</span>
           </p>
+        </div>
+      )}
+
+      {offlineRewardVisible && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-3xl bg-[#111827] border border-yellow-400/30 p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 text-4xl shadow-lg">
+              ⛏️
+            </div>
+
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Майнер заработал
+            </h3>
+
+            <p className="text-gray-400 mb-4">
+              {offlineRewardTime
+                ? `Пока вас не было ${offlineRewardTime}`
+                : 'Пока вас не было'}
+            </p>
+
+            <p className="text-4xl font-bold text-yellow-400 mb-6">
+              +{offlineRewardAmount.toLocaleString('ru-RU')} ONIX
+            </p>
+
+            <button
+              onClick={claimOfflineReward}
+              disabled={isClaimingOfflineReward}
+              className={`w-full rounded-2xl py-4 text-lg font-bold text-black transition ${
+                isClaimingOfflineReward
+                  ? 'bg-gray-500 cursor-not-allowed'
+                  : 'bg-yellow-400 active:scale-95'
+              }`}
+            >
+              {isClaimingOfflineReward ? 'Забираем...' : 'Забрать'}
+            </button>
+          </div>
         </div>
       )}
     </div>
