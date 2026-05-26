@@ -21,12 +21,12 @@ const userSchema = new mongoose.Schema(
 
     energy: {
       type: Number,
-      default: 2000,
+      default: 500,
     },
 
     maxEnergy: {
       type: Number,
-      default: 2000,
+      default: 500,
     },
 
     tapPower: {
@@ -36,12 +36,12 @@ const userSchema = new mongoose.Schema(
 
     energyRecharge: {
       type: Number,
-      default: 10,
+      default: 0.5,
     },
 
     autoclickers: {
       type: Number,
-      default: 0,
+      default: 0.5,
     },
 
     level: {

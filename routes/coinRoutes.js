@@ -9,6 +9,44 @@ const LEVEL_COINS = 500;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_OFFLINE_SECONDS = 3 * 60 * 60;
 const MAX_TAPS_PER_SECOND = 12;
+const DEFAULT_ENERGY = 500;
+const DEFAULT_MAX_ENERGY = 500;
+const DEFAULT_TAP_POWER = 1;
+const DEFAULT_ENERGY_RECHARGE = 0.5;
+const DEFAULT_MINER_INCOME = 0.5;
+
+function roundOnix(value) {
+  return Math.round(Number(value || 0) * 100) / 100;
+}
+
+function getTapUpgradeCost(tapLevel) {
+  return Math.round(1000 * Math.pow(1.35, Number(tapLevel || 1) - 1));
+}
+
+function getMinerUpgradeCost(minerLevel) {
+  return Math.round(2500 * Math.pow(1.38, Number(minerLevel || 1) - 1));
+}
+
+function getEnergyUpgradeCost(energyLevel) {
+  return Math.round(1500 * Math.pow(1.25, Number(energyLevel || 1) - 1));
+}
+
+function getRechargeUpgradeCost(rechargeLevel) {
+  return Math.round(1800 * Math.pow(1.28, Number(rechargeLevel || 1) - 1));
+}
+
+function getDailyReward(level) {
+  return Math.min(15000 + Number(level || 1) * 500, 50000);
+}
+
+function getTapBoostCost(tapPower) {
+  return Math.max(2500, Math.round(Number(tapPower || DEFAULT_TAP_POWER) * 500 * 0.7));
+}
+
+function getMiningBoostCost(autoclickers) {
+  return Math.max(2500, Math.round(Number(autoclickers || DEFAULT_MINER_INCOME) * 900 * 0.7));
+}
+
 
 function calculateLevel(totalEarned) {
   return Math.floor((totalEarned || 0) / LEVEL_COINS) + 1;
@@ -19,11 +57,11 @@ function normalizeUserFields(user) {
   if (!user.tapTimestamps) user.tapTimestamps = [];
 
   if (user.balance === undefined || user.balance === null) user.balance = 0;
-  if (user.energy === undefined || user.energy === null) user.energy = 2000;
-  if (user.maxEnergy === undefined || user.maxEnergy === null) user.maxEnergy = 2000;
-  if (user.tapPower === undefined || user.tapPower === null) user.tapPower = 1;
-  if (user.energyRecharge === undefined || user.energyRecharge === null) user.energyRecharge = 10;
-  if (user.autoclickers === undefined || user.autoclickers === null) user.autoclickers = 0;
+  if (user.energy === undefined || user.energy === null) user.energy = DEFAULT_ENERGY;
+  if (user.maxEnergy === undefined || user.maxEnergy === null) user.maxEnergy = DEFAULT_MAX_ENERGY;
+  if (user.tapPower === undefined || user.tapPower === null) user.tapPower = DEFAULT_TAP_POWER;
+  if (user.energyRecharge === undefined || user.energyRecharge === null) user.energyRecharge = DEFAULT_ENERGY_RECHARGE;
+  if (user.autoclickers === undefined || user.autoclickers === null) user.autoclickers = DEFAULT_MINER_INCOME;
   if (user.totalEarned === undefined || user.totalEarned === null) user.totalEarned = 0;
   if (user.level === undefined || user.level === null) user.level = calculateLevel(user.totalEarned);
 
@@ -126,7 +164,7 @@ router.get('/:telegramId', async (req, res) => {
       const countedSeconds = Math.min(offlineSeconds, MAX_OFFLINE_SECONDS);
 
       offlineSecondsForPopup = countedSeconds;
-      offlineIncome = Math.floor(user.autoclickers * countedSeconds);
+      offlineIncome = roundOnix(Number(user.autoclickers || 0) * countedSeconds);
 
       if (offlineIncome > 0) {
         user.pendingOfflineIncome += offlineIncome;
@@ -171,11 +209,11 @@ router.post('/create', async (req, res) => {
         tapTimestamps: [],
 
         balance: 0,
-        energy: 2000,
-        maxEnergy: 2000,
-        tapPower: 1,
-        energyRecharge: 10,
-        autoclickers: 0,
+        energy: DEFAULT_ENERGY,
+        maxEnergy: DEFAULT_MAX_ENERGY,
+        tapPower: DEFAULT_TAP_POWER,
+        energyRecharge: DEFAULT_ENERGY_RECHARGE,
+        autoclickers: DEFAULT_MINER_INCOME,
 
         totalEarned: 0,
         level: 1,
@@ -206,8 +244,8 @@ router.post('/create', async (req, res) => {
         if (refUser) {
           normalizeUserFields(refUser);
 
-          refUser.balance += 5000;
-          refUser.totalEarned += 5000;
+          refUser.balance += 75000;
+          refUser.totalEarned += 75000;
           refUser.referralsCount += 1;
           refUser.level = calculateLevel(refUser.totalEarned);
           refUser.lastReferralUsername = username || 'новый пользователь';
@@ -215,8 +253,8 @@ router.post('/create', async (req, res) => {
 
           await refUser.save();
 
-          user.balance += 1000;
-          user.totalEarned += 1000;
+          user.balance += 15000;
+          user.totalEarned += 15000;
           user.level = calculateLevel(user.totalEarned);
           user.referredByUsername = refUser.username || 'пользователя';
         }
@@ -276,11 +314,11 @@ router.post('/save', async (req, res) => {
         tapTimestamps: [],
 
         balance: 0,
-        energy: 2000,
-        maxEnergy: 2000,
-        tapPower: 1,
-        energyRecharge: 10,
-        autoclickers: 0,
+        energy: DEFAULT_ENERGY,
+        maxEnergy: DEFAULT_MAX_ENERGY,
+        tapPower: DEFAULT_TAP_POWER,
+        energyRecharge: DEFAULT_ENERGY_RECHARGE,
+        autoclickers: DEFAULT_MINER_INCOME,
 
         totalEarned: 0,
         level: 1,
@@ -311,7 +349,7 @@ router.post('/save', async (req, res) => {
     if (Number.isFinite(safeEnergy)) {
       user.energy = Math.max(
         0,
-        Math.min(Number(user.maxEnergy || 2000), safeEnergy)
+        Math.min(Number(user.maxEnergy || DEFAULT_MAX_ENERGY), safeEnergy)
       );
     }
 
@@ -371,10 +409,10 @@ router.post('/buy-upgrade', async (req, res) => {
 
     let cost = 0;
 
-    if (type === 'tap') cost = (Number(user.tapLevel || 1) + 1) * 150;
-    if (type === 'energy') cost = (Number(user.energyLevel || 1) + 1) * 200;
-    if (type === 'recharge') cost = (Number(user.rechargeLevel || 1) + 1) * 180;
-    if (type === 'miner') cost = (Number(user.minerLevel || 1) + 1) * 300;
+    if (type === 'tap') cost = getTapUpgradeCost(user.tapLevel);
+    if (type === 'energy') cost = getEnergyUpgradeCost(user.energyLevel);
+    if (type === 'recharge') cost = getRechargeUpgradeCost(user.rechargeLevel);
+    if (type === 'miner') cost = getMinerUpgradeCost(user.minerLevel);
 
     if (Number(user.balance || 0) < cost) {
       return res.status(400).json({
@@ -382,7 +420,7 @@ router.post('/buy-upgrade', async (req, res) => {
       });
     }
 
-    user.balance -= cost;
+    user.balance = roundOnix(Number(user.balance || 0) - cost);
 
     if (type === 'tap') {
       user.tapLevel = Number(user.tapLevel || 1) + 1;
@@ -391,18 +429,18 @@ router.post('/buy-upgrade', async (req, res) => {
 
     if (type === 'energy') {
       user.energyLevel = Number(user.energyLevel || 1) + 1;
-      user.maxEnergy = Number(user.maxEnergy || 2000) + 500;
-      user.energy = Math.min(Number(user.energy || 0), Number(user.maxEnergy || 2000));
+      user.maxEnergy = Number(user.maxEnergy || DEFAULT_MAX_ENERGY) + 500;
+      user.energy = Math.min(Number(user.energy || 0), Number(user.maxEnergy || DEFAULT_MAX_ENERGY));
     }
 
     if (type === 'recharge') {
       user.rechargeLevel = Number(user.rechargeLevel || 1) + 1;
-      user.energyRecharge = Number(user.energyRecharge || 10) + 5;
+      user.energyRecharge = roundOnix(Number(user.energyRecharge || DEFAULT_ENERGY_RECHARGE) + 0.25);
     }
 
     if (type === 'miner') {
       user.minerLevel = Number(user.minerLevel || 1) + 1;
-      user.autoclickers = Number(user.autoclickers || 0) + 2;
+      user.autoclickers = roundOnix(Number(user.autoclickers || DEFAULT_MINER_INCOME) + 0.5);
     }
 
     user.lastUpgradeBuyAt = now;
@@ -465,7 +503,7 @@ router.post('/claim-task', async (req, res) => {
         });
       }
 
-      const reward = 500 + user.level * 100;
+      const reward = getDailyReward(user.level);
 
       user.balance += reward;
       user.totalEarned += reward;
@@ -516,8 +554,8 @@ router.post('/claim-task', async (req, res) => {
         });
       }
 
-      user.balance += 2000;
-      user.totalEarned += 2000;
+      user.balance += 25000;
+      user.totalEarned += 25000;
       user.completedTasks.push('channel');
 
       user.level = calculateLevel(user.totalEarned);
@@ -543,8 +581,8 @@ router.post('/claim-task', async (req, res) => {
         });
       }
 
-      user.balance += 3000;
-      user.totalEarned += 3000;
+      user.balance += 75000;
+      user.totalEarned += 75000;
       user.completedTasks.push('inviteFriend');
 
       user.level = calculateLevel(user.totalEarned);
@@ -596,8 +634,8 @@ router.post('/claim-offline-income', async (req, res) => {
       });
     }
 
-    user.balance += claimedAmount;
-    user.totalEarned += claimedAmount;
+    user.balance = roundOnix(Number(user.balance || 0) + claimedAmount);
+    user.totalEarned = roundOnix(Number(user.totalEarned || 0) + claimedAmount);
     user.level = calculateLevel(user.totalEarned);
 
     user.lastOfflineIncome = claimedAmount;
@@ -674,17 +712,17 @@ router.post('/mine-tick', async (req, res) => {
       user.activeBoost === 'mining' && Number(user.boostEndTime || 0) > now;
 
     const multiplier = isMiningBoostActive ? 2 : 1;
-    const income = Math.floor(Number(user.autoclickers || 0) * multiplier);
+    const income = roundOnix(Number(user.autoclickers || 0) * multiplier);
 
     if (income > 0) {
-      user.balance += income;
-      user.totalEarned += income;
+      user.balance = roundOnix(Number(user.balance || 0) + income);
+      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + income);
       user.level = calculateLevel(user.totalEarned);
     }
 
     user.energy = Math.min(
-      Number(user.maxEnergy || 2000),
-      Number(user.energy || 0) + Number(user.energyRecharge || 10)
+      Number(user.maxEnergy || DEFAULT_MAX_ENERGY),
+      Number(user.energy || 0) + Number(user.energyRecharge || DEFAULT_ENERGY_RECHARGE)
     );
 
     user.lastMineTickAt = now;
@@ -717,20 +755,12 @@ router.post('/activate-boost', async (req, res) => {
       });
     }
 
-    const boostConfig = {
-      tap: {
-        cost: 300,
-        durationMs: 10 * 60 * 1000,
-      },
-      mining: {
-        cost: 500,
-        durationMs: 15 * 60 * 1000,
-      },
+    const durationConfig = {
+      tap: 10 * 60 * 1000,
+      mining: 15 * 60 * 1000,
     };
 
-    const config = boostConfig[type];
-
-    if (!config) {
+    if (!durationConfig[type]) {
       return res.status(400).json({
         message: 'Unknown boost type',
       });
@@ -758,15 +788,20 @@ router.post('/activate-boost', async (req, res) => {
       });
     }
 
-    if (user.balance < config.cost) {
+    const cost =
+      type === 'tap'
+        ? getTapBoostCost(user.tapPower)
+        : getMiningBoostCost(user.autoclickers);
+
+    if (Number(user.balance || 0) < cost) {
       return res.status(400).json({
         message: 'Not enough ONIX',
       });
     }
 
-    user.balance -= config.cost;
+    user.balance = roundOnix(Number(user.balance || 0) - cost);
     user.activeBoost = type;
-    user.boostEndTime = now + config.durationMs;
+    user.boostEndTime = now + durationConfig[type];
     user.updatedAt = new Date();
     user.lastSeenAt = now;
 
@@ -776,9 +811,9 @@ router.post('/activate-boost', async (req, res) => {
       user,
       boost: {
         type,
-        cost: config.cost,
+        cost,
         boostEndTime: user.boostEndTime,
-        durationMs: config.durationMs,
+        durationMs: durationConfig[type],
       },
     });
   } catch (error) {
@@ -809,7 +844,9 @@ router.post('/tap', async (req, res) => {
 
     normalizeUserFields(user);
 
-    if (user.energy <= 0) {
+    const energyCost = Math.max(1, Number(user.tapPower || DEFAULT_TAP_POWER));
+
+    if (Number(user.energy || 0) < energyCost) {
       return res.status(400).json({
         message: 'No energy',
       });
@@ -842,11 +879,11 @@ router.post('/tap', async (req, res) => {
     const isTapBoostActive =
       user.activeBoost === 'tap' && Number(user.boostEndTime || 0) > now;
 
-    const points = Math.floor((user.tapPower || 1) * (isTapBoostActive ? 2 : 1));
+    const points = roundOnix(Number(user.tapPower || DEFAULT_TAP_POWER) * (isTapBoostActive ? 2 : 1));
 
-    user.balance += points;
-    user.totalEarned += points;
-    user.energy = Math.max(0, user.energy - 1);
+    user.balance = roundOnix(Number(user.balance || 0) + points);
+    user.totalEarned = roundOnix(Number(user.totalEarned || 0) + points);
+    user.energy = Math.max(0, roundOnix(Number(user.energy || 0) - energyCost));
 
     user.level = calculateLevel(user.totalEarned);
     user.updatedAt = new Date();
