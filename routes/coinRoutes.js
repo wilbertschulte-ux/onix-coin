@@ -274,4 +274,45 @@ router.post('/claim-task', async (req, res) => {
   }
 });
 
+// TAP COIN — backend anti-cheat
+router.post('/tap', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    if (user.energy <= 0) {
+      return res.status(400).json({
+        message: 'No energy',
+      });
+    }
+
+    const points = user.tapPower || 1;
+
+    user.balance += points;
+    user.totalEarned += points;
+    user.energy -= 1;
+
+    user.level = Math.floor(user.totalEarned / 500) + 1;
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    res.json({
+      user,
+      points,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;
