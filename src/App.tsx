@@ -43,6 +43,13 @@ type RewardPopupItem = {
   amount: number;
 };
 
+type LeaderboardItem = {
+  place: number;
+  username: string;
+  weeklyEarned: number;
+  totalEarned: number;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ONIX_EUR_RATE = 0.68 / 1000;
@@ -272,6 +279,8 @@ function App() {
   );
   const [boostEndTime, setBoostEndTime] = useState(0);
   const [referralsCount, setReferralsCount] = useState(0);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
+  const [leaderboardWeek, setLeaderboardWeek] = useState('');
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [dailyCooldown, setDailyCooldown] = useState(0);
   const [dailyStreak, setDailyStreak] = useState(0);
@@ -423,6 +432,21 @@ function App() {
     };
 
     loadUser();
+  }, []);
+
+  useEffect(() => {
+    const loadLeaderboard = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/leaderboard/weekly`);
+
+        setLeaderboard(response.data.leaderboard || []);
+        setLeaderboardWeek(response.data.week || '');
+      } catch (error) {
+        console.log('Ошибка загрузки лидерборда:', error);
+      }
+    };
+
+    loadLeaderboard();
   }, []);
 
   useEffect(() => {
@@ -1689,6 +1713,57 @@ function App() {
             Приглашено:{' '}
             <span className="text-yellow-400 font-bold">{referralsCount}</span>
           </p>
+
+          <div className="mt-8 rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-bold text-white">🏆 Топ недели</h3>
+                <p className="text-sm text-gray-400">
+                  Заработано ONIX за текущую неделю
+                </p>
+              </div>
+
+              {leaderboardWeek && (
+                <span className="rounded-full bg-[#0a0f1c] px-3 py-1 text-xs font-bold text-yellow-400">
+                  {leaderboardWeek}
+                </span>
+              )}
+            </div>
+
+            {leaderboard.length > 0 ? (
+              <div className="space-y-3">
+                {leaderboard.slice(0, 10).map((item) => (
+                  <div
+                    key={`${item.place}-${item.username}`}
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-[#0a0f1c] p-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400 font-bold text-black">
+                        {item.place}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-white">
+                          {item.username}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          всего {formatOnix(item.totalEarned)} ONIX
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="shrink-0 font-bold text-yellow-400">
+                      +{formatOnix(item.weeklyEarned)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                Пока нет данных для рейтинга. Начните зарабатывать ONIX.
+              </p>
+            )}
+          </div>
         </div>
       )}
 
