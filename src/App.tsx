@@ -2004,6 +2004,44 @@ function App() {
               </div>
             </div>
 
+
+            <div className="mb-5 rounded-3xl border border-yellow-400/20 bg-[#0a0f1c] p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-lg font-bold text-white">🎁 Призы сезона</h4>
+                  <p className="text-sm text-gray-400">
+                    Награды за топ-3 будут активированы позже
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-2xl">🥇</p>
+                  <p className="mt-1 text-xs text-gray-400">1 место</p>
+                  <p className="mt-1 text-sm font-bold text-yellow-400">
+                    +250 000
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-2xl">🥈</p>
+                  <p className="mt-1 text-xs text-gray-400">2 место</p>
+                  <p className="mt-1 text-sm font-bold text-yellow-400">
+                    +150 000
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-2xl">🥉</p>
+                  <p className="mt-1 text-xs text-gray-400">3 место</p>
+                  <p className="mt-1 text-sm font-bold text-yellow-400">
+                    +75 000
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {leaderboard.length > 0 ? (
               <div className="space-y-3">
                 {leaderboard.slice(0, 10).map((item) => {
