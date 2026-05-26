@@ -152,17 +152,22 @@ function App() {
         setCompletedTasks(user.completedTasks || []);
 
 setTimeout(() => {
-  if (
-    user.lastOfflineIncome &&
-    user.lastOfflineIncome > 0
-  ) {
-    alert(
-      `⛏️ Пока вас не было, майнер заработал +${user.lastOfflineIncome.toLocaleString(
-        'ru-RU'
-      )} ONIX`
-    );
+  const offlineIncome = Number(user.lastOfflineIncome || 0);
+
+  console.log('OFFLINE INCOME:', offlineIncome);
+
+  if (offlineIncome > 0) {
+    const message = `⛏️ Пока вас не было, майнер заработал +${offlineIncome.toLocaleString(
+      'ru-RU'
+    )} ONIX`;
+
+    if (window.Telegram?.WebApp?.showAlert) {
+      window.Telegram.WebApp.showAlert(message);
+    } else {
+      alert(message);
+    }
   }
-}, 500);
+}, 1000);
 
         const oldRefs = Number(localStorage.getItem('knownReferrals') || 0);
         const newRefs = user.referralsCount || 0;
