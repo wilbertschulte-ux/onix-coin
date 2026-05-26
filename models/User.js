@@ -13,6 +13,16 @@ const userSchema = new mongoose.Schema({
   default: null,
 },
 
+lastTapAt: {
+  type: Number,
+  default: 0,
+},
+
+tapTimestamps: {
+  type: [Number],
+  default: [],
+},
+
   completedTasks: {
   type: [String],
   default: [],

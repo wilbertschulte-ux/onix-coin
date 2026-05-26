@@ -293,6 +293,21 @@ router.post('/tap', async (req, res) => {
       });
     }
 
+const now = Date.now();
+const oneSecondAgo = now - 1000;
+
+user.tapTimestamps = (user.tapTimestamps || []).filter(
+  (time) => time > oneSecondAgo
+);
+
+if (user.tapTimestamps.length >= 12) {
+  return res.status(429).json({
+    message: 'Too many taps',
+  });
+}
+
+user.tapTimestamps.push(now);
+
     const points = user.tapPower || 1;
 
     user.balance += points;
