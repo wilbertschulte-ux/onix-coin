@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Coins, Zap, Trophy, Users, Home, Star, Wallet } from 'lucide-react';
+import { Coins, Zap, Trophy, Users, Home, Star, Wallet, UserCircle } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
 
@@ -45,6 +45,7 @@ type RewardPopupItem = {
 
 type LeaderboardItem = {
   place: number;
+  telegramId?: string;
   username: string;
   weeklyEarned: number;
   totalEarned: number;
@@ -263,6 +264,9 @@ function normalizeBoost(value: unknown): 'none' | 'tap' | 'mining' {
 
 function App() {
   const [balance, setBalance] = useState(0);
+  const [username, setUsername] = useState('Пользователь');
+  const [weeklyEarned, setWeeklyEarned] = useState(0);
+  const [currentUserPlace, setCurrentUserPlace] = useState<number | null>(null);
   const [energy, setEnergy] = useState(500);
   const [maxEnergy, setMaxEnergy] = useState(500);
   const [tapPower, setTapPower] = useState(1);
@@ -360,6 +364,8 @@ function App() {
         }
 
         setBalance(user.balance || 0);
+        setUsername(user.username || 'Пользователь');
+        setWeeklyEarned(Number(user.weeklyEarned || 0));
         setEnergy(user.energy ?? 500);
         setMaxEnergy(user.maxEnergy ?? 500);
         setTapPower(user.tapPower ?? 1);
@@ -437,10 +443,18 @@ function App() {
   useEffect(() => {
     const loadLeaderboard = async () => {
       try {
-        const response = await axios.get(`${API_URL}/leaderboard/weekly`);
+        const telegramId = getTelegramId();
+
+        const response = await axios.get(`${API_URL}/leaderboard/weekly`, {
+          params: {
+            telegramId,
+          },
+        });
 
         setLeaderboard(response.data.leaderboard || []);
         setLeaderboardWeek(response.data.week || '');
+        setCurrentUserPlace(response.data.currentUserPlace || null);
+        setWeeklyEarned(Number(response.data.currentUserWeeklyEarned || weeklyEarned));
       } catch (error) {
         console.log('Ошибка загрузки лидерборда:', error);
       }
@@ -508,6 +522,8 @@ function App() {
         const user = response.data.user;
 
         setBalance(user.balance || 0);
+        setUsername(user.username || 'Пользователь');
+        setWeeklyEarned(Number(user.weeklyEarned || 0));
         setEnergy(user.energy || 0);
         setMaxEnergy(user.maxEnergy ?? 500);
         setTapPower(user.tapPower ?? 1);
@@ -561,6 +577,8 @@ function App() {
       const points = response.data.points ?? user.tapPower ?? tapPower ?? 1;
 
       setBalance(user.balance || 0);
+      setUsername(user.username || 'Пользователь');
+      setWeeklyEarned(Number(user.weeklyEarned || 0));
       setEnergy(user.energy || 0);
       setMaxEnergy(user.maxEnergy ?? 500);
       setTapPower(user.tapPower ?? 1);
@@ -633,6 +651,8 @@ function App() {
       const user = response.data.user;
 
       setBalance(user.balance || 0);
+      setUsername(user.username || 'Пользователь');
+      setWeeklyEarned(Number(user.weeklyEarned || 0));
       setEnergy(user.energy || 0);
       setMaxEnergy(user.maxEnergy ?? 500);
       setTapPower(user.tapPower ?? 1);
@@ -683,6 +703,8 @@ function App() {
       const user = response.data.user;
 
       setBalance(user.balance || 0);
+      setUsername(user.username || 'Пользователь');
+      setWeeklyEarned(Number(user.weeklyEarned || 0));
       setEnergy(user.energy || 0);
       setMaxEnergy(user.maxEnergy ?? 500);
       setTapPower(user.tapPower ?? 1);
@@ -781,6 +803,8 @@ function App() {
       const user = response.data.user;
 
       setBalance(user.balance || 0);
+      setUsername(user.username || 'Пользователь');
+      setWeeklyEarned(Number(user.weeklyEarned || 0));
       setEnergy(user.energy || 0);
       setMaxEnergy(user.maxEnergy ?? 500);
       setTapPower(user.tapPower ?? 1);
@@ -865,6 +889,8 @@ function App() {
   const rankProgressText = rankInfo.nextRank
     ? `${formatOnix(rankInfo.progressCurrent)} / ${formatOnix(rankInfo.progressTotal)}`
     : 'MAX';
+  const currentRankBonus = rankInfo.currentRank.bonus || 0;
+  const nextRankBonus = rankInfo.nextRank?.bonus || 0;
   const activeBoostValue = normalizeBoost(activeBoost);
   const normalizedBoostEndTime = Number(boostEndTime || 0);
   const isBoostActive =
@@ -1066,7 +1092,7 @@ function App() {
           { id: 'home', label: 'Главная', icon: Home },
           { id: 'boosts', label: 'Улучшения', icon: Zap },
           { id: 'tasks', label: 'Задания', icon: Trophy },
-          { id: 'friends', label: 'Друзья', icon: Users },
+          { id: 'friends', label: 'Профиль', icon: UserCircle },
           { id: 'wallet', label: 'Кошелёк', icon: Wallet },
         ].map((tab) => (
           <button
@@ -1451,6 +1477,8 @@ function App() {
                 const cooldown = DAY_MS;
 
                 setBalance(user.balance);
+                setUsername(user.username || 'Пользователь');
+                setWeeklyEarned(Number(user.weeklyEarned || 0));
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
                 setDailyStreak(Number(user.dailyStreak || 0));
@@ -1524,6 +1552,8 @@ function App() {
                 const user = response.data;
 
                 setBalance(user.balance);
+                setUsername(user.username || 'Пользователь');
+                setWeeklyEarned(Number(user.weeklyEarned || 0));
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
@@ -1589,6 +1619,8 @@ function App() {
                 const user = response.data;
 
                 setBalance(user.balance);
+                setUsername(user.username || 'Пользователь');
+                setWeeklyEarned(Number(user.weeklyEarned || 0));
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
@@ -1693,28 +1725,94 @@ function App() {
       )}
 
       {activeTab === 'friends' && (
-        <div className="px-5 mt-8 text-center">
-          <Users className="w-16 h-16 mx-auto text-yellow-400 mb-4" />
+        <div className="px-5 mt-8 space-y-5">
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 text-center shadow-xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
+              👤
+            </div>
 
-          <h2 className="text-2xl font-bold mb-2">Приглашай друзей</h2>
+            <h2 className="text-2xl font-bold text-white">{username}</h2>
 
-          <p className="text-gray-400 mb-6">
-            Получай бонусы за каждого приглашённого
-          </p>
+            <p className="mt-1 text-sm text-gray-400">Профиль игрока ONIX</p>
 
-          <button
-            onClick={copyReferralLink}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl text-lg active:scale-95 transition"
-          >
-            🔗 Поделиться реф. ссылкой
-          </button>
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-gray-400">Текущий ранг</p>
+                  <p className="mt-1 text-xl font-bold text-yellow-400">
+                    {rankInfo.currentRank.name}
+                  </p>
+                </div>
 
-          <p className="mt-8 text-lg">
-            Приглашено:{' '}
-            <span className="text-yellow-400 font-bold">{referralsCount}</span>
-          </p>
+                <div className="text-right">
+                  <p className="text-xs text-gray-400">Бонус ранга</p>
+                  <p className="mt-1 font-bold text-emerald-400">
+                    +{formatOnix(currentRankBonus)} ONIX
+                  </p>
+                </div>
+              </div>
 
-          <div className="mt-8 rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  style={{ width: `${Math.min(rankProgress, 100)}%` }}
+                />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-gray-400">
+                  {rankInfo.nextRank
+                    ? `${rankProgressText} до ${rankInfo.nextRank.name}`
+                    : 'Максимальный ранг'}
+                </span>
+
+                {rankInfo.nextRank && (
+                  <span className="font-bold text-emerald-400">
+                    +{formatOnix(nextRankBonus)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Место в топе</p>
+                <p className="mt-1 text-lg font-bold text-yellow-400">
+                  {currentUserPlace ? `#${currentUserPlace}` : '—'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">За неделю</p>
+                <p className="mt-1 text-lg font-bold text-yellow-400">
+                  +{formatOnix(weeklyEarned)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Всего заработано</p>
+                <p className="mt-1 text-lg font-bold text-white">
+                  {formatOnix(totalEarned)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Рефералы</p>
+                <p className="mt-1 text-lg font-bold text-white">
+                  {referralsCount}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={copyReferralLink}
+              className="mt-5 w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl text-lg active:scale-95 transition"
+            >
+              🔗 Поделиться реф. ссылкой
+            </button>
+          </div>
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-xl font-bold text-white">🏆 Топ недели</h3>
@@ -1732,31 +1830,40 @@ function App() {
 
             {leaderboard.length > 0 ? (
               <div className="space-y-3">
-                {leaderboard.slice(0, 10).map((item) => (
-                  <div
-                    key={`${item.place}-${item.username}`}
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-[#0a0f1c] p-3"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400 font-bold text-black">
-                        {item.place}
+                {leaderboard.slice(0, 10).map((item) => {
+                  const isCurrentUser =
+                    item.telegramId && item.telegramId === getTelegramId();
+
+                  return (
+                    <div
+                      key={`${item.place}-${item.username}`}
+                      className={`flex items-center justify-between gap-3 rounded-2xl p-3 ${
+                        isCurrentUser
+                          ? 'bg-yellow-400/10 ring-1 ring-yellow-400/40'
+                          : 'bg-[#0a0f1c]'
+                      }`}
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400 font-bold text-black">
+                          {item.place}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate font-bold text-white">
+                            {item.username}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            всего {formatOnix(item.totalEarned)} ONIX
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="min-w-0">
-                        <p className="truncate font-bold text-white">
-                          {item.username}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          всего {formatOnix(item.totalEarned)} ONIX
-                        </p>
-                      </div>
+                      <p className="shrink-0 font-bold text-yellow-400">
+                        +{formatOnix(item.weeklyEarned)}
+                      </p>
                     </div>
-
-                    <p className="shrink-0 font-bold text-yellow-400">
-                      +{formatOnix(item.weeklyEarned)}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-gray-500">
@@ -1766,7 +1873,6 @@ function App() {
           </div>
         </div>
       )}
-
 
       {activeTab === 'wallet' && (
         <div className="px-5 mt-8 space-y-5">
