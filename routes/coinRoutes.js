@@ -520,6 +520,59 @@ function normalizeUserFields(user) {
 
 
 
+
+// ADMIN: PREVIEW WEEKLY SEASON PRIZES
+router.get('/admin-weekly-prize-preview', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+
+    if (!process.env.ADMIN_SECRET) {
+      return res.status(500).json({
+        message: 'ADMIN_SECRET is not configured',
+      });
+    }
+
+    if (secret !== process.env.ADMIN_SECRET) {
+      return res.status(403).json({
+        message: 'Forbidden',
+      });
+    }
+
+    const targetWeek = req.query.week ? String(req.query.week) : getWeekKey();
+    const prizes = [250000, 150000, 75000];
+
+    const alreadyAwarded = await WeeklyPrize.findOne({ week: targetWeek });
+
+    const topUsers = await User.find({
+      weeklyEarnedWeek: targetWeek,
+      weeklyEarned: { $gt: 0 },
+    })
+      .sort({ weeklyEarned: -1 })
+      .limit(3)
+      .select('telegramId username weeklyEarned totalEarned balance');
+
+    return res.json({
+      week: targetWeek,
+      alreadyAwarded: Boolean(alreadyAwarded),
+      awardedAt: alreadyAwarded?.awardedAt || null,
+      awardedWinners: alreadyAwarded?.winners || [],
+      preview: topUsers.map((user, index) => ({
+        place: index + 1,
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        totalEarned: roundOnix(user.totalEarned || 0),
+        balance: roundOnix(user.balance || 0),
+        prize: prizes[index],
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
 // ADMIN: AWARD WEEKLY SEASON PRIZES
 router.post('/admin-award-weekly-prizes', async (req, res) => {
   try {
