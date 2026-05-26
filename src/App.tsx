@@ -19,6 +19,14 @@ type FloatingNumber = {
   value: number;
 };
 
+type Transaction = {
+  type: string;
+  amount: number;
+  title: string;
+  status?: string;
+  createdAt?: number;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ONIX_EUR_RATE = 0.68 / 1000;
@@ -48,6 +56,18 @@ function getRechargeUpgradeCost(rechargeLevel: number) {
 
 function getDailyReward(level: number) {
   return Math.min(15000 + Number(level || 1) * 500, 50000);
+}
+
+function getDailyStreakMultiplier(streakDay: number) {
+  const day = Number(streakDay || 1);
+
+  if (day >= 7) return 2;
+
+  return 1 + (day - 1) * 0.1;
+}
+
+function getDailyRewardWithStreak(level: number, streakDay: number) {
+  return Math.round(getDailyReward(level) * getDailyStreakMultiplier(streakDay));
 }
 
 function getTapBoostCost(tapPower: number) {
@@ -110,6 +130,30 @@ function getTelegramId() {
   return tg.initDataUnsafe?.user?.id?.toString() || '';
 }
 
+function getTransactionIcon(type: string) {
+  if (type.includes('daily')) return '🎁';
+  if (type.includes('offline')) return '⛏️';
+  if (type.includes('rank')) return '🏆';
+  if (type.includes('referral')) return '👥';
+  if (type.includes('task')) return '✅';
+  if (type.includes('upgrade')) return '⬆️';
+  if (type.includes('boost')) return '⚡';
+  if (type.includes('withdrawal')) return '💸';
+
+  return '🧾';
+}
+
+function formatTransactionTime(createdAt?: number) {
+  if (!createdAt) return '';
+
+  return new Date(createdAt).toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function normalizeBoost(value: unknown): 'none' | 'tap' | 'mining' {
   const boost = String(value || 'none').trim();
 
@@ -139,6 +183,8 @@ function App() {
   const [referralsCount, setReferralsCount] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [dailyCooldown, setDailyCooldown] = useState(0);
+  const [dailyStreak, setDailyStreak] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [channelJoined, setChannelJoined] = useState(false);
 
   const [tapLevel, setTapLevel] = useState(1);
@@ -220,6 +266,8 @@ function App() {
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
+        setDailyStreak(Number(user.dailyStreak || 0));
+        setTransactions(user.transactions || []);
         setActiveBoost(normalizeBoost(user.activeBoost));
         setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -350,6 +398,8 @@ function App() {
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
+        setDailyStreak(Number(user.dailyStreak || 0));
+        setTransactions(user.transactions || []);
         setActiveBoost(normalizeBoost(user.activeBoost));
         setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -400,6 +450,8 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
+      setTransactions(user.transactions || []);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -468,6 +520,8 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
+      setTransactions(user.transactions || []);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -514,6 +568,8 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
+      setTransactions(user.transactions || []);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -608,6 +664,8 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
+      setTransactions(user.transactions || []);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -729,6 +787,16 @@ function App() {
   const withdrawProgress = Math.min((balance / MIN_WITHDRAW_ONIX) * 100, 100);
   const leftToWithdraw = Math.max(MIN_WITHDRAW_ONIX - balance, 0);
   const canWithdraw = balance >= MIN_WITHDRAW_ONIX;
+
+  const nextDailyStreakDay =
+    dailyCooldown > 0
+      ? Math.max(1, Number(dailyStreak || 1))
+      : Number(dailyStreak || 0) >= 7
+      ? 1
+      : Number(dailyStreak || 0) + 1;
+
+  const dailyRewardPreview = getDailyRewardWithStreak(level, nextDailyStreakDay);
+  const dailyStreakMultiplier = getDailyStreakMultiplier(nextDailyStreakDay);
 
   const boostCards: Array<{
     type: 'tap' | 'mining';
@@ -1204,6 +1272,8 @@ function App() {
                 setBalance(user.balance);
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
+                setDailyStreak(Number(user.dailyStreak || 0));
+                setTransactions(user.transactions || []);
                 setDailyCooldown(cooldown);
 
                 localStorage.setItem(
@@ -1211,7 +1281,23 @@ function App() {
                   (Date.now() + cooldown).toString()
                 );
 
-                alert(`🎁 Вы получили +${getDailyReward(user.level)} ONIX`);
+                const rankBonusText =
+                  Array.isArray(response.data.rankBonuses) && response.data.rankBonuses.length
+                    ? `\n🏆 Бонус ранга: +${formatOnix(
+                        response.data.rankBonuses.reduce(
+                          (sum: number, item: { bonus: number }) =>
+                            sum + Number(item.bonus || 0),
+                          0
+                        )
+                      )} ONIX`
+                    : '';
+
+                alert(
+                  `🎁 Вы получили +${formatOnix(
+                    response.data.claimedDailyReward ||
+                      getDailyRewardWithStreak(user.level, user.dailyStreak || 1)
+                  )} ONIX\n🔥 Стрик: ${user.dailyStreak || 1}/7${rankBonusText}`
+                );
               } catch (error: any) {
                 alert(error?.response?.data?.message || 'Ошибка получения награды');
               }
@@ -1222,7 +1308,12 @@ function App() {
           >
             <div>
               <p className="font-bold">🎁 Ежедневная награда</p>
-              <p className="text-gray-400">+{getDailyReward(level)} ONIX</p>
+              <p className="text-gray-400">
+                +{formatOnix(dailyRewardPreview)} ONIX · День {nextDailyStreakDay}/7
+              </p>
+              <p className="text-xs text-yellow-400">
+                Множитель стрика ×{dailyStreakMultiplier.toFixed(1)}
+              </p>
             </div>
 
             <span className="text-emerald-400 font-bold">
@@ -1438,6 +1529,57 @@ function App() {
                   maximumFractionDigits: 2,
                 })} €
               </p>
+            </div>
+
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">История операций</h3>
+                <span className="text-xs text-gray-500">последние 20</span>
+              </div>
+
+              {transactions.length > 0 ? (
+                <div className="space-y-3">
+                  {transactions.slice(0, 20).map((transaction, index) => {
+                    const isIncome = Number(transaction.amount || 0) >= 0;
+
+                    return (
+                      <div
+                        key={`${transaction.createdAt || index}-${index}`}
+                        className="flex items-center justify-between gap-3 rounded-2xl bg-[#111827] p-3"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0a0f1c] text-xl">
+                            {getTransactionIcon(transaction.type)}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-white">
+                              {transaction.title || 'Операция'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatTransactionTime(transaction.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p
+                          className={`shrink-0 text-sm font-bold ${
+                            isIncome ? 'text-emerald-400' : 'text-red-400'
+                          }`}
+                        >
+                          {isIncome ? '+' : ''}
+                          {formatOnix(transaction.amount)} ONIX
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Пока операций нет. Здесь будут отображаться награды, покупки, бонусы и будущие выводы.
+                </p>
+              )}
             </div>
 
             <button
