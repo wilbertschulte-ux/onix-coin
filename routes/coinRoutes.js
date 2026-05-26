@@ -309,6 +309,91 @@ router.post('/save', async (req, res) => {
   }
 });
 
+
+// BUY UPGRADE — BACKEND AUTHORITATIVE PURCHASE
+router.post('/buy-upgrade', async (req, res) => {
+  try {
+    const { telegramId, type } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({
+        message: 'Telegram ID is required',
+      });
+    }
+
+    const allowedTypes = ['tap', 'energy', 'recharge', 'miner'];
+
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        message: 'Unknown upgrade type',
+      });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    normalizeUserFields(user);
+
+    let cost = 0;
+
+    if (type === 'tap') cost = (Number(user.tapLevel || 1) + 1) * 150;
+    if (type === 'energy') cost = (Number(user.energyLevel || 1) + 1) * 200;
+    if (type === 'recharge') cost = (Number(user.rechargeLevel || 1) + 1) * 180;
+    if (type === 'miner') cost = (Number(user.minerLevel || 1) + 1) * 300;
+
+    if (Number(user.balance || 0) < cost) {
+      return res.status(400).json({
+        message: 'Недостаточно ONIX',
+      });
+    }
+
+    user.balance -= cost;
+
+    if (type === 'tap') {
+      user.tapLevel = Number(user.tapLevel || 1) + 1;
+      user.tapPower = Number(user.tapPower || 1) + 1;
+    }
+
+    if (type === 'energy') {
+      user.energyLevel = Number(user.energyLevel || 1) + 1;
+      user.maxEnergy = Number(user.maxEnergy || 2000) + 500;
+      user.energy = Math.min(Number(user.energy || 0), Number(user.maxEnergy || 2000));
+    }
+
+    if (type === 'recharge') {
+      user.rechargeLevel = Number(user.rechargeLevel || 1) + 1;
+      user.energyRecharge = Number(user.energyRecharge || 10) + 5;
+    }
+
+    if (type === 'miner') {
+      user.minerLevel = Number(user.minerLevel || 1) + 1;
+      user.autoclickers = Number(user.autoclickers || 0) + 2;
+    }
+
+    user.updatedAt = new Date();
+    user.lastSeenAt = Date.now();
+
+    await user.save();
+
+    return res.json({
+      user,
+      upgrade: {
+        type,
+        cost,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
 // CLAIM TASK
 router.post('/claim-task', async (req, res) => {
   try {
