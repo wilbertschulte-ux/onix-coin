@@ -247,7 +247,10 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// SAVE USER PROGRESS
+// SAVE USER PROGRESS — SAFE LEGACY ROUTE
+// This route is kept only for compatibility.
+// Important game economy fields are no longer accepted from frontend.
+// Balance, totalEarned, levels, upgrades, boosts and miners are changed only by backend routes.
 router.post('/save', async (req, res) => {
   try {
     const { telegramId, data } = req.body;
@@ -264,52 +267,56 @@ router.post('/save', async (req, res) => {
       });
     }
 
-    const user = await User.findOneAndUpdate(
-      { telegramId },
-      {
-        $set: {
-          balance: Number(data.balance || 0),
-          energy: Number(data.energy || 0),
-          maxEnergy: Number(data.maxEnergy || 2000),
+    let user = await User.findOne({ telegramId });
 
-          tapPower: Number(data.tapPower || 1),
-          energyRecharge: Number(data.energyRecharge || 10),
-          autoclickers: Number(data.autoclickers || 0),
+    if (!user) {
+      user = new User({
+        telegramId,
+        completedTasks: [],
+        tapTimestamps: [],
 
-          totalEarned: Number(data.totalEarned || 0),
-          level: Number(data.level || calculateLevel(data.totalEarned || 0)),
+        balance: 0,
+        energy: 2000,
+        maxEnergy: 2000,
+        tapPower: 1,
+        energyRecharge: 10,
+        autoclickers: 0,
 
-          referralsCount: Number(data.referralsCount || 0),
+        totalEarned: 0,
+        level: 1,
 
-          tapLevel: Number(data.tapLevel || 1),
-          minerLevel: Number(data.minerLevel || 1),
-          energyLevel: Number(data.energyLevel || 1),
-          rechargeLevel: Number(data.rechargeLevel || 1),
+        referralsCount: 0,
 
-          updatedAt: new Date(),
-          lastSeenAt: Date.now(),
-        },
-        $setOnInsert: {
-          completedTasks: [],
-          tapTimestamps: [],
-          dailyRewardLastClaim: null,
-          lastOfflineIncome: 0,
-          lastOfflineSeconds: 0,
-          pendingOfflineIncome: 0,
-          pendingOfflineSeconds: 0,
-          activeBoost: 'none',
-          boostEndTime: 0,
-          lastMineTickAt: 0,
-          lastUpgradeBuyAt: 0,
-        },
-      },
-      {
-        new: true,
-        upsert: true,
-      }
-    );
+        tapLevel: 1,
+        minerLevel: 1,
+        energyLevel: 1,
+        rechargeLevel: 1,
+
+        lastSeenAt: Date.now(),
+        lastMineTickAt: 0,
+        lastUpgradeBuyAt: 0,
+        lastOfflineIncome: 0,
+        lastOfflineSeconds: 0,
+        pendingOfflineIncome: 0,
+        pendingOfflineSeconds: 0,
+        activeBoost: 'none',
+        boostEndTime: 0,
+      });
+    }
 
     normalizeUserFields(user);
+
+    const safeEnergy = Number(data.energy);
+
+    if (Number.isFinite(safeEnergy)) {
+      user.energy = Math.max(
+        0,
+        Math.min(Number(user.maxEnergy || 2000), safeEnergy)
+      );
+    }
+
+    user.updatedAt = new Date();
+    user.lastSeenAt = Date.now();
 
     await user.save();
 
