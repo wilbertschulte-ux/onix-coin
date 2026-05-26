@@ -328,6 +328,22 @@ function getWeekKey(timestamp = Date.now()) {
   return `${utcDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
+function getWeekEndTimestamp(timestamp = Date.now()) {
+  const date = new Date(timestamp);
+  const day = date.getUTCDay() || 7;
+  const daysUntilNextMonday = 8 - day;
+
+  return Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate() + daysUntilNextMonday,
+    0,
+    0,
+    0,
+    0
+  );
+}
+
 function addEarnings(user, amount) {
   const value = roundOnix(amount);
   const currentWeek = getWeekKey();
@@ -496,8 +512,12 @@ router.get('/leaderboard/weekly', async (req, res) => {
       }
     }
 
+    const seasonEndsAt = getWeekEndTimestamp();
+
     return res.json({
       week: currentWeek,
+      seasonEndsAt,
+      secondsUntilSeasonEnd: Math.max(Math.ceil((seasonEndsAt - Date.now()) / 1000), 0),
       currentUserPlace,
       currentUserWeeklyEarned,
       leaderboard: users.map((user, index) => ({
