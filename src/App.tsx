@@ -878,6 +878,15 @@ function App() {
   const minWithdrawEur = MIN_WITHDRAW_ONIX * ONIX_EUR_RATE;
   const withdrawProgress = Math.min((balance / MIN_WITHDRAW_ONIX) * 100, 100);
   const leftToWithdraw = Math.max(MIN_WITHDRAW_ONIX - balance, 0);
+
+  const completedAchievementsCount = achievements.filter(
+    (item: Achievement) => item.isCompleted
+   ).length;
+
+  const visibleAchievements = achievements.filter(
+    (item: Achievement) => !item.isCompleted
+  );
+
   const canWithdraw = balance >= MIN_WITHDRAW_ONIX;
 
   const nextDailyStreakDay =
