@@ -82,17 +82,26 @@ router.post("/save", async (req, res) => {
       { telegramId },
       {
         $set: {
-          balance: data.balance,
-          energy: data.energy,
-          maxEnergy: data.maxEnergy,
-          tapPower: data.tapPower,
-          energyRecharge: data.energyRecharge,
-          autoclickers: data.autoclickers,
-          totalEarned: data.totalEarned,
-          level: data.level,
-          referralsCount: data.referralsCount,
-          updatedAt: new Date(),
-        },
+  balance: data.balance,
+  energy: data.energy,
+  maxEnergy: data.maxEnergy,
+
+  tapPower: data.tapPower,
+  energyRecharge: data.energyRecharge,
+  autoclickers: data.autoclickers,
+
+  totalEarned: data.totalEarned,
+  level: data.level,
+
+  referralsCount: data.referralsCount,
+
+  tapLevel: data.tapLevel || 1,
+  minerLevel: data.minerLevel || 1,
+  energyLevel: data.energyLevel || 1,
+  rechargeLevel: data.rechargeLevel || 1,
+
+  updatedAt: new Date(),
+}
       },
       {
         new: true,
