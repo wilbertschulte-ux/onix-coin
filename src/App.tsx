@@ -68,10 +68,29 @@ type EconomyConfig = {
   maxPaidReferralsPerDay: number;
 };
 
+type AdminPrizePreview = {
+  place: number;
+  telegramId: string;
+  username: string;
+  weeklyEarned: number;
+  totalEarned: number;
+  balance: number;
+  prize: number;
+};
+
+type AdminPrizePreviewResponse = {
+  week: string;
+  alreadyAwarded: boolean;
+  awardedAt: number | null;
+  awardedWinners: AdminPrizePreview[];
+  preview: AdminPrizePreview[];
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_ONIX_EUR_PER_1000 = 0.68;
 const DEFAULT_MIN_WITHDRAW_ONIX = 750000;
+const ADMIN_TELEGRAM_ID = String(import.meta.env.VITE_ADMIN_TELEGRAM_ID || '');
 
 const ACHIEVEMENTS: Achievement[] = [
   {
@@ -338,6 +357,10 @@ function App() {
   const [isClaimingOfflineReward, setIsClaimingOfflineReward] = useState(false);
   const [rewardPopupItems, setRewardPopupItems] = useState<RewardPopupItem[]>([]);
   const [rewardPopupVisible, setRewardPopupVisible] = useState(false);
+  const [adminPanelVisible, setAdminPanelVisible] = useState(false);
+  const [adminPrizePreview, setAdminPrizePreview] =
+    useState<AdminPrizePreviewResponse | null>(null);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -1015,6 +1038,68 @@ function App() {
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
       } catch {}
+    }
+  };
+
+
+  const isAdmin = () => {
+    const telegramId = getTelegramId();
+
+    return Boolean(ADMIN_TELEGRAM_ID && telegramId === ADMIN_TELEGRAM_ID);
+  };
+
+  const loadAdminPrizePreview = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-weekly-prize-preview`, {
+        params: {
+          telegramId,
+        },
+      });
+
+      setAdminPrizePreview(response.data);
+      setAdminPanelVisible(true);
+    } catch (error: any) {
+      alert(error?.response?.data?.message || 'Не удалось загрузить preview');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const awardWeeklyPrizes = async () => {
+    const telegramId = getTelegramId();
+
+    if (!adminPrizePreview || adminPrizePreview.alreadyAwarded) return;
+
+    const confirmed = window.confirm(
+      `Выдать призы топ-3 за неделю ${adminPrizePreview.week}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.post(`${API_URL}/admin-award-weekly-prizes`, {
+        telegramId,
+        confirm: 'AWARD_WEEKLY_PRIZES',
+        week: adminPrizePreview.week,
+      });
+
+      alert('✅ Призы сезона выданы');
+
+      setAdminPrizePreview({
+        ...adminPrizePreview,
+        alreadyAwarded: true,
+        awardedWinners: response.data.winners || [],
+      });
+    } catch (error: any) {
+      alert(error?.response?.data?.message || 'Не удалось выдать призы');
+    } finally {
+      setIsAdminLoading(false);
     }
   };
 
@@ -1980,6 +2065,17 @@ function App() {
             >
               👥 Пригласить друга
             </button>
+
+            {isAdmin() && (
+              <button
+                onClick={loadAdminPrizePreview}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-yellow-400 active:scale-95 disabled:opacity-50"
+              >
+                🛠 Админ: призы сезона
+              </button>
+            )}
+
           </div>
 
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
@@ -2226,6 +2322,97 @@ function App() {
       )}
 
 
+
+
+      {adminPanelVisible && adminPrizePreview && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  🛠 Админ-панель
+                </h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Призы недели {adminPrizePreview.week}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setAdminPanelVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <div
+              className={`mb-4 rounded-2xl p-4 text-sm font-bold ${
+                adminPrizePreview.alreadyAwarded
+                  ? 'bg-emerald-500/10 text-emerald-400'
+                  : 'bg-yellow-400/10 text-yellow-400'
+              }`}
+            >
+              {adminPrizePreview.alreadyAwarded
+                ? 'Призы за эту неделю уже выданы'
+                : 'Призы ещё не выданы'}
+            </div>
+
+            <div className="space-y-3">
+              {adminPrizePreview.preview.length > 0 ? (
+                adminPrizePreview.preview.map((item) => (
+                  <div
+                    key={`${item.place}-${item.telegramId}`}
+                    className="rounded-2xl bg-[#0a0f1c] p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-white">
+                          #{item.place} {item.username}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          week: {formatOnix(item.weeklyEarned)} ONIX
+                        </p>
+                      </div>
+
+                      <p className="font-bold text-yellow-400">
+                        +{formatOnix(item.prize)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-[#0a0f1c] p-4 text-sm text-gray-400">
+                  Нет игроков для выдачи призов.
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={awardWeeklyPrizes}
+              disabled={
+                isAdminLoading ||
+                adminPrizePreview.alreadyAwarded ||
+                adminPrizePreview.preview.length === 0
+              }
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-400"
+            >
+              {adminPrizePreview.alreadyAwarded
+                ? 'Уже выдано'
+                : isAdminLoading
+                ? 'Загрузка...'
+                : 'Выдать призы топ-3'}
+            </button>
+
+            <button
+              onClick={loadAdminPrizePreview}
+              disabled={isAdminLoading}
+              className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-white active:scale-95 disabled:opacity-50"
+            >
+              Обновить preview
+            </button>
+          </div>
+        </div>
+      )}
 
       {referralModalVisible && (
         <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/70 px-4">
