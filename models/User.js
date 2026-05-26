@@ -94,6 +94,16 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    hourlyReferralBonusCount: {
+      type: Number,
+      default: 0,
+    },
+
+    lastReferralBonusHour: {
+      type: String,
+      default: null,
+    },
+
     lastReferralBonusDay: {
       type: String,
       default: null,
@@ -179,6 +189,45 @@ const userSchema = new mongoose.Schema(
           },
         },
       ],
+      default: [],
+    },
+
+    withdrawalRequests: {
+      type: [
+        {
+          amount: {
+            type: Number,
+            default: 0,
+          },
+          eurAmount: {
+            type: Number,
+            default: 0,
+          },
+          status: {
+            type: String,
+            default: 'pending',
+          },
+          createdAt: {
+            type: Number,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+
+    seasonBadges: {
+      type: [String],
+      default: [],
+    },
+
+    isSuspicious: {
+      type: Boolean,
+      default: false,
+    },
+
+    suspiciousReasons: {
+      type: [String],
       default: [],
     },
 

@@ -39,6 +39,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_OFFLINE_SECONDS = 3 * 60 * 60;
 const MAX_TAPS_PER_SECOND = 12;
 const MAX_PAID_REFERRALS_PER_DAY = getEconomyConfig().maxPaidReferralsPerDay;
+const MAX_PAID_REFERRALS_PER_HOUR = getNumberEnv('MAX_PAID_REFERRALS_PER_HOUR', 5);
 const DEFAULT_ENERGY = 500;
 const DEFAULT_MAX_ENERGY = 500;
 const DEFAULT_TAP_POWER = 1;
@@ -197,12 +198,68 @@ const ACHIEVEMENTS = [
     reward: 25000,
     goal: 1,
   },
+  {
+    id: 'taps_10000',
+    title: '10 000 тапов',
+    description: 'Сделайте 10 000 тапов',
+    reward: 50000,
+    goal: 10000,
+  },
+  {
+    id: 'weekly_100k',
+    title: '100 000 ONIX за неделю',
+    description: 'Заработайте 100 000 ONIX за неделю',
+    reward: 25000,
+    goal: 100000,
+  },
+  {
+    id: 'all_perks',
+    title: 'Коллекционер перков',
+    description: 'Купите все постоянные перки',
+    reward: 75000,
+    goal: 4,
+  },
+  {
+    id: 'rank_gold',
+    title: 'Золотой ранг',
+    description: 'Достигните Gold I',
+    reward: 50000,
+    goal: 750000,
+  },
+  {
+    id: 'rank_diamond',
+    title: 'Diamond игрок',
+    description: 'Достигните Diamond',
+    reward: 250000,
+    goal: 5000000,
+  },
+  {
+    id: 'friends_5',
+    title: '5 друзей',
+    description: 'Пригласите 5 друзей',
+    reward: 100000,
+    goal: 5,
+  },
+  {
+    id: 'streak_7',
+    title: '7 дней подряд',
+    description: 'Дойдите до 7 дня daily streak',
+    reward: 50000,
+    goal: 7,
+  },
 ];
 
 function getAchievementProgressValue(user, achievementId) {
   if (achievementId === 'first_tap') return Number(user.totalTaps || 0);
   if (achievementId === 'taps_100') return Number(user.totalTaps || 0);
   if (achievementId === 'taps_1000') return Number(user.totalTaps || 0);
+  if (achievementId === 'taps_10000') return Number(user.totalTaps || 0);
+  if (achievementId === 'weekly_100k') return Number(user.weeklyEarned || 0);
+  if (achievementId === 'all_perks') return Array.isArray(user.ownedPerks) ? user.ownedPerks.length : 0;
+  if (achievementId === 'rank_gold') return Number(user.totalEarned || 0);
+  if (achievementId === 'rank_diamond') return Number(user.totalEarned || 0);
+  if (achievementId === 'friends_5') return Number(user.referralsCount || 0);
+  if (achievementId === 'streak_7') return Number(user.dailyStreak || 0);
   if (achievementId === 'first_upgrade') return Number(user.totalUpgradesBought || 0);
   if (achievementId === 'miner_level_5') return Number(user.minerLevel || 1);
   if (achievementId === 'first_boost') return Number(user.totalBoostsUsed || 0);
@@ -364,14 +421,24 @@ function addTransaction(user, type, amount, title, status = 'completed') {
 
 function prepareReferralBonusWindow(user, now = Date.now()) {
   const todayKey = getUtcDayKey(now);
+  const hourKey = getUtcHourKey(now);
 
   if (user.lastReferralBonusDay !== todayKey) {
     user.lastReferralBonusDay = todayKey;
     user.dailyReferralBonusCount = 0;
   }
 
+  if (user.lastReferralBonusHour !== hourKey) {
+    user.lastReferralBonusHour = hourKey;
+    user.hourlyReferralBonusCount = 0;
+  }
+
   if (user.dailyReferralBonusCount === undefined || user.dailyReferralBonusCount === null) {
     user.dailyReferralBonusCount = 0;
+  }
+
+  if (user.hourlyReferralBonusCount === undefined || user.hourlyReferralBonusCount === null) {
+    user.hourlyReferralBonusCount = 0;
   }
 
   return todayKey;
@@ -380,7 +447,10 @@ function prepareReferralBonusWindow(user, now = Date.now()) {
 function canReceivePaidReferralBonus(user, now = Date.now()) {
   prepareReferralBonusWindow(user, now);
 
-  return Number(user.dailyReferralBonusCount || 0) < getEconomyConfig().maxPaidReferralsPerDay;
+  return (
+    Number(user.dailyReferralBonusCount || 0) < getEconomyConfig().maxPaidReferralsPerDay &&
+    Number(user.hourlyReferralBonusCount || 0) < MAX_PAID_REFERRALS_PER_HOUR
+  );
 }
 
 function getNextUtcDayStart(timestamp = Date.now()) {
@@ -435,6 +505,10 @@ function getDailyReward(level) {
 
 function getUtcDayKey(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 10);
+}
+
+function getUtcHourKey(timestamp) {
+  return new Date(timestamp).toISOString().slice(0, 13);
 }
 
 function getWeekKey(timestamp = Date.now()) {
@@ -605,6 +679,89 @@ function isAdminRequest(secret, telegramId) {
   return Boolean(hasSecret || hasAdminTelegramId);
 }
 
+
+// CRON: AUTO AWARD WEEKLY PRIZES
+router.get('/cron-award-weekly-prizes', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+
+    if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const targetWeek = req.query.week ? String(req.query.week) : getWeekKey();
+    const alreadyAwarded = await WeeklyPrize.findOne({ week: targetWeek });
+
+    if (alreadyAwarded) {
+      return res.json({
+        message: 'Already awarded',
+        week: targetWeek,
+        winners: alreadyAwarded.winners,
+      });
+    }
+
+    const prizes = [250000, 150000, 75000];
+
+    const topUsers = await User.find({
+      weeklyEarnedWeek: targetWeek,
+      weeklyEarned: { $gt: 0 },
+    })
+      .sort({ weeklyEarned: -1 })
+      .limit(3);
+
+    const winners = [];
+
+    for (let i = 0; i < topUsers.length; i += 1) {
+      const user = topUsers[i];
+      const prize = prizes[i];
+
+      normalizeUserFields(user);
+
+      user.balance = roundOnix(Number(user.balance || 0) + prize);
+      addEarnings(user, prize);
+
+      const badge = `season_${targetWeek}_top_${i + 1}`;
+      if (!user.seasonBadges.includes(badge)) {
+        user.seasonBadges.push(badge);
+      }
+
+      addTransaction(user, 'income_season_prize', prize, `Приз сезона: ${i + 1} место`);
+
+      applyRankBonuses(user);
+      user.level = calculateLevel(user.totalEarned);
+      user.updatedAt = new Date();
+
+      await user.save();
+
+      winners.push({
+        place: i + 1,
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        prize,
+      });
+    }
+
+    await WeeklyPrize.create({
+      week: targetWeek,
+      awardedAt: Date.now(),
+      winners,
+    });
+
+    return res.json({
+      message: 'Weekly prizes awarded by cron',
+      week: targetWeek,
+      winners,
+    });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      return res.json({ message: 'Already awarded' });
+    }
+
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // ADMIN: PREVIEW WEEKLY SEASON PRIZES
 router.get('/admin-weekly-prize-preview', async (req, res) => {
   try {
@@ -752,6 +909,26 @@ router.post('/admin-award-weekly-prizes', async (req, res) => {
     return res.status(500).json({
       error: error.message,
     });
+  }
+});
+
+
+// SEASON HISTORY
+router.get('/season-history', async (req, res) => {
+  try {
+    const seasons = await WeeklyPrize.find({})
+      .sort({ awardedAt: -1 })
+      .limit(10);
+
+    return res.json({
+      seasons: seasons.map((season) => ({
+        week: season.week,
+        awardedAt: season.awardedAt,
+        winners: season.winners || [],
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -963,7 +1140,13 @@ router.post('/create', async (req, res) => {
 
         referralsCount: 0,
         dailyReferralBonusCount: 0,
+        hourlyReferralBonusCount: 0,
+        lastReferralBonusHour: null,
         lastReferralBonusDay: null,
+        withdrawalRequests: [],
+        seasonBadges: [],
+        isSuspicious: false,
+        suspiciousReasons: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -1000,6 +1183,8 @@ router.post('/create', async (req, res) => {
           if (isPaidReferralAllowed) {
             refUser.dailyReferralBonusCount =
               Number(refUser.dailyReferralBonusCount || 0) + 1;
+            refUser.hourlyReferralBonusCount =
+              Number(refUser.hourlyReferralBonusCount || 0) + 1;
 
             refUser.balance = roundOnix(Number(refUser.balance || 0) + economyConfig.referralReward);
             refUser.totalEarned = roundOnix(Number(refUser.totalEarned || 0) + 75000);
@@ -1117,7 +1302,13 @@ router.post('/save', async (req, res) => {
 
         referralsCount: 0,
         dailyReferralBonusCount: 0,
+        hourlyReferralBonusCount: 0,
+        lastReferralBonusHour: null,
         lastReferralBonusDay: null,
+        withdrawalRequests: [],
+        seasonBadges: [],
+        isSuspicious: false,
+        suspiciousReasons: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -1284,6 +1475,74 @@ router.post('/buy-upgrade', async (req, res) => {
   }
 });
 
+
+
+// REQUEST WITHDRAWAL — creates a pending withdrawal request
+router.post('/request-withdrawal', async (req, res) => {
+  try {
+    const { telegramId, amount } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const economyConfig = getEconomyConfig();
+    const withdrawAmount = roundOnix(Number(amount || economyConfig.minWithdrawOnix));
+
+    if (withdrawAmount < economyConfig.minWithdrawOnix) {
+      return res.status(400).json({
+        message: `Минимальный вывод ${economyConfig.minWithdrawOnix} ONIX`,
+      });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    if (Number(user.balance || 0) < withdrawAmount) {
+      return res.status(400).json({ message: 'Недостаточно ONIX для вывода' });
+    }
+
+    user.balance = roundOnix(Number(user.balance || 0) - withdrawAmount);
+
+    const eurAmount = roundOnix(withdrawAmount * getOnixEurRate());
+
+    user.withdrawalRequests.unshift({
+      amount: withdrawAmount,
+      eurAmount,
+      status: 'pending',
+      createdAt: Date.now(),
+    });
+
+    user.withdrawalRequests = user.withdrawalRequests.slice(0, 20);
+
+    addTransaction(
+      user,
+      'withdrawal_pending',
+      -withdrawAmount,
+      `Заявка на вывод ≈ ${eurAmount}€`,
+      'pending'
+    );
+
+    user.updatedAt = new Date();
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+      },
+      withdrawal: user.withdrawalRequests[0],
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 // BUY PERK — ONE-TIME PERMANENT BONUSES
 router.post('/buy-perk', async (req, res) => {
