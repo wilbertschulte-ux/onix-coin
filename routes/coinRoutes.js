@@ -78,6 +78,12 @@ function applyRankBonuses(user) {
         user.balance = roundOnix(Number(user.balance || 0) + rank.bonus);
         user.totalEarned = roundOnix(Number(user.totalEarned || 0) + rank.bonus);
         user.claimedRankBonuses.push(rank.id);
+        addTransaction(
+          user,
+          'income_rank',
+          rank.bonus,
+          `Бонус ранга ${rank.name}`
+        );
         awarded.push({
           id: rank.id,
           name: rank.name,
@@ -94,6 +100,20 @@ function applyRankBonuses(user) {
 
 function roundOnix(value) {
   return Math.round(Number(value || 0) * 100) / 100;
+}
+
+function addTransaction(user, type, amount, title, status = 'completed') {
+  if (!user.transactions) user.transactions = [];
+
+  user.transactions.unshift({
+    type,
+    amount: roundOnix(amount),
+    title,
+    status,
+    createdAt: Date.now(),
+  });
+
+  user.transactions = user.transactions.slice(0, 50);
 }
 
 function getTapUpgradeCost(tapLevel) {
@@ -114,6 +134,22 @@ function getRechargeUpgradeCost(rechargeLevel) {
 
 function getDailyReward(level) {
   return Math.min(15000 + Number(level || 1) * 500, 50000);
+}
+
+function getUtcDayKey(timestamp) {
+  return new Date(timestamp).toISOString().slice(0, 10);
+}
+
+function getDailyStreakMultiplier(streakDay) {
+  const day = Number(streakDay || 1);
+
+  if (day >= 7) return 2;
+
+  return 1 + (day - 1) * 0.1;
+}
+
+function getDailyRewardWithStreak(level, streakDay) {
+  return Math.round(getDailyReward(level) * getDailyStreakMultiplier(streakDay));
 }
 
 function getTapBoostCost(tapPower) {
@@ -149,6 +185,11 @@ function normalizeUserFields(user) {
   if (user.minerLevel === undefined || user.minerLevel === null) user.minerLevel = 1;
   if (user.energyLevel === undefined || user.energyLevel === null) user.energyLevel = 1;
   if (user.rechargeLevel === undefined || user.rechargeLevel === null) user.rechargeLevel = 1;
+
+  if (user.dailyStreak === undefined || user.dailyStreak === null) user.dailyStreak = 0;
+  if (user.lastDailyClaimDay === undefined || user.lastDailyClaimDay === null) {
+    user.lastDailyClaimDay = null;
+  }
 
   if (user.lastOfflineIncome === undefined || user.lastOfflineIncome === null) {
     user.lastOfflineIncome = 0;
@@ -297,6 +338,9 @@ router.post('/create', async (req, res) => {
         referredBy: referredBy || null,
         completedTasks: [],
         claimedRankBonuses: [],
+        transactions: [],
+        dailyStreak: 0,
+        lastDailyClaimDay: null,
         tapTimestamps: [],
 
         balance: 0,
@@ -338,6 +382,7 @@ router.post('/create', async (req, res) => {
           refUser.balance += 75000;
           refUser.totalEarned += 75000;
           refUser.referralsCount += 1;
+          addTransaction(refUser, 'income_referral', 75000, 'Реферальный бонус');
           applyRankBonuses(refUser);
           refUser.level = calculateLevel(refUser.totalEarned);
           refUser.lastReferralUsername = username || 'новый пользователь';
@@ -347,6 +392,7 @@ router.post('/create', async (req, res) => {
 
           user.balance += 15000;
           user.totalEarned += 15000;
+          addTransaction(user, 'income_referral', 15000, 'Бонус за вход по ссылке');
           applyRankBonuses(user);
           user.level = calculateLevel(user.totalEarned);
           user.referredByUsername = refUser.username || 'пользователя';
@@ -405,6 +451,9 @@ router.post('/save', async (req, res) => {
         telegramId,
         completedTasks: [],
         claimedRankBonuses: [],
+        transactions: [],
+        dailyStreak: 0,
+        lastDailyClaimDay: null,
         tapTimestamps: [],
 
         balance: 0,
@@ -516,6 +565,20 @@ router.post('/buy-upgrade', async (req, res) => {
 
     user.balance = roundOnix(Number(user.balance || 0) - cost);
 
+    const upgradeTitles = {
+      tap: 'Улучшение силы тапа',
+      energy: 'Улучшение энергии',
+      recharge: 'Улучшение восстановления',
+      miner: 'Улучшение майнера',
+    };
+
+    addTransaction(
+      user,
+      'expense_upgrade',
+      -cost,
+      upgradeTitles[type] || 'Покупка улучшения'
+    );
+
     if (type === 'tap') {
       user.tapLevel = Number(user.tapLevel || 1) + 1;
       user.tapPower = Number(user.tapPower || 1) + 1;
@@ -584,32 +647,61 @@ router.post('/claim-task', async (req, res) => {
 
     normalizeUserFields(user);
 
-    // DAILY REWARD
+    // DAILY REWARD WITH STREAK
     if (task === 'daily') {
       const now = Date.now();
+      const todayKey = getUtcDayKey(now);
 
-      if (
-        user.dailyRewardLastClaim &&
-        now - Number(user.dailyRewardLastClaim) < DAY_MS
-      ) {
-        return res.status(400).json({
-          message: 'Daily reward already claimed',
-        });
+      if (user.dailyRewardLastClaim) {
+        const lastClaimTime = Number(user.dailyRewardLastClaim || 0);
+        const lastClaimDay = user.lastDailyClaimDay || getUtcDayKey(lastClaimTime);
+
+        if (lastClaimDay === todayKey || now - lastClaimTime < DAY_MS) {
+          return res.status(400).json({
+            message: 'Daily reward already claimed',
+          });
+        }
       }
 
-      const reward = getDailyReward(user.level);
+      const yesterdayKey = getUtcDayKey(now - DAY_MS);
+      const previousClaimDay =
+        user.lastDailyClaimDay ||
+        (user.dailyRewardLastClaim ? getUtcDayKey(Number(user.dailyRewardLastClaim)) : null);
 
-      user.balance += reward;
-      user.totalEarned += reward;
+      let nextStreak = 1;
+
+      if (previousClaimDay === yesterdayKey) {
+        nextStreak = Number(user.dailyStreak || 0) + 1;
+      }
+
+      if (nextStreak > 7) {
+        nextStreak = 1;
+      }
+
+      const reward = getDailyRewardWithStreak(user.level, nextStreak);
+
+      user.balance = roundOnix(Number(user.balance || 0) + reward);
+      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + reward);
       user.dailyRewardLastClaim = now;
+      user.lastDailyClaimDay = todayKey;
+      user.dailyStreak = nextStreak;
 
+      addTransaction(user, 'income_daily', reward, `Ежедневная награда · День ${nextStreak}/7`);
+
+      const rankBonuses = applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
       user.lastSeenAt = now;
 
       await user.save();
 
-      return res.json(user);
+      return res.json({
+        ...user.toObject(),
+        claimedDailyReward: reward,
+        rankBonuses,
+        dailyStreak: nextStreak,
+        dailyStreakMultiplier: getDailyStreakMultiplier(nextStreak),
+      });
     }
 
     // CHANNEL SUBSCRIBE
@@ -651,6 +743,7 @@ router.post('/claim-task', async (req, res) => {
       user.balance = roundOnix(Number(user.balance || 0) + 25000);
       user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 25000);
       user.completedTasks.push('channel');
+      addTransaction(user, 'income_task', 25000, 'Задание: подписка на канал');
 
       applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
@@ -679,6 +772,7 @@ router.post('/claim-task', async (req, res) => {
       user.balance = roundOnix(Number(user.balance || 0) + 75000);
       user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 75000);
       user.completedTasks.push('inviteFriend');
+      addTransaction(user, 'income_task', 75000, 'Задание: пригласить друга');
 
       applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
@@ -732,6 +826,7 @@ router.post('/claim-offline-income', async (req, res) => {
 
     user.balance = roundOnix(Number(user.balance || 0) + claimedAmount);
     user.totalEarned = roundOnix(Number(user.totalEarned || 0) + claimedAmount);
+    addTransaction(user, 'income_offline', claimedAmount, 'Оффлайн-майнинг');
     applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
 
@@ -898,6 +993,12 @@ router.post('/activate-boost', async (req, res) => {
     }
 
     user.balance = roundOnix(Number(user.balance || 0) - cost);
+    addTransaction(
+      user,
+      'expense_boost',
+      -cost,
+      type === 'tap' ? 'Буст тапа ×2' : 'Буст майнинга ×2'
+    );
     user.activeBoost = type;
     user.boostEndTime = now + durationConfig[type];
     user.updatedAt = new Date();

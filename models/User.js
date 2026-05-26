@@ -104,8 +104,46 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    transactions: {
+      type: [
+        {
+          type: {
+            type: String,
+            default: 'income',
+          },
+          amount: {
+            type: Number,
+            default: 0,
+          },
+          title: {
+            type: String,
+            default: '',
+          },
+          status: {
+            type: String,
+            default: 'completed',
+          },
+          createdAt: {
+            type: Number,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+
     dailyRewardLastClaim: {
       type: Number,
+      default: null,
+    },
+
+    dailyStreak: {
+      type: Number,
+      default: 0,
+    },
+
+    lastDailyClaimDay: {
+      type: String,
       default: null,
     },
 
