@@ -508,6 +508,74 @@ router.post('/claim-offline-income', async (req, res) => {
 });
 
 
+
+// MINE TICK — BACKEND ONLINE MINING
+router.post('/mine-tick', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({
+        message: 'Telegram ID is required',
+      });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    normalizeUserFields(user);
+
+    const now = Date.now();
+
+    if (
+      user.activeBoost &&
+      user.activeBoost !== 'none' &&
+      Number(user.boostEndTime || 0) <= now
+    ) {
+      user.activeBoost = 'none';
+      user.boostEndTime = 0;
+    }
+
+    const isMiningBoostActive =
+      user.activeBoost === 'mining' && Number(user.boostEndTime || 0) > now;
+
+    const multiplier = isMiningBoostActive ? 2 : 1;
+    const income = Math.floor(Number(user.autoclickers || 0) * multiplier);
+
+    if (income > 0) {
+      user.balance += income;
+      user.totalEarned += income;
+      user.level = calculateLevel(user.totalEarned);
+    }
+
+    user.energy = Math.min(
+      Number(user.maxEnergy || 2000),
+      Number(user.energy || 0) + Number(user.energyRecharge || 10)
+    );
+
+    user.updatedAt = new Date();
+    user.lastSeenAt = now;
+
+    await user.save();
+
+    return res.json({
+      user,
+      income,
+      multiplier,
+      isMiningBoostActive,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
 // ACTIVATE BOOST
 router.post('/activate-boost', async (req, res) => {
   try {
