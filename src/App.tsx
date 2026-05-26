@@ -658,6 +658,42 @@ function App() {
     },
   ];
 
+  const boostRemainingMs = Math.max(boostEndTime - Date.now(), 0);
+  const boostTimeLeft = boostRemainingMs > 0 ? formatTime(boostRemainingMs) : '';
+  const isAnyBoostActive = isBoostActive && activeBoost !== 'none';
+
+  const boostCards: Array<{
+    type: 'tap' | 'mining';
+    icon: string;
+    title: string;
+    description: string;
+    multiplier: string;
+    durationMinutes: number;
+    cost: number;
+    isActive: boolean;
+  }> = [
+    {
+      type: 'tap',
+      icon: '🎯',
+      title: 'Буст тапа',
+      description: 'Увеличивает силу тапа на время действия',
+      multiplier: '×2',
+      durationMinutes: 10,
+      cost: 300,
+      isActive: isBoostActive && activeBoost === 'tap',
+    },
+    {
+      type: 'mining',
+      icon: '⛏️',
+      title: 'Буст майнинга',
+      description: 'Удваивает доход майнера онлайн',
+      multiplier: '×2',
+      durationMinutes: 15,
+      cost: 500,
+      isActive: isBoostActive && activeBoost === 'mining',
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
       <div className="bg-[#111827] p-4 flex justify-between items-center sticky top-0 z-50">
@@ -953,20 +989,126 @@ function App() {
           <div>
             <h2 className="text-2xl font-bold mb-4">⚡ Временные бусты</h2>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div
-                onClick={() => activateBoost('tap', 10, 300)}
-                className="shop-item"
-              >
-                🎯 ×2 Тап — 10 мин — 300 ONIX
-              </div>
+            {isAnyBoostActive && (
+              <div className="mb-4 rounded-3xl border border-emerald-400/20 bg-emerald-500/10 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-emerald-300">Активный буст</p>
+                    <h3 className="mt-1 text-xl font-bold text-white">
+                      {activeBoost === 'tap' ? '🎯 Тап ×2' : '⛏️ Майнинг ×2'}
+                    </h3>
+                  </div>
 
-              <div
-                onClick={() => activateBoost('mining', 15, 500)}
-                className="shop-item"
-              >
-                ⛏️ ×2 Майнинг — 15 мин — 500 ONIX
+                  <div className="rounded-2xl bg-[#0a0f1c] px-4 py-3 text-right">
+                    <p className="text-xs text-gray-400">Осталось</p>
+                    <p className="font-bold text-emerald-400">
+                      {boostTimeLeft}
+                    </p>
+                  </div>
+                </div>
               </div>
+            )}
+
+            <div className="space-y-4">
+              {boostCards.map((boost) => {
+                const canBuyBoost = balance >= boost.cost && !isAnyBoostActive;
+                const isLockedByOtherBoost =
+                  isAnyBoostActive && !boost.isActive;
+
+                return (
+                  <div
+                    key={boost.type}
+                    className={`rounded-3xl border p-5 shadow-xl transition ${
+                      boost.isActive
+                        ? 'border-emerald-400/40 bg-emerald-500/10'
+                        : 'border-yellow-400/20 bg-[#111827]'
+                    }`}
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${
+                            boost.isActive ? 'bg-emerald-400' : 'bg-yellow-400'
+                          }`}
+                        >
+                          {boost.icon}
+                        </div>
+
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {boost.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {boost.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-[#0a0f1c] px-4 py-3 text-right">
+                        <p className="text-xs text-gray-400">Множитель</p>
+                        <p className="text-xl font-bold text-yellow-400">
+                          {boost.multiplier}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">Длительность</p>
+                        <p className="mt-1 text-lg font-bold text-white">
+                          {boost.durationMinutes} мин
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">Цена</p>
+                        <p className="mt-1 text-lg font-bold text-yellow-400">
+                          {boost.cost.toLocaleString('ru-RU')} ONIX
+                        </p>
+                      </div>
+                    </div>
+
+                    {boost.isActive && (
+                      <div className="mt-4 rounded-2xl bg-[#0a0f1c] p-4">
+                        <div className="mb-2 flex items-center justify-between text-sm">
+                          <span className="text-gray-400">Статус</span>
+                          <span className="font-bold text-emerald-400">
+                            Активен: {boostTimeLeft}
+                          </span>
+                        </div>
+
+                        <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                          <div className="h-full rounded-full bg-emerald-400 transition-all" />
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() =>
+                        activateBoost(boost.type, boost.durationMinutes, boost.cost)
+                      }
+                      disabled={!canBuyBoost}
+                      className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
+                        canBuyBoost
+                          ? 'bg-yellow-400 text-black active:scale-95'
+                          : boost.isActive
+                          ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed'
+                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {boost.isActive
+                        ? `Активен ${boostTimeLeft}`
+                        : isLockedByOtherBoost
+                        ? 'Сначала дождитесь окончания буста'
+                        : balance >= boost.cost
+                        ? 'Активировать буст'
+                        : `Не хватает ${(boost.cost - balance).toLocaleString(
+                            'ru-RU'
+                          )} ONIX`}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
