@@ -58,6 +58,10 @@ function normalizeUserFields(user) {
     user.boostEndTime = 0;
   }
 
+  if (user.lastMineTickAt === undefined || user.lastMineTickAt === null) {
+    user.lastMineTickAt = 0;
+  }
+
   if (!user.activeBoost) user.activeBoost = 'none';
   if (!user.boostEndTime) user.boostEndTime = 0;
 
@@ -180,6 +184,7 @@ router.post('/create', async (req, res) => {
         rechargeLevel: 1,
 
         lastSeenAt: Date.now(),
+        lastMineTickAt: 0,
         lastOfflineIncome: 0,
         lastOfflineSeconds: 0,
         pendingOfflineIncome: 0,
@@ -289,6 +294,7 @@ router.post('/save', async (req, res) => {
           pendingOfflineSeconds: 0,
           activeBoost: 'none',
           boostEndTime: 0,
+          lastMineTickAt: 0,
         },
       },
       {
@@ -616,6 +622,19 @@ router.post('/mine-tick', async (req, res) => {
     normalizeUserFields(user);
 
     const now = Date.now();
+    const lastMineTickAt = Number(user.lastMineTickAt || 0);
+    const elapsedMs = now - lastMineTickAt;
+
+    if (lastMineTickAt > 0 && elapsedMs < 900) {
+      return res.status(429).json({
+        message: 'Mine tick cooldown',
+        user,
+        income: 0,
+        multiplier: 1,
+        isMiningBoostActive: false,
+        retryAfterMs: 900 - elapsedMs,
+      });
+    }
 
     if (
       user.activeBoost &&
@@ -643,6 +662,7 @@ router.post('/mine-tick', async (req, res) => {
       Number(user.energy || 0) + Number(user.energyRecharge || 10)
     );
 
+    user.lastMineTickAt = now;
     user.updatedAt = new Date();
     user.lastSeenAt = now;
 

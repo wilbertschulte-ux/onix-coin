@@ -150,6 +150,11 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    lastMineTickAt: {
+      type: Number,
+      default: 0,
+    },
+
     tapTimestamps: {
       type: [Number],
       default: [],
