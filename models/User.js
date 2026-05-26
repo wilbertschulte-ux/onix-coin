@@ -114,6 +114,11 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    lastOfflineSeconds: {
+      type: Number,
+      default: 0,
+    },
+
     lastSeenAt: {
       type: Number,
       default: Date.now,

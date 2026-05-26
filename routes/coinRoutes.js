@@ -59,6 +59,7 @@ router.get('/:telegramId', async (req, res) => {
     normalizeUserFields(user);
 
     let offlineIncome = 0;
+    let offlineSecondsForPopup = 0;
 
     const now = Date.now();
     const lastSeenAt = user.lastSeenAt || now;
@@ -67,6 +68,7 @@ router.get('/:telegramId', async (req, res) => {
     if (user.autoclickers > 0 && offlineSeconds > 10) {
       const countedSeconds = Math.min(offlineSeconds, MAX_OFFLINE_SECONDS);
 
+      offlineSecondsForPopup = countedSeconds;
       offlineIncome = Math.floor(user.autoclickers * countedSeconds);
 
       if (offlineIncome > 0) {
@@ -77,6 +79,7 @@ router.get('/:telegramId', async (req, res) => {
     }
 
     user.lastOfflineIncome = offlineIncome;
+    user.lastOfflineSeconds = offlineSecondsForPopup;
     user.lastSeenAt = now;
     user.updatedAt = new Date();
 
