@@ -99,18 +99,13 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    claimedRankBonuses: {
+      type: [String],
+      default: [],
+    },
+
     dailyRewardLastClaim: {
       type: Number,
-      default: null,
-    },
-
-    dailyStreak: {
-      type: Number,
-      default: 0,
-    },
-
-    lastDailyClaimDay: {
-      type: String,
       default: null,
     },
 

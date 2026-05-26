@@ -14,6 +14,83 @@ const DEFAULT_MAX_ENERGY = 500;
 const DEFAULT_TAP_POWER = 1;
 const DEFAULT_ENERGY_RECHARGE = 0.5;
 const DEFAULT_MINER_INCOME = 0.5;
+const RANKS = [
+  { id: 'bronze_1', name: 'Bronze I', threshold: 0, bonus: 0 },
+  { id: 'bronze_2', name: 'Bronze II', threshold: 25000, bonus: 2500 },
+  { id: 'bronze_3', name: 'Bronze III', threshold: 75000, bonus: 7500 },
+  { id: 'silver_1', name: 'Silver I', threshold: 150000, bonus: 15000 },
+  { id: 'silver_2', name: 'Silver II', threshold: 300000, bonus: 30000 },
+  { id: 'silver_3', name: 'Silver III', threshold: 500000, bonus: 50000 },
+  { id: 'gold_1', name: 'Gold I', threshold: 750000, bonus: 75000 },
+  { id: 'gold_2', name: 'Gold II', threshold: 1000000, bonus: 100000 },
+  { id: 'gold_3', name: 'Gold III', threshold: 1500000, bonus: 150000 },
+  { id: 'platinum', name: 'Platinum', threshold: 2500000, bonus: 250000 },
+  { id: 'diamond', name: 'Diamond', threshold: 5000000, bonus: 500000 },
+  { id: 'master', name: 'Master', threshold: 10000000, bonus: 1000000 },
+  { id: 'legend', name: 'Legend', threshold: 25000000, bonus: 2500000 },
+];
+
+function getRankInfo(totalEarned) {
+  const earned = Number(totalEarned || 0);
+  let currentRank = RANKS[0];
+  let nextRank = null;
+
+  for (let i = 0; i < RANKS.length; i += 1) {
+    if (earned >= RANKS[i].threshold) {
+      currentRank = RANKS[i];
+      nextRank = RANKS[i + 1] || null;
+    }
+  }
+
+  const currentThreshold = currentRank.threshold;
+  const nextThreshold = nextRank ? nextRank.threshold : currentThreshold;
+  const progressTotal = Math.max(1, nextThreshold - currentThreshold);
+  const progressCurrent = Math.max(0, earned - currentThreshold);
+  const progressPercent = nextRank
+    ? Math.min(100, (progressCurrent / progressTotal) * 100)
+    : 100;
+
+  return {
+    currentRank,
+    nextRank,
+    progressCurrent: roundOnix(progressCurrent),
+    progressTotal: roundOnix(progressTotal),
+    progressPercent: roundOnix(progressPercent),
+  };
+}
+
+function applyRankBonuses(user) {
+  if (!user.claimedRankBonuses) user.claimedRankBonuses = [];
+
+  const awarded = [];
+  let changed = true;
+  let guard = 0;
+
+  while (changed && guard < RANKS.length + 2) {
+    changed = false;
+    guard += 1;
+
+    for (const rank of RANKS) {
+      if (rank.bonus <= 0) continue;
+      if (user.claimedRankBonuses.includes(rank.id)) continue;
+
+      if (Number(user.totalEarned || 0) >= rank.threshold) {
+        user.balance = roundOnix(Number(user.balance || 0) + rank.bonus);
+        user.totalEarned = roundOnix(Number(user.totalEarned || 0) + rank.bonus);
+        user.claimedRankBonuses.push(rank.id);
+        awarded.push({
+          id: rank.id,
+          name: rank.name,
+          bonus: rank.bonus,
+        });
+        changed = true;
+      }
+    }
+  }
+
+  return awarded;
+}
+
 
 function roundOnix(value) {
   return Math.round(Number(value || 0) * 100) / 100;
@@ -39,22 +116,6 @@ function getDailyReward(level) {
   return Math.min(15000 + Number(level || 1) * 500, 50000);
 }
 
-function getUtcDayKey(timestamp) {
-  return new Date(timestamp).toISOString().slice(0, 10);
-}
-
-function getDailyStreakMultiplier(streakDay) {
-  const day = Number(streakDay || 1);
-
-  if (day >= 7) return 2;
-
-  return 1 + (day - 1) * 0.1;
-}
-
-function getDailyRewardWithStreak(level, streakDay) {
-  return Math.round(getDailyReward(level) * getDailyStreakMultiplier(streakDay));
-}
-
 function getTapBoostCost(tapPower) {
   return Math.max(2500, Math.round(Number(tapPower || DEFAULT_TAP_POWER) * 500 * 0.7));
 }
@@ -70,6 +131,7 @@ function calculateLevel(totalEarned) {
 
 function normalizeUserFields(user) {
   if (!user.completedTasks) user.completedTasks = [];
+  if (!user.claimedRankBonuses) user.claimedRankBonuses = [];
   if (!user.tapTimestamps) user.tapTimestamps = [];
 
   if (user.balance === undefined || user.balance === null) user.balance = 0;
@@ -87,11 +149,6 @@ function normalizeUserFields(user) {
   if (user.minerLevel === undefined || user.minerLevel === null) user.minerLevel = 1;
   if (user.energyLevel === undefined || user.energyLevel === null) user.energyLevel = 1;
   if (user.rechargeLevel === undefined || user.rechargeLevel === null) user.rechargeLevel = 1;
-
-  if (user.dailyStreak === undefined || user.dailyStreak === null) user.dailyStreak = 0;
-  if (user.lastDailyClaimDay === undefined || user.lastDailyClaimDay === null) {
-    user.lastDailyClaimDay = null;
-  }
 
   if (user.lastOfflineIncome === undefined || user.lastOfflineIncome === null) {
     user.lastOfflineIncome = 0;
@@ -227,9 +284,8 @@ router.post('/create', async (req, res) => {
         username: username || 'Пользователь',
         referredBy: referredBy || null,
         completedTasks: [],
+        claimedRankBonuses: [],
         tapTimestamps: [],
-        dailyStreak: 0,
-        lastDailyClaimDay: null,
 
         balance: 0,
         energy: DEFAULT_ENERGY,
@@ -270,6 +326,7 @@ router.post('/create', async (req, res) => {
           refUser.balance += 75000;
           refUser.totalEarned += 75000;
           refUser.referralsCount += 1;
+          applyRankBonuses(refUser);
           refUser.level = calculateLevel(refUser.totalEarned);
           refUser.lastReferralUsername = username || 'новый пользователь';
           refUser.updatedAt = new Date();
@@ -278,6 +335,7 @@ router.post('/create', async (req, res) => {
 
           user.balance += 15000;
           user.totalEarned += 15000;
+          applyRankBonuses(user);
           user.level = calculateLevel(user.totalEarned);
           user.referredByUsername = refUser.username || 'пользователя';
         }
@@ -334,9 +392,8 @@ router.post('/save', async (req, res) => {
       user = new User({
         telegramId,
         completedTasks: [],
+        claimedRankBonuses: [],
         tapTimestamps: [],
-        dailyStreak: 0,
-        lastDailyClaimDay: null,
 
         balance: 0,
         energy: DEFAULT_ENERGY,
@@ -515,44 +572,24 @@ router.post('/claim-task', async (req, res) => {
 
     normalizeUserFields(user);
 
-    // DAILY REWARD WITH STREAK
+    // DAILY REWARD
     if (task === 'daily') {
       const now = Date.now();
-      const todayKey = getUtcDayKey(now);
 
-      if (user.dailyRewardLastClaim) {
-        const lastClaimTime = Number(user.dailyRewardLastClaim || 0);
-        const lastClaimDay = user.lastDailyClaimDay || getUtcDayKey(lastClaimTime);
-
-        if (lastClaimDay === todayKey || now - lastClaimTime < DAY_MS) {
-          return res.status(400).json({
-            message: 'Daily reward already claimed',
-          });
-        }
+      if (
+        user.dailyRewardLastClaim &&
+        now - Number(user.dailyRewardLastClaim) < DAY_MS
+      ) {
+        return res.status(400).json({
+          message: 'Daily reward already claimed',
+        });
       }
 
-      const yesterdayKey = getUtcDayKey(now - DAY_MS);
-      const previousClaimDay =
-        user.lastDailyClaimDay ||
-        (user.dailyRewardLastClaim ? getUtcDayKey(Number(user.dailyRewardLastClaim)) : null);
+      const reward = getDailyReward(user.level);
 
-      let nextStreak = 1;
-
-      if (previousClaimDay === yesterdayKey) {
-        nextStreak = Number(user.dailyStreak || 0) + 1;
-      }
-
-      if (nextStreak > 7) {
-        nextStreak = 1;
-      }
-
-      const reward = getDailyRewardWithStreak(user.level, nextStreak);
-
-      user.balance = roundOnix(Number(user.balance || 0) + reward);
-      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + reward);
+      user.balance += reward;
+      user.totalEarned += reward;
       user.dailyRewardLastClaim = now;
-      user.lastDailyClaimDay = todayKey;
-      user.dailyStreak = nextStreak;
 
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
@@ -560,12 +597,7 @@ router.post('/claim-task', async (req, res) => {
 
       await user.save();
 
-      return res.json({
-        ...user.toObject(),
-        claimedDailyReward: reward,
-        dailyStreak: nextStreak,
-        dailyStreakMultiplier: getDailyStreakMultiplier(nextStreak),
-      });
+      return res.json(user);
     }
 
     // CHANNEL SUBSCRIBE
@@ -604,10 +636,11 @@ router.post('/claim-task', async (req, res) => {
         });
       }
 
-      user.balance += 25000;
-      user.totalEarned += 25000;
+      user.balance = roundOnix(Number(user.balance || 0) + 25000);
+      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 25000);
       user.completedTasks.push('channel');
 
+      applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
       user.lastSeenAt = Date.now();
@@ -631,10 +664,11 @@ router.post('/claim-task', async (req, res) => {
         });
       }
 
-      user.balance += 75000;
-      user.totalEarned += 75000;
+      user.balance = roundOnix(Number(user.balance || 0) + 75000);
+      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + 75000);
       user.completedTasks.push('inviteFriend');
 
+      applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
       user.lastSeenAt = Date.now();
@@ -686,6 +720,7 @@ router.post('/claim-offline-income', async (req, res) => {
 
     user.balance = roundOnix(Number(user.balance || 0) + claimedAmount);
     user.totalEarned = roundOnix(Number(user.totalEarned || 0) + claimedAmount);
+    applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
 
     user.lastOfflineIncome = claimedAmount;
@@ -767,6 +802,7 @@ router.post('/mine-tick', async (req, res) => {
     if (income > 0) {
       user.balance = roundOnix(Number(user.balance || 0) + income);
       user.totalEarned = roundOnix(Number(user.totalEarned || 0) + income);
+      applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
     }
 
@@ -935,6 +971,7 @@ router.post('/tap', async (req, res) => {
     user.totalEarned = roundOnix(Number(user.totalEarned || 0) + points);
     user.energy = Math.max(0, roundOnix(Number(user.energy || 0) - energyCost));
 
+    applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
     user.updatedAt = new Date();
     user.lastSeenAt = now;
