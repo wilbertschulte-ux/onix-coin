@@ -71,31 +71,6 @@ function App() {
 
   const coinsPerLevel = 500;
 
-  const saveProgress = async (data: {
-    balance: number;
-    energy: number;
-    maxEnergy: number;
-    tapPower: number;
-    energyRecharge: number;
-    autoclickers: number;
-    totalEarned: number;
-    level: number;
-    referralsCount: number;
-    tapLevel: number;
-    minerLevel: number;
-    energyLevel: number;
-    rechargeLevel: number;
-  }) => {
-    try {
-      await axios.post(`${API_URL}/save`, {
-        telegramId: getTelegramId(),
-        data,
-      });
-    } catch (error) {
-      console.log('Ошибка сохранения:', error);
-    }
-  };
-
   useEffect(() => {
     try {
       WebApp.ready();
@@ -387,81 +362,46 @@ function App() {
     }
   };
 
-  const buyUpgrade = (type: 'tap' | 'energy' | 'recharge' | 'miner') => {
-    let cost = 0;
+  const buyUpgrade = async (type: 'tap' | 'energy' | 'recharge' | 'miner') => {
+    const telegramId = getTelegramId();
 
-    if (type === 'tap') cost = (tapLevel + 1) * 150;
-    if (type === 'energy') cost = (energyLevel + 1) * 200;
-    if (type === 'recharge') cost = (rechargeLevel + 1) * 180;
-    if (type === 'miner') cost = (minerLevel + 1) * 300;
-
-    if (balance < cost) {
-      alert('Недостаточно ONIX!');
+    if (!telegramId) {
+      alert('Не удалось получить Telegram ID');
       return;
     }
 
-    const newBalance = balance - cost;
-
-    let newTapPower = tapPower;
-    let newMaxEnergy = maxEnergy;
-    let newEnergyRecharge = energyRecharge;
-    let newAutoclickers = autoclickers;
-
-    let newTapLevel = tapLevel;
-    let newMinerLevel = minerLevel;
-    let newEnergyLevel = energyLevel;
-    let newRechargeLevel = rechargeLevel;
-
-    if (type === 'tap') {
-      newTapLevel += 1;
-      newTapPower += 1;
-    }
-
-    if (type === 'energy') {
-      newEnergyLevel += 1;
-      newMaxEnergy += 500;
-    }
-
-    if (type === 'recharge') {
-      newRechargeLevel += 1;
-      newEnergyRecharge += 5;
-    }
-
-    if (type === 'miner') {
-      newMinerLevel += 1;
-      newAutoclickers += 2;
-    }
-
-    setBalance(newBalance);
-    setTapPower(newTapPower);
-    setMaxEnergy(newMaxEnergy);
-    setEnergyRecharge(newEnergyRecharge);
-    setAutoclickers(newAutoclickers);
-
-    setTapLevel(newTapLevel);
-    setMinerLevel(newMinerLevel);
-    setEnergyLevel(newEnergyLevel);
-    setRechargeLevel(newRechargeLevel);
-
-    saveProgress({
-      balance: newBalance,
-      energy,
-      maxEnergy: newMaxEnergy,
-      tapPower: newTapPower,
-      energyRecharge: newEnergyRecharge,
-      autoclickers: newAutoclickers,
-      totalEarned,
-      level,
-      referralsCount,
-      tapLevel: newTapLevel,
-      minerLevel: newMinerLevel,
-      energyLevel: newEnergyLevel,
-      rechargeLevel: newRechargeLevel,
-    });
-
     try {
-      WebApp.HapticFeedback?.notificationOccurred('success');
-    } catch {}
+      const response = await axios.post(`${API_URL}/buy-upgrade`, {
+        telegramId,
+        type,
+      });
+
+      const user = response.data.user;
+
+      setBalance(user.balance || 0);
+      setEnergy(user.energy || 0);
+      setMaxEnergy(user.maxEnergy || 2000);
+      setTapPower(user.tapPower || 1);
+      setEnergyRecharge(user.energyRecharge || 10);
+      setAutoclickers(user.autoclickers || 0);
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+      setReferralsCount(user.referralsCount || 0);
+      setCompletedTasks(user.completedTasks || []);
+      setActiveBoost(normalizeBoost(user.activeBoost));
+      setBoostEndTime(Number(user.boostEndTime || 0));
+
+      setTapLevel(user.tapLevel || 1);
+      setMinerLevel(user.minerLevel || 1);
+      setEnergyLevel(user.energyLevel || 1);
+      setRechargeLevel(user.rechargeLevel || 1);
+
+      try {
+        WebApp.HapticFeedback?.notificationOccurred('success');
+      } catch {}
+    } catch (error: any) {
+      alert(error?.response?.data?.message || 'Не удалось купить улучшение');
+    }
   };
 
   const activateBoost = async (
