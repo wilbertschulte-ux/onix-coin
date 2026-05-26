@@ -273,6 +273,7 @@ function getTransactionIcon(type: string) {
   if (type.includes('task')) return '✅';
   if (type.includes('upgrade')) return '⬆️';
   if (type.includes('boost')) return '⚡';
+  if (type.includes('perk')) return '🧩';
   if (type.includes('withdrawal')) return '💸';
 
   return '🧾';
@@ -340,6 +341,7 @@ function App() {
     isLimitReached: false,
   });
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [ownedPerks, setOwnedPerks] = useState<string[]>([]);
   const [dailyCooldown, setDailyCooldown] = useState(0);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -457,6 +459,7 @@ function App() {
         setReferralsCount(user.referralsCount || 0);
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
+        setOwnedPerks(user.ownedPerks || []);
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -656,6 +659,7 @@ function App() {
         setReferralsCount(user.referralsCount || 0);
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
+        setOwnedPerks(user.ownedPerks || []);
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -712,6 +716,7 @@ function App() {
       setReferralsCount(user.referralsCount || 0);
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
+      setOwnedPerks(user.ownedPerks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -787,6 +792,7 @@ function App() {
       setReferralsCount(user.referralsCount || 0);
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
+      setOwnedPerks(user.ownedPerks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -804,6 +810,56 @@ function App() {
       } catch {}
     } catch (error: any) {
       alert(error?.response?.data?.message || 'Не удалось купить улучшение');
+    }
+  };
+
+
+  const buyPerk = async (perkId: 'offline_pro') => {
+    const telegramId = getTelegramId();
+
+    if (!telegramId) {
+      alert('Не удалось получить Telegram ID');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/buy-perk`, {
+        telegramId,
+        perkId,
+      });
+
+      const user = response.data.user;
+
+      setBalance(user.balance || 0);
+      setUsername(user.username || 'Пользователь');
+      setWeeklyEarned(Number(user.weeklyEarned || 0));
+      setEnergy(user.energy || 0);
+      setMaxEnergy(user.maxEnergy ?? 500);
+      setTapPower(user.tapPower ?? 1);
+      setEnergyRecharge(user.energyRecharge ?? 0.5);
+      setAutoclickers(user.autoclickers ?? 0.5);
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+      setReferralsCount(user.referralsCount || 0);
+      setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
+      setCompletedTasks(user.completedTasks || []);
+      setOwnedPerks(user.ownedPerks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
+      setTransactions(user.transactions || []);
+      setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
+      setActiveBoost(normalizeBoost(user.activeBoost));
+      setBoostEndTime(Number(user.boostEndTime || 0));
+
+      setTapLevel(user.tapLevel || 1);
+      setMinerLevel(user.minerLevel || 1);
+      setEnergyLevel(user.energyLevel || 1);
+      setRechargeLevel(user.rechargeLevel || 1);
+
+      try {
+        WebApp.HapticFeedback?.notificationOccurred('success');
+      } catch {}
+    } catch (error: any) {
+      alert(error?.response?.data?.message || 'Не удалось купить перк');
     }
   };
 
@@ -840,6 +896,7 @@ function App() {
       setReferralsCount(user.referralsCount || 0);
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
+      setOwnedPerks(user.ownedPerks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -971,6 +1028,7 @@ function App() {
       setReferralsCount(user.referralsCount || 0);
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
+      setOwnedPerks(user.ownedPerks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1119,7 +1177,9 @@ function App() {
     activeBoostValue === 'mining' && isBoostActive ? 2 : 1;
   const minerIncomePerSecond = Number((autoclickers * miningMultiplier).toFixed(2));
   const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
-  const maxOfflineHours = 3;
+  const hasOfflinePro = ownedPerks.includes('offline_pro');
+  const offlineProCost = 100000;
+  const maxOfflineHours = hasOfflinePro ? 4 : 3;
   const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
 
   const nextTapCost = getTapUpgradeCost(tapLevel);
@@ -1457,6 +1517,67 @@ function App() {
             )}
           </div>
 
+
+          <div>
+            <h2 className="text-2xl font-bold mb-4">🧩 Перки</h2>
+
+            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
+                    🧲
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Offline Pro</h3>
+                    <p className="text-sm text-gray-400">
+                      Увеличивает максимум оффлайн-дохода с 3 до 4 часов
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                  <p className="text-xs text-gray-400">Тип</p>
+                  <p className="font-bold text-yellow-400">Навсегда</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                  <p className="text-xs text-gray-400">Сейчас</p>
+                  <p className="mt-1 text-sm font-bold text-white">
+                    {hasOfflinePro ? '4 часа' : '3 часа'}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                  <p className="text-xs text-gray-400">После покупки</p>
+                  <p className="mt-1 text-sm font-bold text-emerald-400">
+                    4 часа оффлайн
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => buyPerk('offline_pro')}
+                disabled={hasOfflinePro || balance < offlineProCost}
+                className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
+                  hasOfflinePro
+                    ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed'
+                    : balance >= offlineProCost
+                    ? 'bg-yellow-400 text-black active:scale-95'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {hasOfflinePro
+                  ? 'Куплено'
+                  : balance >= offlineProCost
+                  ? `Купить за ${offlineProCost.toLocaleString('ru-RU')} ONIX`
+                  : `Не хватает ${(offlineProCost - balance).toLocaleString('ru-RU')} ONIX`}
+              </button>
+            </div>
+          </div>
+
           <div>
             <h2 className="text-2xl font-bold mb-4">Постоянные улучшения</h2>
 
@@ -1786,6 +1907,7 @@ function App() {
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
+                setOwnedPerks(user.ownedPerks || []);
                 setTransactions(user.transactions || []);
                 setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
                 showRewardPopupFromResponse(response.data);
@@ -1838,6 +1960,7 @@ function App() {
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
+                setOwnedPerks(user.ownedPerks || []);
 
                 alert('🎉 Вы получили +${formatOnix(economyConfig.referralReward)} ONIX!');
               } catch (error: any) {
