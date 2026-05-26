@@ -110,19 +110,24 @@ router.post('/create', async (req, res) => {
         referredBy: referredBy || null,
         completedTasks: [],
         tapTimestamps: [],
+
         balance: 0,
         energy: 2000,
         maxEnergy: 2000,
         tapPower: 1,
         energyRecharge: 10,
         autoclickers: 0,
+
         totalEarned: 0,
         level: 1,
+
         referralsCount: 0,
+
         tapLevel: 1,
         minerLevel: 1,
         energyLevel: 1,
         rechargeLevel: 1,
+
         lastSeenAt: Date.now(),
         lastOfflineIncome: 0,
       });
@@ -159,8 +164,11 @@ router.post('/create', async (req, res) => {
         user.username = username;
       }
 
-      user.lastSeenAt = Date.now();
       user.updatedAt = new Date();
+
+      // ВАЖНО:
+      // lastSeenAt здесь НЕ обновляем.
+      // Иначе offline income не успеет посчитаться в GET /:telegramId.
 
       await user.save();
     }
