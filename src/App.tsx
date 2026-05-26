@@ -51,6 +51,15 @@ type LeaderboardItem = {
   totalEarned: number;
 };
 
+type ReferralLimit = {
+  used: number;
+  max: number;
+  remaining: number;
+  resetAt: number;
+  secondsUntilReset: number;
+  isLimitReached: boolean;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ONIX_EUR_RATE = 0.68 / 1000;
@@ -285,6 +294,16 @@ function App() {
   const [referralsCount, setReferralsCount] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [leaderboardWeek, setLeaderboardWeek] = useState('');
+  const [referralModalVisible, setReferralModalVisible] = useState(false);
+  const [copySuccessVisible, setCopySuccessVisible] = useState(false);
+  const [referralLimit, setReferralLimit] = useState<ReferralLimit>({
+    used: 0,
+    max: 10,
+    remaining: 10,
+    resetAt: 0,
+    secondsUntilReset: 0,
+    isLimitReached: false,
+  });
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [dailyCooldown, setDailyCooldown] = useState(0);
   const [dailyStreak, setDailyStreak] = useState(0);
@@ -374,6 +393,7 @@ function App() {
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
+        setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
@@ -464,6 +484,31 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (referralLimit.secondsUntilReset <= 0) return;
+
+    const timer = setInterval(() => {
+      setReferralLimit((prev) => {
+        if (prev.secondsUntilReset <= 1) {
+          return {
+            ...prev,
+            used: 0,
+            remaining: prev.max,
+            secondsUntilReset: 0,
+            isLimitReached: false,
+          };
+        }
+
+        return {
+          ...prev,
+          secondsUntilReset: prev.secondsUntilReset - 1,
+        };
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [referralLimit.secondsUntilReset]);
+
+  useEffect(() => {
     if (dailyCooldown <= 0) return;
 
     const timer = setInterval(() => {
@@ -532,6 +577,7 @@ function App() {
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
+        setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
@@ -587,6 +633,7 @@ function App() {
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
+      setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
@@ -661,6 +708,7 @@ function App() {
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
+      setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
@@ -713,6 +761,7 @@ function App() {
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
+      setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
@@ -736,16 +785,31 @@ function App() {
     }
   };
 
-  const copyReferralLink = async () => {
+  const getReferralLink = () => {
     const telegramId = getTelegramId();
 
-    const link = telegramId
+    return telegramId
       ? `https://t.me/coinonix_bot/onix?startapp=${telegramId}`
       : 'https://t.me/coinonix_bot/onix';
+  };
+
+  const getReferralShareText = () =>
+    'Присоединяйся к ONIX COIN ⚡ Получи стартовый бонус 15 000 ONIX!';
+
+  const showCopySuccess = () => {
+    setCopySuccessVisible(true);
+
+    setTimeout(() => {
+      setCopySuccessVisible(false);
+    }, 1600);
+  };
+
+  const copyReferralLink = async () => {
+    const link = getReferralLink();
 
     try {
       await navigator.clipboard.writeText(link);
-      alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
+      showCopySuccess();
     } catch {
       const textarea = document.createElement('textarea');
       textarea.value = link;
@@ -754,7 +818,22 @@ function App() {
       document.execCommand('copy');
       document.body.removeChild(textarea);
 
-      alert(`✅ Ссылка скопирована в буфер обмена:\n\n${link}`);
+      showCopySuccess();
+    }
+  };
+
+  const shareReferralLink = () => {
+    const link = getReferralLink();
+    const text = getReferralShareText();
+
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+      link
+    )}&text=${encodeURIComponent(text)}`;
+
+    try {
+      WebApp.openTelegramLink(shareUrl);
+    } catch {
+      window.open(shareUrl, '_blank');
     }
   };
 
@@ -813,6 +892,7 @@ function App() {
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
+      setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
@@ -1639,6 +1719,9 @@ function App() {
             <div>
               <p className="font-bold">👥 Пригласить друга</p>
               <p className="text-gray-400">+75000 ONIX</p>
+              <p className="text-xs text-yellow-400">
+                Бонусы сегодня: {referralLimit.used}/{referralLimit.max}
+              </p>
             </div>
 
             <span className="text-emerald-400 font-bold">
@@ -1804,11 +1887,42 @@ function App() {
               </div>
             </div>
 
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-gray-400">Реферальные бонусы сегодня</p>
+                  <p className="mt-1 text-lg font-bold text-white">
+                    {referralLimit.used} / {referralLimit.max}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xs text-gray-400">За друга</p>
+                  <p className="mt-1 font-bold text-yellow-400">
+                    +75 000 ONIX
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  style={{ width: `${referralProgress}%` }}
+                />
+              </div>
+
+              <p className="mt-3 text-sm text-gray-400">
+                {referralLimit.isLimitReached
+                  ? `Лимит исчерпан. Новые бонусы через ${referralResetTime}`
+                  : `Осталось оплачиваемых приглашений: ${referralLimit.remaining}`}
+              </p>
+            </div>
+
             <button
-              onClick={copyReferralLink}
+              onClick={() => setReferralModalVisible(true)}
               className="mt-5 w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl text-lg active:scale-95 transition"
             >
-              🔗 Поделиться реф. ссылкой
+              👥 Пригласить друга
             </button>
           </div>
 
@@ -2011,6 +2125,83 @@ function App() {
         </div>
       )}
 
+
+
+      {referralModalVisible && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 text-center shadow-2xl">
+            <button
+              onClick={() => setReferralModalVisible(false)}
+              className="absolute right-5 top-5 text-2xl text-gray-400"
+            >
+              ×
+            </button>
+
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
+              👥
+            </div>
+
+            <h2 className="text-2xl font-bold text-white">Пригласи друга</h2>
+            <p className="mt-2 text-sm text-gray-400">
+              Делись ссылкой и получай ONIX за новых игроков
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Ты получишь</p>
+                <p className="mt-1 font-bold text-yellow-400">+75 000</p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Друг получит</p>
+                <p className="mt-1 font-bold text-emerald-400">+15 000</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="text-gray-400">Бонусы сегодня</span>
+                <span className="font-bold text-yellow-400">
+                  {referralLimit.used} / {referralLimit.max}
+                </span>
+              </div>
+
+              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  style={{ width: `${referralProgress}%` }}
+                />
+              </div>
+
+              <p className="mt-3 text-xs text-gray-400">
+                {referralLimit.isLimitReached
+                  ? `Лимит бонусов на сегодня исчерпан. Следующие бонусы через ${referralResetTime}`
+                  : `Можно получить ещё ${referralLimit.remaining} оплачиваемых бонусов сегодня`}
+              </p>
+            </div>
+
+            <button
+              onClick={shareReferralLink}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+            >
+              📤 Пригласить в Telegram
+            </button>
+
+            <button
+              onClick={copyReferralLink}
+              className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-white active:scale-95"
+            >
+              🔗 Скопировать ссылку
+            </button>
+
+            {copySuccessVisible && (
+              <p className="mt-3 rounded-2xl bg-emerald-500/10 py-2 text-sm font-bold text-emerald-400">
+                ✅ Ссылка скопирована
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {rewardPopupVisible && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4">
