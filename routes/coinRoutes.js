@@ -234,6 +234,18 @@ router.get('/:telegramId', async (req, res) => {
     const lastSeenAt = user.lastSeenAt || now;
     const offlineSeconds = Math.floor((now - lastSeenAt) / 1000);
 
+    if (offlineSeconds > 0) {
+      const offlineEnergy = roundOnix(
+        Number(user.energy || 0) +
+          Number(user.energyRecharge || DEFAULT_ENERGY_RECHARGE) * offlineSeconds
+      );
+
+      user.energy = Math.min(
+        Number(user.maxEnergy || DEFAULT_MAX_ENERGY),
+        offlineEnergy
+      );
+    }
+
     if (
   user.autoclickers > 0 &&
   offlineSeconds > 10 &&
