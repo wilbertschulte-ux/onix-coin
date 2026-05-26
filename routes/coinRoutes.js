@@ -426,6 +426,7 @@ function normalizeUserFields(user) {
 router.get('/leaderboard/weekly', async (req, res) => {
   try {
     const currentWeek = getWeekKey();
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
 
     await User.updateMany(
       {
@@ -444,10 +445,34 @@ router.get('/leaderboard/weekly', async (req, res) => {
       .limit(20)
       .select('telegramId username weeklyEarned totalEarned');
 
+    let currentUserPlace = null;
+    let currentUserWeeklyEarned = 0;
+
+    if (telegramId) {
+      const currentUser = await User.findOne({ telegramId }).select(
+        'weeklyEarned weeklyEarnedWeek'
+      );
+
+      if (currentUser) {
+        const weeklyEarned = Number(currentUser.weeklyEarned || 0);
+        currentUserWeeklyEarned = roundOnix(weeklyEarned);
+
+        const playersAbove = await User.countDocuments({
+          weeklyEarnedWeek: currentWeek,
+          weeklyEarned: { $gt: weeklyEarned },
+        });
+
+        currentUserPlace = playersAbove + 1;
+      }
+    }
+
     return res.json({
       week: currentWeek,
+      currentUserPlace,
+      currentUserWeeklyEarned,
       leaderboard: users.map((user, index) => ({
         place: index + 1,
+        telegramId: user.telegramId,
         username: user.username || 'Пользователь',
         weeklyEarned: roundOnix(user.weeklyEarned || 0),
         totalEarned: roundOnix(user.totalEarned || 0),
