@@ -86,6 +86,23 @@ type AdminPrizePreviewResponse = {
   preview: AdminPrizePreview[];
 };
 
+type ToastMessage = {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+};
+
+type SeasonHistoryItem = {
+  week: string;
+  awardedAt: number;
+  winners: Array<{
+    place: number;
+    username: string;
+    weeklyEarned: number;
+    prize: number;
+  }>;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_ONIX_EUR_PER_1000 = 0.68;
@@ -162,6 +179,69 @@ const ACHIEVEMENTS: Achievement[] = [
     description: 'Пригласите первого друга',
     reward: 25000,
     goal: 1,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'taps_10000',
+    title: '10 000 тапов',
+    description: 'Сделайте 10 000 тапов',
+    reward: 50000,
+    goal: 10000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'weekly_100k',
+    title: '100 000 ONIX за неделю',
+    description: 'Заработайте 100 000 ONIX за неделю',
+    reward: 25000,
+    goal: 100000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'all_perks',
+    title: 'Коллекционер перков',
+    description: 'Купите все постоянные перки',
+    reward: 75000,
+    goal: 4,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'rank_gold',
+    title: 'Золотой ранг',
+    description: 'Достигните Gold I',
+    reward: 50000,
+    goal: 750000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'rank_diamond',
+    title: 'Diamond игрок',
+    description: 'Достигните Diamond',
+    reward: 250000,
+    goal: 5000000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'friends_5',
+    title: '5 друзей',
+    description: 'Пригласите 5 друзей',
+    reward: 100000,
+    goal: 5,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'streak_7',
+    title: '7 дней подряд',
+    description: 'Дойдите до 7 дня daily streak',
+    reward: 50000,
+    goal: 7,
     progress: 0,
     isCompleted: false,
   },
@@ -359,6 +439,14 @@ function App() {
   const [isClaimingOfflineReward, setIsClaimingOfflineReward] = useState(false);
   const [rewardPopupItems, setRewardPopupItems] = useState<RewardPopupItem[]>([]);
   const [rewardPopupVisible, setRewardPopupVisible] = useState(false);
+  const [toastMessages, setToastMessages] = useState<ToastMessage[]>([]);
+  const [seasonHistory, setSeasonHistory] = useState<SeasonHistoryItem[]>([]);
+  const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
+
+  const [totalTaps, setTotalTaps] = useState(0);
+  const [totalBoostsUsed, setTotalBoostsUsed] = useState(0);
+  const [totalUpgradesBought, setTotalUpgradesBought] = useState(0);
+  const [offlineClaimsCount, setOfflineClaimsCount] = useState(0);
   const [adminPanelVisible, setAdminPanelVisible] = useState(false);
   const [adminPrizePreview, setAdminPrizePreview] =
     useState<AdminPrizePreviewResponse | null>(null);
@@ -491,7 +579,7 @@ function App() {
         const newRefs = user.referralsCount || 0;
 
         if (newRefs > oldRefs) {
-          alert(
+          showToast(
             `🎉 По вашей ссылке перешёл ${
               user.lastReferralUsername || 'новый пользователь'
             }! Вы получили +${formatOnix(economyConfig.referralReward)} ONIX`
@@ -504,7 +592,7 @@ function App() {
           user.referredBy &&
           !localStorage.getItem(`referralWelcomeShown_${user.telegramId}`)
         ) {
-          alert(
+          showToast(
             `🎁 Вы получили +${formatOnix(economyConfig.referredUserReward)} ONIX за вход по ссылке пользователя ${
               user.referredByUsername || 'друга'
             }!`
@@ -517,12 +605,28 @@ function App() {
         setMinerLevel(user.minerLevel || 1);
         setEnergyLevel(user.energyLevel || 1);
         setRechargeLevel(user.rechargeLevel || 1);
+      applyUserStats(user);
+        applyUserStats(user);
       } catch (error) {
         console.log('Ошибка загрузки пользователя:', error);
       }
     };
 
     loadUser();
+  }, []);
+
+  useEffect(() => {
+    const loadSeasonHistory = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/season-history`);
+
+        setSeasonHistory(response.data.seasons || []);
+      } catch (error) {
+        console.log('Ошибка загрузки истории сезонов:', error);
+      }
+    };
+
+    loadSeasonHistory();
   }, []);
 
   useEffect(() => {
@@ -670,6 +774,8 @@ function App() {
         setMinerLevel(user.minerLevel || 1);
         setEnergyLevel(user.energyLevel || 1);
         setRechargeLevel(user.rechargeLevel || 1);
+      applyUserStats(user);
+        applyUserStats(user);
       } catch (error) {
         console.log('Ошибка майнинга:', error);
       } finally {
@@ -684,7 +790,7 @@ function App() {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
-      alert('Не удалось получить Telegram ID');
+      showToast('Не удалось получить Telegram ID');
       return;
     }
 
@@ -727,6 +833,7 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      applyUserStats(user);
       showRewardPopupFromResponse(response.data);
 
       const newNum: FloatingNumber = {
@@ -767,7 +874,7 @@ function App() {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
-      alert('Не удалось получить Telegram ID');
+      showToast('Не удалось получить Telegram ID');
       return;
     }
 
@@ -803,13 +910,14 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      applyUserStats(user);
       showRewardPopupFromResponse(response.data);
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
       } catch {}
     } catch (error: any) {
-      alert(error?.response?.data?.message || 'Не удалось купить улучшение');
+      showToast(error?.response?.data?.message || 'Не удалось купить улучшение');
     }
   };
 
@@ -818,7 +926,7 @@ function App() {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
-      alert('Не удалось получить Telegram ID');
+      showToast('Не удалось получить Telegram ID');
       return;
     }
 
@@ -854,12 +962,13 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      applyUserStats(user);
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
       } catch {}
     } catch (error: any) {
-      alert(error?.response?.data?.message || 'Не удалось купить перк');
+      showToast(error?.response?.data?.message || 'Не удалось купить перк');
     }
   };
 
@@ -871,7 +980,7 @@ function App() {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
-      alert('Не удалось получить Telegram ID');
+      showToast('Не удалось получить Telegram ID');
       return;
     }
 
@@ -907,15 +1016,16 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      applyUserStats(user);
       showRewardPopupFromResponse(response.data);
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
       } catch {}
 
-      alert(`⚡ ${type === 'tap' ? 'Тап' : 'Майнинг'} ×2 активирован!`);
+      showToast(`⚡ ${type === 'tap' ? 'Тап' : 'Майнинг'} ×2 активирован!`);
     } catch (error: any) {
-      alert(error?.response?.data?.message || 'Не удалось активировать буст');
+      showToast(error?.response?.data?.message || 'Не удалось активировать буст');
     }
   };
 
@@ -1002,7 +1112,7 @@ function App() {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
-      alert('Не удалось получить Telegram ID');
+      showToast('Не удалось получить Telegram ID');
       return;
     }
 
@@ -1039,6 +1149,7 @@ function App() {
       setMinerLevel(user.minerLevel || 1);
       setEnergyLevel(user.energyLevel || 1);
       setRechargeLevel(user.rechargeLevel || 1);
+      applyUserStats(user);
       showRewardPopupFromResponse(response.data);
 
       setOfflineRewardVisible(false);
@@ -1049,12 +1160,32 @@ function App() {
         WebApp.HapticFeedback?.notificationOccurred('success');
       } catch {}
     } catch (error: any) {
-      alert(error?.response?.data?.message || 'Не удалось забрать доход майнера');
+      showToast(error?.response?.data?.message || 'Не удалось забрать доход майнера');
     } finally {
       setIsClaimingOfflineReward(false);
     }
   };
 
+
+  const applyUserStats = (user: any) => {
+    setTotalTaps(Number(user.totalTaps || 0));
+    setTotalBoostsUsed(Number(user.totalBoostsUsed || 0));
+    setTotalUpgradesBought(Number(user.totalUpgradesBought || 0));
+    setOfflineClaimsCount(Number(user.offlineClaimsCount || 0));
+  };
+
+  const showToast = (
+    message: string,
+    type: 'success' | 'error' | 'info' = 'info'
+  ) => {
+    const id = Date.now() + Math.random();
+
+    setToastMessages((prev) => [...prev, { id, message, type }]);
+
+    setTimeout(() => {
+      setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
+    }, 2800);
+  };
 
   const showRewardPopupFromResponse = (data: any) => {
     const items: RewardPopupItem[] = [];
@@ -1121,9 +1252,40 @@ function App() {
       setAdminPrizePreview(response.data);
       setAdminPanelVisible(true);
     } catch (error: any) {
-      alert(error?.response?.data?.message || 'Не удалось загрузить preview');
+      showToast(error?.response?.data?.message || 'Не удалось загрузить preview');
     } finally {
       setIsAdminLoading(false);
+    }
+  };
+
+  const requestWithdrawal = async () => {
+    const telegramId = getTelegramId();
+
+    if (!canWithdraw || isWithdrawalLoading) return;
+
+    const confirmed = window.confirm(
+      `Создать заявку на вывод ${formatOnix(minWithdrawOnix)} ONIX?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsWithdrawalLoading(true);
+
+      const response = await axios.post(`${API_URL}/request-withdrawal`, {
+        telegramId,
+        amount: minWithdrawOnix,
+      });
+
+      const user = response.data.user;
+
+      setBalance(user.balance || 0);
+      setTransactions(user.transactions || []);
+      showToast('✅ Заявка на вывод создана', 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось создать заявку', 'error');
+    } finally {
+      setIsWithdrawalLoading(false);
     }
   };
 
@@ -1147,7 +1309,7 @@ function App() {
         week: adminPrizePreview.week,
       });
 
-      alert('✅ Призы сезона выданы');
+      showToast('✅ Призы сезона выданы');
 
       setAdminPrizePreview({
         ...adminPrizePreview,
@@ -1155,7 +1317,7 @@ function App() {
         awardedWinners: response.data.winners || [],
       });
     } catch (error: any) {
-      alert(error?.response?.data?.message || 'Не удалось выдать призы');
+      showToast(error?.response?.data?.message || 'Не удалось выдать призы');
     } finally {
       setIsAdminLoading(false);
     }
@@ -1350,6 +1512,22 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
+      <div className="fixed left-0 right-0 top-4 z-[100] flex flex-col items-center gap-2 px-4">
+        {toastMessages.map((toast) => (
+          <div
+            key={toast.id}
+            className={`w-full max-w-sm rounded-2xl px-4 py-3 text-center text-sm font-bold shadow-2xl ${
+              toast.type === 'success'
+                ? 'bg-emerald-500 text-white'
+                : toast.type === 'error'
+                ? 'bg-red-500 text-white'
+                : 'bg-[#111827] text-yellow-400 border border-yellow-400/30'
+            }`}
+          >
+            {toast.message}
+          </div>
+        ))}
+      </div>
       <div className="bg-[#111827] p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <Coins className="w-9 h-9 text-yellow-400" />
@@ -1912,6 +2090,7 @@ function App() {
                 setWeeklyEarned(Number(user.weeklyEarned || 0));
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
+                applyUserStats(user);
                 setDailyStreak(Number(user.dailyStreak || 0));
                 setTransactions(user.transactions || []);
                 setDailyCooldown(cooldown);
@@ -1934,14 +2113,14 @@ function App() {
                       )} ONIX`
                     : '';
 
-                alert(
+                showToast(
                   `🎁 Вы получили +${formatOnix(
                     response.data.claimedDailyReward ||
                       getDailyRewardWithStreak(user.level, user.dailyStreak || 1)
                   )} ONIX\n🔥 Стрик: ${user.dailyStreak || 1}/7${rankBonusText}`
                 );
               } catch (error: any) {
-                alert(error?.response?.data?.message || 'Ошибка получения награды');
+                showToast(error?.response?.data?.message || 'Ошибка получения награды');
               }
             }}
             className={`shop-item ${
@@ -1987,15 +2166,16 @@ function App() {
                 setWeeklyEarned(Number(user.weeklyEarned || 0));
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
+                applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
                 setTransactions(user.transactions || []);
                 setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
                 showRewardPopupFromResponse(response.data);
 
-                alert('🎉 Подписка подтверждена! +25000 ONIX');
+                showToast('🎉 Подписка подтверждена! +25000 ONIX');
               } catch (error: any) {
-                alert(error?.response?.data?.message || 'Сначала подпишитесь на канал');
+                showToast(error?.response?.data?.message || 'Сначала подпишитесь на канал');
               }
             }}
             className={`shop-item ${
@@ -2040,12 +2220,13 @@ function App() {
                 setWeeklyEarned(Number(user.weeklyEarned || 0));
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
+                applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
 
-                alert('🎉 Вы получили +${formatOnix(economyConfig.referralReward)} ONIX!');
+                showToast(`🎉 Вы получили +${formatOnix(economyConfig.referralReward)} ONIX!`, 'success');
               } catch (error: any) {
-                alert(error?.response?.data?.message || 'Сначала пригласите друга');
+                showToast(error?.response?.data?.message || 'Сначала пригласите друга');
               }
             }}
             className={`shop-item ${
@@ -2233,6 +2414,32 @@ function App() {
             </div>
 
             <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <h3 className="mb-3 text-lg font-bold text-white">📊 Статистика игрока</h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Тапов</p>
+                  <p className="font-bold text-yellow-400">{formatOnix(totalTaps)}</p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Апгрейдов</p>
+                  <p className="font-bold text-yellow-400">{formatOnix(totalUpgradesBought)}</p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Бустов</p>
+                  <p className="font-bold text-yellow-400">{formatOnix(totalBoostsUsed)}</p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Оффлайн-клеймов</p>
+                  <p className="font-bold text-yellow-400">{formatOnix(offlineClaimsCount)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs text-gray-400">Реферальные бонусы сегодня</p>
@@ -2385,6 +2592,28 @@ function App() {
               </p>
             )}
           </div>
+
+          {seasonHistory.length > 0 && (
+            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+              <h3 className="mb-4 text-xl font-bold text-white">📜 История сезонов</h3>
+
+              <div className="space-y-3">
+                {seasonHistory.slice(0, 5).map((season) => (
+                  <div key={season.week} className="rounded-2xl bg-[#0a0f1c] p-4">
+                    <p className="font-bold text-yellow-400">{season.week}</p>
+
+                    <div className="mt-2 space-y-1">
+                      {season.winners.map((winner) => (
+                        <p key={`${season.week}-${winner.place}`} className="text-sm text-gray-300">
+                          #{winner.place} {winner.username} · +{formatOnix(winner.prize)} ONIX
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2512,10 +2741,19 @@ function App() {
             </div>
 
             <button
-              disabled
-              className="mt-5 w-full rounded-2xl bg-gray-700 py-4 text-lg font-bold text-gray-400 cursor-not-allowed"
+              onClick={requestWithdrawal}
+              disabled={!canWithdraw || isWithdrawalLoading}
+              className={`mt-5 w-full rounded-2xl py-4 text-lg font-bold active:scale-95 ${
+                canWithdraw
+                  ? 'bg-yellow-400 text-black'
+                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              }`}
             >
-              Вывод скоро
+              {isWithdrawalLoading
+                ? 'Создаём заявку...'
+                : canWithdraw
+                ? 'Создать заявку на вывод'
+                : 'Недостаточно ONIX для вывода'}
             </button>
 
             <p className="mt-4 text-center text-xs text-gray-500">
