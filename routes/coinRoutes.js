@@ -259,6 +259,36 @@ function canReceivePaidReferralBonus(user, now = Date.now()) {
   return Number(user.dailyReferralBonusCount || 0) < MAX_PAID_REFERRALS_PER_DAY;
 }
 
+function getNextUtcDayStart(timestamp = Date.now()) {
+  const date = new Date(timestamp);
+  return Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate() + 1,
+    0,
+    0,
+    0,
+    0
+  );
+}
+
+function getReferralLimitPayload(user, now = Date.now()) {
+  prepareReferralBonusWindow(user, now);
+
+  const used = Number(user.dailyReferralBonusCount || 0);
+  const max = MAX_PAID_REFERRALS_PER_DAY;
+  const resetAt = getNextUtcDayStart(now);
+
+  return {
+    used,
+    max,
+    remaining: Math.max(max - used, 0),
+    resetAt,
+    secondsUntilReset: Math.max(Math.ceil((resetAt - now) / 1000), 0),
+    isLimitReached: used >= max,
+  };
+}
+
 function getTapUpgradeCost(tapLevel) {
   return Math.round(1000 * Math.pow(1.35, Number(tapLevel || 1) - 1));
 }
@@ -561,6 +591,7 @@ router.get('/:telegramId', async (req, res) => {
     return res.json({
       ...user.toObject(),
       achievements: getAchievementsPayload(user),
+      referralLimit: getReferralLimitPayload(user),
     });
   } catch (error) {
     return res.status(500).json({
@@ -702,7 +733,11 @@ router.post('/create', async (req, res) => {
       await user.save();
     }
 
-    return res.json(user);
+    return res.json({
+      ...user.toObject(),
+      achievements: getAchievementsPayload(user),
+      referralLimit: getReferralLimitPayload(user),
+    });
   } catch (error) {
     return res.status(500).json({
       error: error.message,
@@ -910,8 +945,10 @@ router.post('/buy-upgrade', async (req, res) => {
       user: {
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
       },
       achievements: getAchievementsPayload(user),
+      referralLimit: getReferralLimitPayload(user),
       achievementBonuses,
       rankBonuses,
       upgrade: {
@@ -1062,6 +1099,7 @@ router.post('/claim-task', async (req, res) => {
       return res.json({
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
         rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
         achievementBonuses: typeof achievementBonuses !== 'undefined' ? achievementBonuses : [],
       });
@@ -1096,6 +1134,7 @@ router.post('/claim-task', async (req, res) => {
       return res.json({
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
         rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
         achievementBonuses: typeof achievementBonuses !== 'undefined' ? achievementBonuses : [],
       });
@@ -1164,8 +1203,10 @@ router.post('/claim-offline-income', async (req, res) => {
       user: {
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
       },
       achievements: getAchievementsPayload(user),
+      referralLimit: getReferralLimitPayload(user),
       achievementBonuses,
       rankBonuses,
       claimedAmount,
@@ -1253,6 +1294,7 @@ router.post('/mine-tick', async (req, res) => {
       user: {
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
       },
       achievements: getAchievementsPayload(user),
       income,
@@ -1343,8 +1385,10 @@ router.post('/activate-boost', async (req, res) => {
       user: {
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
       },
       achievements: getAchievementsPayload(user),
+      referralLimit: getReferralLimitPayload(user),
       achievementBonuses,
       rankBonuses,
       boost: {
@@ -1436,8 +1480,10 @@ router.post('/tap', async (req, res) => {
       user: {
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
       },
       achievements: getAchievementsPayload(user),
+      referralLimit: getReferralLimitPayload(user),
       achievementBonuses,
       rankBonuses,
       points,
