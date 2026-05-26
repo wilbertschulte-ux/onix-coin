@@ -28,6 +28,15 @@ function getTelegramId() {
   return tg.initDataUnsafe?.user?.id?.toString() || '';
 }
 
+function normalizeBoost(value: unknown): 'none' | 'tap' | 'mining' {
+  const boost = String(value || 'none').trim();
+
+  if (boost === 'tap') return 'tap';
+  if (boost === 'mining' || boost === 'miner') return 'mining';
+
+  return 'none';
+}
+
 function App() {
   const [balance, setBalance] = useState(0);
   const [energy, setEnergy] = useState(2000);
@@ -156,7 +165,7 @@ function App() {
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
-        setActiveBoost(user.activeBoost || 'none');
+        setActiveBoost(normalizeBoost(user.activeBoost));
         setBoostEndTime(Number(user.boostEndTime || 0));
 
         setTimeout(() => {
@@ -238,10 +247,24 @@ function App() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const multiplier =
-        activeBoost === 'mining' && Date.now() < boostEndTime ? 2 : 1;
+      const now = Date.now();
+      const currentBoost = normalizeBoost(activeBoost);
+      const currentBoostEndTime = Number(boostEndTime || 0);
 
-      const income = Math.floor(autoclickers * multiplier);
+      const isMiningBoostActive =
+        currentBoost === 'mining' && currentBoostEndTime > now;
+
+      if (
+        currentBoost !== 'none' &&
+        currentBoostEndTime > 0 &&
+        currentBoostEndTime <= now
+      ) {
+        setActiveBoost('none');
+        setBoostEndTime(0);
+      }
+
+      const multiplier = isMiningBoostActive ? 2 : 1;
+      const income = Math.floor(Number(autoclickers || 0) * multiplier);
 
       if (income > 0) {
         const newBalance = balance + income;
@@ -325,7 +348,7 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
-      setActiveBoost(user.activeBoost || 'none');
+      setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
       setTapLevel(user.tapLevel || 1);
@@ -474,7 +497,7 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
-      setActiveBoost(user.activeBoost || 'none');
+      setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
       setTapLevel(user.tapLevel || 1);
@@ -568,7 +591,7 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
-      setActiveBoost(user.activeBoost || 'none');
+      setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
       setTapLevel(user.tapLevel || 1);
@@ -592,9 +615,13 @@ function App() {
 
   const currentLevelCoins = totalEarned - (level - 1) * coinsPerLevel;
   const progress = (currentLevelCoins / coinsPerLevel) * 100;
-  const isBoostActive = Date.now() < boostEndTime;
+  const activeBoostValue = normalizeBoost(activeBoost);
+  const normalizedBoostEndTime = Number(boostEndTime || 0);
+  const isBoostActive =
+    activeBoostValue !== 'none' && Date.now() < normalizedBoostEndTime;
 
-  const miningMultiplier = activeBoost === 'mining' && isBoostActive ? 2 : 1;
+  const miningMultiplier =
+    activeBoostValue === 'mining' && isBoostActive ? 2 : 1;
   const minerIncomePerSecond = Math.floor(autoclickers * miningMultiplier);
   const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
   const maxOfflineHours = 3;
@@ -695,7 +722,7 @@ function App() {
       multiplier: '×2',
       durationMinutes: 10,
       cost: 300,
-      isActive: isBoostActive && activeBoost === 'tap',
+      isActive: isBoostActive && activeBoostValue === 'tap',
     },
     {
       type: 'mining',
@@ -705,7 +732,7 @@ function App() {
       multiplier: '×2',
       durationMinutes: 15,
       cost: 500,
-      isActive: isBoostActive && activeBoost === 'mining',
+      isActive: isBoostActive && activeBoostValue === 'mining',
     },
   ];
 
@@ -891,7 +918,7 @@ function App() {
               </div>
             </div>
 
-            {isBoostActive && activeBoost === 'mining' && (
+            {isBoostActive && activeBoostValue === 'mining' && (
               <p className="mt-4 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-400">
                 ⚡ Активен буст майнинга ×2
               </p>
@@ -1010,7 +1037,7 @@ function App() {
                   <div>
                     <p className="text-sm text-emerald-300">Активный буст</p>
                     <h3 className="mt-1 text-xl font-bold text-white">
-                      {activeBoost === 'tap' ? '🎯 Тап ×2' : '⛏️ Майнинг ×2'}
+                      {activeBoostValue === 'tap' ? '🎯 Тап ×2' : '⛏️ Майнинг ×2'}
                     </h3>
                   </div>
 
