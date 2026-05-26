@@ -48,6 +48,18 @@ function getDailyReward(level: number) {
   return Math.min(15000 + Number(level || 1) * 500, 50000);
 }
 
+function getDailyStreakMultiplier(streakDay: number) {
+  const day = Number(streakDay || 1);
+
+  if (day >= 7) return 2;
+
+  return 1 + (day - 1) * 0.1;
+}
+
+function getDailyRewardWithStreak(level: number, streakDay: number) {
+  return Math.round(getDailyReward(level) * getDailyStreakMultiplier(streakDay));
+}
+
 function getTapBoostCost(tapPower: number) {
   return Math.max(2500, Math.round(Number(tapPower || 1) * 500 * 0.7));
 }
@@ -91,6 +103,7 @@ function App() {
   const [referralsCount, setReferralsCount] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [dailyCooldown, setDailyCooldown] = useState(0);
+  const [dailyStreak, setDailyStreak] = useState(0);
   const [channelJoined, setChannelJoined] = useState(false);
 
   const [tapLevel, setTapLevel] = useState(1);
@@ -174,6 +187,7 @@ function App() {
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
+        setDailyStreak(Number(user.dailyStreak || 0));
         setActiveBoost(normalizeBoost(user.activeBoost));
         setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -304,6 +318,7 @@ function App() {
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
         setCompletedTasks(user.completedTasks || []);
+        setDailyStreak(Number(user.dailyStreak || 0));
         setActiveBoost(normalizeBoost(user.activeBoost));
         setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -354,6 +369,7 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -422,6 +438,7 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -468,6 +485,7 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -562,6 +580,7 @@ function App() {
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
       setCompletedTasks(user.completedTasks || []);
+      setDailyStreak(Number(user.dailyStreak || 0));
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
 
@@ -674,6 +693,15 @@ function App() {
   const boostRemainingMs = Math.max(boostEndTime - Date.now(), 0);
   const boostTimeLeft = boostRemainingMs > 0 ? formatTime(boostRemainingMs) : '';
   const isAnyBoostActive = isBoostActive && activeBoost !== 'none';
+
+  const nextDailyStreakDay = dailyCooldown > 0
+    ? Math.max(1, Number(dailyStreak || 1))
+    : Number(dailyStreak || 0) >= 7
+    ? 1
+    : Number(dailyStreak || 0) + 1;
+
+  const dailyRewardPreview = getDailyRewardWithStreak(level, nextDailyStreakDay);
+  const dailyStreakMultiplier = getDailyStreakMultiplier(nextDailyStreakDay);
 
   const boostCards: Array<{
     type: 'tap' | 'mining';
@@ -1147,6 +1175,7 @@ function App() {
                 setBalance(user.balance);
                 setTotalEarned(user.totalEarned);
                 setLevel(user.level);
+                setDailyStreak(Number(user.dailyStreak || 0));
                 setDailyCooldown(cooldown);
 
                 localStorage.setItem(
@@ -1154,7 +1183,12 @@ function App() {
                   (Date.now() + cooldown).toString()
                 );
 
-                alert(`🎁 Вы получили +${getDailyReward(user.level)} ONIX`);
+                alert(
+                  `🎁 Вы получили +${formatOnix(
+                    response.data.claimedDailyReward ||
+                      getDailyRewardWithStreak(user.level, user.dailyStreak || 1)
+                  )} ONIX\n🔥 Стрик: ${user.dailyStreak || 1}/7`
+                );
               } catch (error: any) {
                 alert(error?.response?.data?.message || 'Ошибка получения награды');
               }
@@ -1165,7 +1199,12 @@ function App() {
           >
             <div>
               <p className="font-bold">🎁 Ежедневная награда</p>
-              <p className="text-gray-400">+{getDailyReward(level)} ONIX</p>
+              <p className="text-gray-400">
+                +{formatOnix(dailyRewardPreview)} ONIX · День {nextDailyStreakDay}/7
+              </p>
+              <p className="text-xs text-yellow-400">
+                Множитель стрика ×{dailyStreakMultiplier.toFixed(1)}
+              </p>
             </div>
 
             <span className="text-emerald-400 font-bold">
