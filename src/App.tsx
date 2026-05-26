@@ -22,6 +22,40 @@ type FloatingNumber = {
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+function formatOnix(value: number) {
+  return Number(value || 0).toLocaleString('ru-RU', {
+    maximumFractionDigits: 2,
+  });
+}
+
+function getTapUpgradeCost(tapLevel: number) {
+  return Math.round(1000 * Math.pow(1.35, Number(tapLevel || 1) - 1));
+}
+
+function getMinerUpgradeCost(minerLevel: number) {
+  return Math.round(2500 * Math.pow(1.38, Number(minerLevel || 1) - 1));
+}
+
+function getEnergyUpgradeCost(energyLevel: number) {
+  return Math.round(1500 * Math.pow(1.25, Number(energyLevel || 1) - 1));
+}
+
+function getRechargeUpgradeCost(rechargeLevel: number) {
+  return Math.round(1800 * Math.pow(1.28, Number(rechargeLevel || 1) - 1));
+}
+
+function getDailyReward(level: number) {
+  return Math.min(15000 + Number(level || 1) * 500, 50000);
+}
+
+function getTapBoostCost(tapPower: number) {
+  return Math.max(2500, Math.round(Number(tapPower || 1) * 500 * 0.7));
+}
+
+function getMiningBoostCost(autoclickers: number) {
+  return Math.max(2500, Math.round(Number(autoclickers || 0.5) * 900 * 0.7));
+}
+
 function getTelegramId() {
   const tg = window.Telegram?.WebApp;
   if (!tg) return '';
@@ -39,11 +73,11 @@ function normalizeBoost(value: unknown): 'none' | 'tap' | 'mining' {
 
 function App() {
   const [balance, setBalance] = useState(0);
-  const [energy, setEnergy] = useState(2000);
-  const [maxEnergy, setMaxEnergy] = useState(2000);
+  const [energy, setEnergy] = useState(500);
+  const [maxEnergy, setMaxEnergy] = useState(500);
   const [tapPower, setTapPower] = useState(1);
-  const [energyRecharge, setEnergyRecharge] = useState(10);
-  const [autoclickers, setAutoclickers] = useState(0);
+  const [energyRecharge, setEnergyRecharge] = useState(0.5);
+  const [autoclickers, setAutoclickers] = useState(0.5);
   const [level, setLevel] = useState(1);
   const [totalEarned, setTotalEarned] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -131,11 +165,11 @@ function App() {
         }
 
         setBalance(user.balance || 0);
-        setEnergy(user.energy || 2000);
-        setMaxEnergy(user.maxEnergy || 2000);
-        setTapPower(user.tapPower || 1);
-        setEnergyRecharge(user.energyRecharge || 10);
-        setAutoclickers(user.autoclickers || 0);
+        setEnergy(user.energy ?? 500);
+        setMaxEnergy(user.maxEnergy ?? 500);
+        setTapPower(user.tapPower ?? 1);
+        setEnergyRecharge(user.energyRecharge ?? 0.5);
+        setAutoclickers(user.autoclickers ?? 0.5);
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
@@ -171,7 +205,7 @@ function App() {
           alert(
             `🎉 По вашей ссылке перешёл ${
               user.lastReferralUsername || 'новый пользователь'
-            }! Вы получили +5000 ONIX`
+            }! Вы получили +75000 ONIX`
           );
         }
 
@@ -182,7 +216,7 @@ function App() {
           !localStorage.getItem(`referralWelcomeShown_${user.telegramId}`)
         ) {
           alert(
-            `🎁 Вы получили +1000 ONIX за вход по ссылке пользователя ${
+            `🎁 Вы получили +15000 ONIX за вход по ссылке пользователя ${
               user.referredByUsername || 'друга'
             }!`
           );
@@ -262,10 +296,10 @@ function App() {
 
         setBalance(user.balance || 0);
         setEnergy(user.energy || 0);
-        setMaxEnergy(user.maxEnergy || 2000);
-        setTapPower(user.tapPower || 1);
-        setEnergyRecharge(user.energyRecharge || 10);
-        setAutoclickers(user.autoclickers || 0);
+        setMaxEnergy(user.maxEnergy ?? 500);
+        setTapPower(user.tapPower ?? 1);
+        setEnergyRecharge(user.energyRecharge ?? 0.5);
+        setAutoclickers(user.autoclickers ?? 0.5);
         setTotalEarned(user.totalEarned || 0);
         setLevel(user.level || 1);
         setReferralsCount(user.referralsCount || 0);
@@ -308,14 +342,14 @@ function App() {
       });
 
       const user = response.data.user;
-      const points = response.data.points || user.tapPower || tapPower || 1;
+      const points = response.data.points ?? user.tapPower ?? tapPower ?? 1;
 
       setBalance(user.balance || 0);
       setEnergy(user.energy || 0);
-      setMaxEnergy(user.maxEnergy || 2000);
-      setTapPower(user.tapPower || 1);
-      setEnergyRecharge(user.energyRecharge || 10);
-      setAutoclickers(user.autoclickers || 0);
+      setMaxEnergy(user.maxEnergy ?? 500);
+      setTapPower(user.tapPower ?? 1);
+      setEnergyRecharge(user.energyRecharge ?? 0.5);
+      setAutoclickers(user.autoclickers ?? 0.5);
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
@@ -380,10 +414,10 @@ function App() {
 
       setBalance(user.balance || 0);
       setEnergy(user.energy || 0);
-      setMaxEnergy(user.maxEnergy || 2000);
-      setTapPower(user.tapPower || 1);
-      setEnergyRecharge(user.energyRecharge || 10);
-      setAutoclickers(user.autoclickers || 0);
+      setMaxEnergy(user.maxEnergy ?? 500);
+      setTapPower(user.tapPower ?? 1);
+      setEnergyRecharge(user.energyRecharge ?? 0.5);
+      setAutoclickers(user.autoclickers ?? 0.5);
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
@@ -426,10 +460,10 @@ function App() {
 
       setBalance(user.balance || 0);
       setEnergy(user.energy || 0);
-      setMaxEnergy(user.maxEnergy || 2000);
-      setTapPower(user.tapPower || 1);
-      setEnergyRecharge(user.energyRecharge || 10);
-      setAutoclickers(user.autoclickers || 0);
+      setMaxEnergy(user.maxEnergy ?? 500);
+      setTapPower(user.tapPower ?? 1);
+      setEnergyRecharge(user.energyRecharge ?? 0.5);
+      setAutoclickers(user.autoclickers ?? 0.5);
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
@@ -520,10 +554,10 @@ function App() {
 
       setBalance(user.balance || 0);
       setEnergy(user.energy || 0);
-      setMaxEnergy(user.maxEnergy || 2000);
-      setTapPower(user.tapPower || 1);
-      setEnergyRecharge(user.energyRecharge || 10);
-      setAutoclickers(user.autoclickers || 0);
+      setMaxEnergy(user.maxEnergy ?? 500);
+      setTapPower(user.tapPower ?? 1);
+      setEnergyRecharge(user.energyRecharge ?? 0.5);
+      setAutoclickers(user.autoclickers ?? 0.5);
       setTotalEarned(user.totalEarned || 0);
       setLevel(user.level || 1);
       setReferralsCount(user.referralsCount || 0);
@@ -559,19 +593,19 @@ function App() {
 
   const miningMultiplier =
     activeBoostValue === 'mining' && isBoostActive ? 2 : 1;
-  const minerIncomePerSecond = Math.floor(autoclickers * miningMultiplier);
+  const minerIncomePerSecond = Number((autoclickers * miningMultiplier).toFixed(2));
   const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
   const maxOfflineHours = 3;
   const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
 
-  const nextTapCost = (tapLevel + 1) * 150;
-  const nextMinerCost = (minerLevel + 1) * 300;
-  const nextEnergyCost = (energyLevel + 1) * 200;
-  const nextRechargeCost = (rechargeLevel + 1) * 180;
+  const nextTapCost = getTapUpgradeCost(tapLevel);
+  const nextMinerCost = getMinerUpgradeCost(minerLevel);
+  const nextEnergyCost = getEnergyUpgradeCost(energyLevel);
+  const nextRechargeCost = getRechargeUpgradeCost(rechargeLevel);
 
   const minerUpgradeProgress = Math.min((balance / nextMinerCost) * 100, 100);
-  const nextMinerIncomePerSecond = Math.floor(
-    (autoclickers + 2) * miningMultiplier
+  const nextMinerIncomePerSecond = Number(
+    ((autoclickers + 0.5) * miningMultiplier).toFixed(2)
   );
   const minerIncomeIncrease = nextMinerIncomePerSecond - minerIncomePerSecond;
 
@@ -595,9 +629,9 @@ function App() {
       level: tapLevel,
       cost: nextTapCost,
       currentLabel: 'Сейчас',
-      currentValue: `+${tapPower.toLocaleString('ru-RU')} ONIX/тап`,
+      currentValue: `+${formatOnix(tapPower)} ONIX/тап`,
       nextLabel: 'После апгрейда',
-      nextValue: `+${(tapPower + 1).toLocaleString('ru-RU')} ONIX/тап`,
+      nextValue: `+${formatOnix(tapPower + 1)} ONIX/тап`,
     },
     {
       type: 'miner',
@@ -607,9 +641,9 @@ function App() {
       level: minerLevel,
       cost: nextMinerCost,
       currentLabel: 'Сейчас',
-      currentValue: `+${minerIncomePerSecond.toLocaleString('ru-RU')} ONIX/сек`,
+      currentValue: `+${formatOnix(minerIncomePerSecond)} ONIX/сек`,
       nextLabel: 'После апгрейда',
-      nextValue: `+${nextMinerIncomePerSecond.toLocaleString('ru-RU')} ONIX/сек`,
+      nextValue: `+${formatOnix(nextMinerIncomePerSecond)} ONIX/сек`,
     },
     {
       type: 'energy',
@@ -621,7 +655,7 @@ function App() {
       currentLabel: 'Сейчас',
       currentValue: `${maxEnergy.toLocaleString('ru-RU')} энергии`,
       nextLabel: 'После апгрейда',
-      nextValue: `${(maxEnergy + 500).toLocaleString('ru-RU')} энергии`,
+      nextValue: `${(maxEnergy + 100).toLocaleString('ru-RU')} энергии`,
     },
     {
       type: 'recharge',
@@ -631,9 +665,9 @@ function App() {
       level: rechargeLevel,
       cost: nextRechargeCost,
       currentLabel: 'Сейчас',
-      currentValue: `+${energyRecharge.toLocaleString('ru-RU')} энергии/сек`,
+      currentValue: `+${formatOnix(energyRecharge)} энергии/сек`,
       nextLabel: 'После апгрейда',
-      nextValue: `+${(energyRecharge + 5).toLocaleString('ru-RU')} энергии/сек`,
+      nextValue: `+${formatOnix(energyRecharge + 0.25)} энергии/сек`,
     },
   ];
 
@@ -658,7 +692,7 @@ function App() {
       description: 'Увеличивает силу тапа на время действия',
       multiplier: '×2',
       durationMinutes: 10,
-      cost: 300,
+      cost: getTapBoostCost(tapPower),
       isActive: isBoostActive && activeBoostValue === 'tap',
     },
     {
@@ -668,7 +702,7 @@ function App() {
       description: 'Удваивает доход майнера онлайн',
       multiplier: '×2',
       durationMinutes: 15,
-      cost: 500,
+      cost: getMiningBoostCost(autoclickers),
       isActive: isBoostActive && activeBoostValue === 'mining',
     },
   ];
@@ -791,14 +825,14 @@ function App() {
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Доход в секунду</p>
                 <p className="mt-1 text-lg font-bold text-yellow-400">
-                  +{minerIncomePerSecond.toLocaleString('ru-RU')}
+                  +{formatOnix(minerIncomePerSecond)}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Доход в час</p>
                 <p className="mt-1 text-lg font-bold text-yellow-400">
-                  +{minerIncomePerHour.toLocaleString('ru-RU')}
+                  +{formatOnix(minerIncomePerHour)}
                 </p>
               </div>
 
@@ -812,7 +846,7 @@ function App() {
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Макс. доход</p>
                 <p className="mt-1 text-lg font-bold text-yellow-400">
-                  +{maxOfflineIncome.toLocaleString('ru-RU')}
+                  +{formatOnix(maxOfflineIncome)}
                 </p>
               </div>
             </div>
@@ -850,7 +884,7 @@ function App() {
                 </span>
 
                 <span className="font-bold text-emerald-400">
-                  +{minerIncomeIncrease.toLocaleString('ru-RU')} ONIX/сек
+                  +{formatOnix(minerIncomeIncrease)} ONIX/сек
                 </span>
               </div>
             </div>
@@ -1120,7 +1154,7 @@ function App() {
                   (Date.now() + cooldown).toString()
                 );
 
-                alert(`🎁 Вы получили +${500 + user.level * 100} ONIX`);
+                alert(`🎁 Вы получили +${getDailyReward(user.level)} ONIX`);
               } catch (error: any) {
                 alert(error?.response?.data?.message || 'Ошибка получения награды');
               }
@@ -1131,7 +1165,7 @@ function App() {
           >
             <div>
               <p className="font-bold">🎁 Ежедневная награда</p>
-              <p className="text-gray-400">+{500 + level * 100} ONIX</p>
+              <p className="text-gray-400">+{getDailyReward(level)} ONIX</p>
             </div>
 
             <span className="text-emerald-400 font-bold">
@@ -1163,7 +1197,7 @@ function App() {
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
 
-                alert('🎉 Подписка подтверждена! +2000 ONIX');
+                alert('🎉 Подписка подтверждена! +25000 ONIX');
               } catch (error: any) {
                 alert(error?.response?.data?.message || 'Сначала подпишитесь на канал');
               }
@@ -1176,7 +1210,7 @@ function App() {
           >
             <div>
               <p className="font-bold">📢 Подписаться на канал</p>
-              <p className="text-gray-400">+2000 ONIX</p>
+              <p className="text-gray-400">+25000 ONIX</p>
             </div>
 
             <span className="text-emerald-400 font-bold">
@@ -1225,7 +1259,7 @@ function App() {
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
 
-                alert('🎉 Вы получили +3000 ONIX!');
+                alert('🎉 Вы получили +75000 ONIX!');
               } catch (error: any) {
                 alert(error?.response?.data?.message || 'Сначала пригласите друга');
               }
@@ -1238,7 +1272,7 @@ function App() {
           >
             <div>
               <p className="font-bold">👥 Пригласить друга</p>
-              <p className="text-gray-400">+3000 ONIX</p>
+              <p className="text-gray-400">+75000 ONIX</p>
             </div>
 
             <span className="text-emerald-400 font-bold">
