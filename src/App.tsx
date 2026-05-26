@@ -60,10 +60,18 @@ type ReferralLimit = {
   isLimitReached: boolean;
 };
 
+type EconomyConfig = {
+  onixEurPer1000: number;
+  minWithdrawOnix: number;
+  referralReward: number;
+  referredUserReward: number;
+  maxPaidReferralsPerDay: number;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
-const ONIX_EUR_RATE = 0.68 / 1000;
-const MIN_WITHDRAW_ONIX = 750000;
+const DEFAULT_ONIX_EUR_PER_1000 = 0.68;
+const DEFAULT_MIN_WITHDRAW_ONIX = economyConfig.referralReward0;
 
 const ACHIEVEMENTS: Achievement[] = [
   {
@@ -190,11 +198,11 @@ function getMiningBoostCost(autoclickers: number) {
 const RANKS = [
   { id: 'bronze_1', name: 'Bronze I', threshold: 0, bonus: 0 },
   { id: 'bronze_2', name: 'Bronze II', threshold: 25000, bonus: 2500 },
-  { id: 'bronze_3', name: 'Bronze III', threshold: 75000, bonus: 7500 },
+  { id: 'bronze_3', name: 'Bronze III', threshold: economyConfig.referralReward, bonus: 7500 },
   { id: 'silver_1', name: 'Silver I', threshold: 150000, bonus: 15000 },
   { id: 'silver_2', name: 'Silver II', threshold: 300000, bonus: 30000 },
   { id: 'silver_3', name: 'Silver III', threshold: 500000, bonus: 50000 },
-  { id: 'gold_1', name: 'Gold I', threshold: 750000, bonus: 75000 },
+  { id: 'gold_1', name: 'Gold I', threshold: economyConfig.referralReward0, bonus: economyConfig.referralReward },
   { id: 'gold_2', name: 'Gold II', threshold: 1000000, bonus: 100000 },
   { id: 'gold_3', name: 'Gold III', threshold: 1500000, bonus: 150000 },
   { id: 'platinum', name: 'Platinum', threshold: 2500000, bonus: 250000 },
@@ -273,6 +281,13 @@ function normalizeBoost(value: unknown): 'none' | 'tap' | 'mining' {
 
 function App() {
   const [balance, setBalance] = useState(0);
+  const [economyConfig, setEconomyConfig] = useState<EconomyConfig>({
+    onixEurPer1000: DEFAULT_ONIX_EUR_PER_1000,
+    minWithdrawOnix: DEFAULT_MIN_WITHDRAW_ONIX,
+    referralReward: economyConfig.referralReward,
+    referredUserReward: 15000,
+    maxPaidReferralsPerDay: 10,
+  });
   const [username, setUsername] = useState('Пользователь');
   const [weeklyEarned, setWeeklyEarned] = useState(0);
   const [currentUserPlace, setCurrentUserPlace] = useState<number | null>(null);
@@ -329,6 +344,29 @@ function App() {
       WebApp.ready();
       WebApp.expand();
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    const loadEconomyConfig = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/config`);
+
+        setEconomyConfig({
+          onixEurPer1000:
+            Number(response.data.onixEurPer1000) || DEFAULT_ONIX_EUR_PER_1000,
+          minWithdrawOnix:
+            Number(response.data.minWithdrawOnix) || DEFAULT_MIN_WITHDRAW_ONIX,
+          referralReward: Number(response.data.referralReward) || economyConfig.referralReward,
+          referredUserReward: Number(response.data.referredUserReward) || 15000,
+          maxPaidReferralsPerDay:
+            Number(response.data.maxPaidReferralsPerDay) || 10,
+        });
+      } catch (error) {
+        console.log('Ошибка загрузки конфига экономики:', error);
+      }
+    };
+
+    loadEconomyConfig();
   }, []);
 
   useEffect(() => {
@@ -430,7 +468,7 @@ function App() {
           alert(
             `🎉 По вашей ссылке перешёл ${
               user.lastReferralUsername || 'новый пользователь'
-            }! Вы получили +75000 ONIX`
+            }! Вы получили +${formatOnix(economyConfig.referralReward)} ONIX`
           );
         }
 
@@ -441,7 +479,7 @@ function App() {
           !localStorage.getItem(`referralWelcomeShown_${user.telegramId}`)
         ) {
           alert(
-            `🎁 Вы получили +15000 ONIX за вход по ссылке пользователя ${
+            `🎁 Вы получили +${formatOnix(economyConfig.referredUserReward)} ONIX за вход по ссылке пользователя ${
               user.referredByUsername || 'друга'
             }!`
           );
@@ -1076,10 +1114,12 @@ function App() {
   const boostTimeLeft = boostRemainingMs > 0 ? formatTime(boostRemainingMs) : '';
   const isAnyBoostActive = isBoostActive && activeBoost !== 'none';
 
-  const balanceInEur = balance * ONIX_EUR_RATE;
-  const minWithdrawEur = MIN_WITHDRAW_ONIX * ONIX_EUR_RATE;
-  const withdrawProgress = Math.min((balance / MIN_WITHDRAW_ONIX) * 100, 100);
-  const leftToWithdraw = Math.max(MIN_WITHDRAW_ONIX - balance, 0);
+  const onixEurRate = Number(economyConfig.onixEurPer1000 || DEFAULT_ONIX_EUR_PER_1000) / 1000;
+  const minWithdrawOnix = Number(economyConfig.minWithdrawOnix || DEFAULT_MIN_WITHDRAW_ONIX);
+  const balanceInEur = balance * onixEurRate;
+  const minWithdrawEur = minWithdrawOnix * onixEurRate;
+  const withdrawProgress = Math.min((balance / minWithdrawOnix) * 100, 100);
+  const leftToWithdraw = Math.max(minWithdrawOnix - balance, 0);
 
   const completedAchievementsCount = achievements.filter(
     (item: Achievement) => item.isCompleted
@@ -1089,7 +1129,7 @@ function App() {
     (item: Achievement) => !item.isCompleted
   );
 
-  const canWithdraw = balance >= MIN_WITHDRAW_ONIX;
+  const canWithdraw = balance >= minWithdrawOnix;
 
   const referralProgress = Math.min(
     (Number(referralLimit.used || 0) / Number(referralLimit.max || 10)) * 100,
@@ -1714,7 +1754,7 @@ function App() {
                 setLevel(user.level);
                 setCompletedTasks(user.completedTasks || []);
 
-                alert('🎉 Вы получили +75000 ONIX!');
+                alert('🎉 Вы получили +${formatOnix(economyConfig.referralReward)} ONIX!');
               } catch (error: any) {
                 alert(error?.response?.data?.message || 'Сначала пригласите друга');
               }
@@ -1727,7 +1767,7 @@ function App() {
           >
             <div>
               <p className="font-bold">👥 Пригласить друга</p>
-              <p className="text-gray-400">+75000 ONIX</p>
+              <p className="text-gray-400">+{formatOnix(economyConfig.referralReward)} ONIX</p>
               <p className="text-xs text-yellow-400">
                 Бонусы сегодня: {referralLimit.used}/{referralLimit.max}
               </p>
@@ -1915,7 +1955,7 @@ function App() {
                 <div className="text-right">
                   <p className="text-xs text-gray-400">За друга</p>
                   <p className="mt-1 font-bold text-yellow-400">
-                    +75 000 ONIX
+                    +{formatOnix(economyConfig.referralReward)} ONIX
                   </p>
                 </div>
               </div>
@@ -2041,14 +2081,14 @@ function App() {
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Курс</p>
                 <p className="mt-1 text-sm font-bold text-white">
-                  1000 ONIX = 0.68€
+                  1000 ONIX = {economyConfig.onixEurPer1000.toLocaleString('ru-RU')}€
                 </p>
               </div>
 
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Минимальный вывод</p>
                 <p className="mt-1 text-sm font-bold text-yellow-400">
-                  {MIN_WITHDRAW_ONIX.toLocaleString('ru-RU')} ONIX
+                  {minWithdrawOnix.toLocaleString('ru-RU')} ONIX
                 </p>
               </div>
             </div>
@@ -2171,12 +2211,12 @@ function App() {
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Ты получишь</p>
-                <p className="mt-1 font-bold text-yellow-400">+75 000</p>
+                <p className="mt-1 font-bold text-yellow-400">+{formatOnix(economyConfig.referralReward)}</p>
               </div>
 
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Друг получит</p>
-                <p className="mt-1 font-bold text-emerald-400">+15 000</p>
+                <p className="mt-1 font-bold text-emerald-400">+{formatOnix(economyConfig.referredUserReward)}</p>
               </div>
             </div>
 
