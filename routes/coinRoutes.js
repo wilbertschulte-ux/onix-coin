@@ -9,12 +9,33 @@ const LEVEL_COINS = 500;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_OFFLINE_SECONDS = 3 * 60 * 60;
 const MAX_TAPS_PER_SECOND = 12;
-const MAX_PAID_REFERRALS_PER_DAY = 10;
+const MAX_PAID_REFERRALS_PER_DAY = getEconomyConfig().maxPaidReferralsPerDay;
 const DEFAULT_ENERGY = 500;
 const DEFAULT_MAX_ENERGY = 500;
 const DEFAULT_TAP_POWER = 1;
 const DEFAULT_ENERGY_RECHARGE = 0.5;
 const DEFAULT_MINER_INCOME = 0.5;
+function getNumberEnv(name, fallback) {
+  const value = Number(process.env[name]);
+
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function getEconomyConfig() {
+  return {
+    onixEurPer1000: getNumberEnv('ONIX_EUR_PER_1000', 0.68),
+    minWithdrawOnix: getNumberEnv('MIN_WITHDRAW_ONIX', 750000),
+    referralReward: getNumberEnv('REFERRAL_REWARD', 75000),
+    referredUserReward: getNumberEnv('REFERRED_USER_REWARD', 15000),
+    maxPaidReferralsPerDay: getNumberEnv('MAX_PAID_REFERRALS_PER_DAY', 10),
+  };
+}
+
+function getOnixEurRate() {
+  return getEconomyConfig().onixEurPer1000 / 1000;
+}
+
+
 
 const ACHIEVEMENTS = [
   {
@@ -256,7 +277,7 @@ function prepareReferralBonusWindow(user, now = Date.now()) {
 function canReceivePaidReferralBonus(user, now = Date.now()) {
   prepareReferralBonusWindow(user, now);
 
-  return Number(user.dailyReferralBonusCount || 0) < MAX_PAID_REFERRALS_PER_DAY;
+  return Number(user.dailyReferralBonusCount || 0) < getEconomyConfig().maxPaidReferralsPerDay;
 }
 
 function getNextUtcDayStart(timestamp = Date.now()) {
@@ -276,7 +297,7 @@ function getReferralLimitPayload(user, now = Date.now()) {
   prepareReferralBonusWindow(user, now);
 
   const used = Number(user.dailyReferralBonusCount || 0);
-  const max = MAX_PAID_REFERRALS_PER_DAY;
+  const max = getEconomyConfig().maxPaidReferralsPerDay;
   const resetAt = getNextUtcDayStart(now);
 
   return {
@@ -467,6 +488,18 @@ function normalizeUserFields(user) {
   return user;
 }
 
+
+
+// PUBLIC ECONOMY CONFIG
+router.get('/config', async (req, res) => {
+  try {
+    return res.json(getEconomyConfig());
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
 
 // WEEKLY LEADERBOARD
 router.get('/leaderboard/weekly', async (req, res) => {
@@ -691,6 +724,7 @@ router.post('/create', async (req, res) => {
           normalizeUserFields(refUser);
 
           const now = Date.now();
+          const economyConfig = getEconomyConfig();
           const isPaidReferralAllowed = canReceivePaidReferralBonus(refUser, now);
 
           refUser.referralsCount += 1;
@@ -701,27 +735,27 @@ router.post('/create', async (req, res) => {
             refUser.dailyReferralBonusCount =
               Number(refUser.dailyReferralBonusCount || 0) + 1;
 
-            refUser.balance = roundOnix(Number(refUser.balance || 0) + 75000);
+            refUser.balance = roundOnix(Number(refUser.balance || 0) + economyConfig.referralReward);
             refUser.totalEarned = roundOnix(Number(refUser.totalEarned || 0) + 75000);
 
             addTransaction(
               refUser,
               'income_referral',
-              75000,
-              `Реферальный бонус ${refUser.dailyReferralBonusCount}/${MAX_PAID_REFERRALS_PER_DAY}`
+              economyConfig.referralReward,
+              `Реферальный бонус ${refUser.dailyReferralBonusCount}/${economyConfig.maxPaidReferralsPerDay}`
             );
 
             const refAchievementBonuses = applyAchievements(refUser);
             const refRankBonuses = applyRankBonuses(refUser);
             refUser.level = calculateLevel(refUser.totalEarned);
 
-            user.balance = roundOnix(Number(user.balance || 0) + 15000);
-            addEarnings(user, 15000);
+            user.balance = roundOnix(Number(user.balance || 0) + economyConfig.referredUserReward);
+            addEarnings(user, economyConfig.referredUserReward);
 
             addTransaction(
               user,
               'income_referral',
-              15000,
+              economyConfig.referredUserReward,
               'Бонус за вход по ссылке'
             );
 
@@ -1139,10 +1173,17 @@ router.post('/claim-task', async (req, res) => {
         });
       }
 
-      user.balance = roundOnix(Number(user.balance || 0) + 75000);
-      addEarnings(user, 75000);
+      const economyConfig = getEconomyConfig();
+
+      user.balance = roundOnix(Number(user.balance || 0) + economyConfig.referralReward);
+      addEarnings(user, economyConfig.referralReward);
       user.completedTasks.push('inviteFriend');
-      addTransaction(user, 'income_task', 75000, 'Задание: пригласить друга');
+      addTransaction(
+        user,
+        'income_task',
+        economyConfig.referralReward,
+        'Задание: пригласить друга'
+      );
 
       const rankBonuses = applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
