@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
   default: null,
 },
 
+lastOfflineIncome: {
+  type: Number,
+  default: 0,
+},
+
 lastSeenAt: {
   type: Number,
   default: Date.now,

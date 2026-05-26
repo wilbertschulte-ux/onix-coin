@@ -23,14 +23,22 @@ router.get('/:telegramId', async (req, res) => {
       await user.save();
     }
 
+let offlineIncome = 0;
+
 const now = Date.now();
 const lastSeenAt = user.lastSeenAt || now;
 const offlineSeconds = Math.floor((now - lastSeenAt) / 1000);
 
 if (user.autoclickers > 0 && offlineSeconds > 10) {
   const maxOfflineSeconds = 3 * 60 * 60;
-  const countedSeconds = Math.min(offlineSeconds, maxOfflineSeconds);
-  const offlineIncome = Math.floor(user.autoclickers * countedSeconds);
+  const countedSeconds = Math.min(
+    offlineSeconds,
+    maxOfflineSeconds
+  );
+
+  offlineIncome = Math.floor(
+    user.autoclickers * countedSeconds
+  );
 
   if (offlineIncome > 0) {
     user.balance += offlineIncome;
@@ -39,7 +47,9 @@ if (user.autoclickers > 0 && offlineSeconds > 10) {
   }
 }
 
+user.lastOfflineIncome = offlineIncome;
 user.lastSeenAt = now;
+
 await user.save();
 
     res.json(user);
