@@ -521,18 +521,23 @@ function normalizeUserFields(user) {
 
 
 
+
+function isAdminRequest(secret, telegramId) {
+  const hasSecret = process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET;
+  const hasAdminTelegramId =
+    process.env.ADMIN_TELEGRAM_ID &&
+    String(telegramId || '') === String(process.env.ADMIN_TELEGRAM_ID);
+
+  return Boolean(hasSecret || hasAdminTelegramId);
+}
+
 // ADMIN: PREVIEW WEEKLY SEASON PRIZES
 router.get('/admin-weekly-prize-preview', async (req, res) => {
   try {
     const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
 
-    if (!process.env.ADMIN_SECRET) {
-      return res.status(500).json({
-        message: 'ADMIN_SECRET is not configured',
-      });
-    }
-
-    if (secret !== process.env.ADMIN_SECRET) {
+    if (!isAdminRequest(secret, telegramId)) {
       return res.status(403).json({
         message: 'Forbidden',
       });
@@ -576,15 +581,9 @@ router.get('/admin-weekly-prize-preview', async (req, res) => {
 // ADMIN: AWARD WEEKLY SEASON PRIZES
 router.post('/admin-award-weekly-prizes', async (req, res) => {
   try {
-    const { secret, confirm, week } = req.body;
+    const { secret, confirm, week, telegramId } = req.body;
 
-    if (!process.env.ADMIN_SECRET) {
-      return res.status(500).json({
-        message: 'ADMIN_SECRET is not configured',
-      });
-    }
-
-    if (secret !== process.env.ADMIN_SECRET) {
+    if (!isAdminRequest(secret, telegramId)) {
       return res.status(403).json({
         message: 'Forbidden',
       });
