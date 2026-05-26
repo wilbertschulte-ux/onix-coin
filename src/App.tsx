@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Coins, Zap, Trophy, Users, Home, Star } from 'lucide-react';
+import { Coins, Zap, Trophy, Users, Home, Star, Wallet } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
 
@@ -10,7 +10,7 @@ if (tg) {
   tg.expand();
 }
 
-type Tab = 'home' | 'boosts' | 'tasks' | 'friends';
+type Tab = 'home' | 'boosts' | 'tasks' | 'friends' | 'wallet';
 
 type FloatingNumber = {
   id: number;
@@ -21,6 +21,8 @@ type FloatingNumber = {
 
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
+const ONIX_EUR_RATE = 0.68 / 1000;
+const MIN_WITHDRAW_ONIX = 750000;
 
 function formatOnix(value: number) {
   return Number(value || 0).toLocaleString('ru-RU', {
@@ -722,6 +724,12 @@ function App() {
   const boostTimeLeft = boostRemainingMs > 0 ? formatTime(boostRemainingMs) : '';
   const isAnyBoostActive = isBoostActive && activeBoost !== 'none';
 
+  const balanceInEur = balance * ONIX_EUR_RATE;
+  const minWithdrawEur = MIN_WITHDRAW_ONIX * ONIX_EUR_RATE;
+  const withdrawProgress = Math.min((balance / MIN_WITHDRAW_ONIX) * 100, 100);
+  const leftToWithdraw = Math.max(MIN_WITHDRAW_ONIX - balance, 0);
+  const canWithdraw = balance >= MIN_WITHDRAW_ONIX;
+
   const boostCards: Array<{
     type: 'tap' | 'mining';
     icon: string;
@@ -810,6 +818,7 @@ function App() {
           { id: 'boosts', label: 'Улучшения', icon: Zap },
           { id: 'tasks', label: 'Задания', icon: Trophy },
           { id: 'friends', label: 'Друзья', icon: Users },
+          { id: 'wallet', label: 'Кошелёк', icon: Wallet },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -1355,6 +1364,93 @@ function App() {
             Приглашено:{' '}
             <span className="text-yellow-400 font-bold">{referralsCount}</span>
           </p>
+        </div>
+      )}
+
+
+      {activeTab === 'wallet' && (
+        <div className="px-5 mt-8 space-y-5">
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 shadow-xl">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-400 text-3xl">
+                💼
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold text-white">Кошелёк</h2>
+                <p className="text-sm text-gray-400">Баланс и будущий вывод ONIX</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-[#0a0f1c] p-5 text-center">
+              <p className="text-sm text-gray-400">Текущий баланс</p>
+              <p className="mt-2 text-5xl font-bold text-yellow-400">
+                {formatOnix(balance)}
+              </p>
+              <p className="mt-2 text-lg font-bold text-emerald-400">
+                ≈ {balanceInEur.toLocaleString('ru-RU', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} €
+              </p>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Курс</p>
+                <p className="mt-1 text-sm font-bold text-white">
+                  1000 ONIX = 0.68€
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Минимальный вывод</p>
+                <p className="mt-1 text-sm font-bold text-yellow-400">
+                  {MIN_WITHDRAW_ONIX.toLocaleString('ru-RU')} ONIX
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+                <span className="text-gray-400">Прогресс до вывода</span>
+                <span className="font-bold text-yellow-400">
+                  {withdrawProgress.toFixed(1)}%
+                </span>
+              </div>
+
+              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  style={{ width: `${withdrawProgress}%` }}
+                />
+              </div>
+
+              <p className="mt-3 text-sm text-gray-400">
+                {canWithdraw
+                  ? 'Минимальная сумма набрана'
+                  : `Осталось ${formatOnix(leftToWithdraw)} ONIX`}
+              </p>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Минимальный вывод ≈ {minWithdrawEur.toLocaleString('ru-RU', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} €
+              </p>
+            </div>
+
+            <button
+              disabled
+              className="mt-5 w-full rounded-2xl bg-gray-700 py-4 text-lg font-bold text-gray-400 cursor-not-allowed"
+            >
+              Вывод скоро
+            </button>
+
+            <p className="mt-4 text-center text-xs text-gray-500">
+              Раздел вывода находится в подготовке. Сейчас это расчётный баланс по ориентировочному курсу.
+            </p>
+          </div>
         </div>
       )}
 
