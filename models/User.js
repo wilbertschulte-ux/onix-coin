@@ -124,6 +124,11 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    ownedPerks: {
+      type: [String],
+      default: [],
+    },
+
     totalTaps: {
       type: Number,
       default: 0,

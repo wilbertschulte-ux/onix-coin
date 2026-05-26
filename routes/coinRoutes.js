@@ -44,6 +44,23 @@ const DEFAULT_MAX_ENERGY = 500;
 const DEFAULT_TAP_POWER = 1;
 const DEFAULT_ENERGY_RECHARGE = 0.5;
 const DEFAULT_MINER_INCOME = 0.5;
+
+const PERKS = {
+  offline_pro: {
+    id: 'offline_pro',
+    title: 'Offline Pro',
+    cost: 100000,
+    maxOfflineSecondsBonus: 60 * 60,
+  },
+};
+
+function getMaxOfflineSeconds(user) {
+  const ownedPerks = Array.isArray(user.ownedPerks) ? user.ownedPerks : [];
+
+  return ownedPerks.includes('offline_pro')
+    ? MAX_OFFLINE_SECONDS + PERKS.offline_pro.maxOfflineSecondsBonus
+    : MAX_OFFLINE_SECONDS;
+}
 function getNumberEnv(name, fallback) {
   const value = Number(process.env[name]);
 
@@ -814,7 +831,7 @@ router.get('/:telegramId', async (req, res) => {
   offlineSeconds > 10 &&
   Number(user.pendingOfflineIncome || 0) <= 0
 ) {
-      const countedSeconds = Math.min(offlineSeconds, MAX_OFFLINE_SECONDS);
+      const countedSeconds = Math.min(offlineSeconds, getMaxOfflineSeconds(user));
 
       offlineSecondsForPopup = countedSeconds;
       offlineIncome = roundOnix(Number(user.autoclickers || 0) * countedSeconds);
@@ -864,6 +881,7 @@ router.post('/create', async (req, res) => {
         referredBy: referredBy || null,
         completedTasks: [],
         completedAchievements: [],
+        ownedPerks: [],
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -1017,6 +1035,7 @@ router.post('/save', async (req, res) => {
         telegramId,
         completedTasks: [],
         completedAchievements: [],
+        ownedPerks: [],
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -1199,6 +1218,82 @@ router.post('/buy-upgrade', async (req, res) => {
       upgrade: {
         type,
         cost,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
+
+// BUY PERK — ONE-TIME PERMANENT BONUSES
+router.post('/buy-perk', async (req, res) => {
+  try {
+    const { telegramId, perkId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({
+        message: 'Telegram ID is required',
+      });
+    }
+
+    const perk = PERKS[perkId];
+
+    if (!perk) {
+      return res.status(400).json({
+        message: 'Unknown perk',
+      });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    normalizeUserFields(user);
+
+    if (user.ownedPerks.includes(perk.id)) {
+      return res.status(400).json({
+        message: 'Перк уже куплен',
+      });
+    }
+
+    if (Number(user.balance || 0) < perk.cost) {
+      return res.status(400).json({
+        message: 'Недостаточно ONIX',
+      });
+    }
+
+    user.balance = roundOnix(Number(user.balance || 0) - perk.cost);
+    user.ownedPerks.push(perk.id);
+
+    addTransaction(
+      user,
+      'expense_perk',
+      -perk.cost,
+      `Перк: ${perk.title}`
+    );
+
+    user.updatedAt = new Date();
+    user.lastSeenAt = Date.now();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+      },
+      perk: {
+        id: perk.id,
+        title: perk.title,
+        cost: perk.cost,
       },
     });
   } catch (error) {
