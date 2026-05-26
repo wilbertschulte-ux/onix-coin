@@ -104,6 +104,16 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    dailyStreak: {
+      type: Number,
+      default: 0,
+    },
+
+    lastDailyClaimDay: {
+      type: String,
+      default: null,
+    },
+
     lastDailyRewardDate: {
       type: String,
       default: null,

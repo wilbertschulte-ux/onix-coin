@@ -39,6 +39,22 @@ function getDailyReward(level) {
   return Math.min(15000 + Number(level || 1) * 500, 50000);
 }
 
+function getUtcDayKey(timestamp) {
+  return new Date(timestamp).toISOString().slice(0, 10);
+}
+
+function getDailyStreakMultiplier(streakDay) {
+  const day = Number(streakDay || 1);
+
+  if (day >= 7) return 2;
+
+  return 1 + (day - 1) * 0.1;
+}
+
+function getDailyRewardWithStreak(level, streakDay) {
+  return Math.round(getDailyReward(level) * getDailyStreakMultiplier(streakDay));
+}
+
 function getTapBoostCost(tapPower) {
   return Math.max(2500, Math.round(Number(tapPower || DEFAULT_TAP_POWER) * 500 * 0.7));
 }
@@ -71,6 +87,11 @@ function normalizeUserFields(user) {
   if (user.minerLevel === undefined || user.minerLevel === null) user.minerLevel = 1;
   if (user.energyLevel === undefined || user.energyLevel === null) user.energyLevel = 1;
   if (user.rechargeLevel === undefined || user.rechargeLevel === null) user.rechargeLevel = 1;
+
+  if (user.dailyStreak === undefined || user.dailyStreak === null) user.dailyStreak = 0;
+  if (user.lastDailyClaimDay === undefined || user.lastDailyClaimDay === null) {
+    user.lastDailyClaimDay = null;
+  }
 
   if (user.lastOfflineIncome === undefined || user.lastOfflineIncome === null) {
     user.lastOfflineIncome = 0;
@@ -207,6 +228,8 @@ router.post('/create', async (req, res) => {
         referredBy: referredBy || null,
         completedTasks: [],
         tapTimestamps: [],
+        dailyStreak: 0,
+        lastDailyClaimDay: null,
 
         balance: 0,
         energy: DEFAULT_ENERGY,
@@ -312,6 +335,8 @@ router.post('/save', async (req, res) => {
         telegramId,
         completedTasks: [],
         tapTimestamps: [],
+        dailyStreak: 0,
+        lastDailyClaimDay: null,
 
         balance: 0,
         energy: DEFAULT_ENERGY,
@@ -490,24 +515,44 @@ router.post('/claim-task', async (req, res) => {
 
     normalizeUserFields(user);
 
-    // DAILY REWARD
+    // DAILY REWARD WITH STREAK
     if (task === 'daily') {
       const now = Date.now();
+      const todayKey = getUtcDayKey(now);
 
-      if (
-        user.dailyRewardLastClaim &&
-        now - Number(user.dailyRewardLastClaim) < DAY_MS
-      ) {
-        return res.status(400).json({
-          message: 'Daily reward already claimed',
-        });
+      if (user.dailyRewardLastClaim) {
+        const lastClaimTime = Number(user.dailyRewardLastClaim || 0);
+        const lastClaimDay = user.lastDailyClaimDay || getUtcDayKey(lastClaimTime);
+
+        if (lastClaimDay === todayKey || now - lastClaimTime < DAY_MS) {
+          return res.status(400).json({
+            message: 'Daily reward already claimed',
+          });
+        }
       }
 
-      const reward = getDailyReward(user.level);
+      const yesterdayKey = getUtcDayKey(now - DAY_MS);
+      const previousClaimDay =
+        user.lastDailyClaimDay ||
+        (user.dailyRewardLastClaim ? getUtcDayKey(Number(user.dailyRewardLastClaim)) : null);
 
-      user.balance += reward;
-      user.totalEarned += reward;
+      let nextStreak = 1;
+
+      if (previousClaimDay === yesterdayKey) {
+        nextStreak = Number(user.dailyStreak || 0) + 1;
+      }
+
+      if (nextStreak > 7) {
+        nextStreak = 1;
+      }
+
+      const reward = getDailyRewardWithStreak(user.level, nextStreak);
+
+      user.balance = roundOnix(Number(user.balance || 0) + reward);
+      user.totalEarned = roundOnix(Number(user.totalEarned || 0) + reward);
       user.dailyRewardLastClaim = now;
+      user.lastDailyClaimDay = todayKey;
+      user.dailyStreak = nextStreak;
 
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
@@ -515,7 +560,12 @@ router.post('/claim-task', async (req, res) => {
 
       await user.save();
 
-      return res.json(user);
+      return res.json({
+        ...user.toObject(),
+        claimedDailyReward: reward,
+        dailyStreak: nextStreak,
+        dailyStreakMultiplier: getDailyStreakMultiplier(nextStreak),
+      });
     }
 
     // CHANNEL SUBSCRIBE
