@@ -742,7 +742,7 @@ router.post('/buy-upgrade', async (req, res) => {
 
     user.totalUpgradesBought = Number(user.totalUpgradesBought || 0) + 1;
     const achievementBonuses = applyAchievements(user);
-    applyRankBonuses(user);
+    const rankBonuses = applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
 
     user.lastUpgradeBuyAt = now;
@@ -758,6 +758,7 @@ router.post('/buy-upgrade', async (req, res) => {
       },
       achievements: getAchievementsPayload(user),
       achievementBonuses,
+      rankBonuses,
       upgrade: {
         type,
         cost,
@@ -896,7 +897,7 @@ router.post('/claim-task', async (req, res) => {
       user.completedTasks.push('channel');
       addTransaction(user, 'income_task', 25000, 'Задание: подписка на канал');
 
-      applyRankBonuses(user);
+      const rankBonuses = applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
       user.lastSeenAt = Date.now();
@@ -906,6 +907,8 @@ router.post('/claim-task', async (req, res) => {
       return res.json({
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
+        achievementBonuses: typeof achievementBonuses !== 'undefined' ? achievementBonuses : [],
       });
     }
 
@@ -928,7 +931,7 @@ router.post('/claim-task', async (req, res) => {
       user.completedTasks.push('inviteFriend');
       addTransaction(user, 'income_task', 75000, 'Задание: пригласить друга');
 
-      applyRankBonuses(user);
+      const rankBonuses = applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
       user.lastSeenAt = Date.now();
@@ -938,6 +941,8 @@ router.post('/claim-task', async (req, res) => {
       return res.json({
         ...user.toObject(),
         achievements: getAchievementsPayload(user),
+        rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
+        achievementBonuses: typeof achievementBonuses !== 'undefined' ? achievementBonuses : [],
       });
     }
 
@@ -986,7 +991,7 @@ router.post('/claim-offline-income', async (req, res) => {
     addTransaction(user, 'income_offline', claimedAmount, 'Оффлайн-майнинг');
     user.offlineClaimsCount = Number(user.offlineClaimsCount || 0) + 1;
     const achievementBonuses = applyAchievements(user);
-    applyRankBonuses(user);
+    const rankBonuses = applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
 
     user.lastOfflineIncome = claimedAmount;
@@ -1007,6 +1012,7 @@ router.post('/claim-offline-income', async (req, res) => {
       },
       achievements: getAchievementsPayload(user),
       achievementBonuses,
+      rankBonuses,
       claimedAmount,
       claimedSeconds,
     });
@@ -1171,7 +1177,7 @@ router.post('/activate-boost', async (req, res) => {
     user.boostEndTime = now + durationConfig[type];
     user.totalBoostsUsed = Number(user.totalBoostsUsed || 0) + 1;
     const achievementBonuses = applyAchievements(user);
-    applyRankBonuses(user);
+    const rankBonuses = applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
     user.updatedAt = new Date();
     user.lastSeenAt = now;
@@ -1185,6 +1191,7 @@ router.post('/activate-boost', async (req, res) => {
       },
       achievements: getAchievementsPayload(user),
       achievementBonuses,
+      rankBonuses,
       boost: {
         type,
         cost,
@@ -1263,7 +1270,7 @@ router.post('/tap', async (req, res) => {
     user.totalTaps = Number(user.totalTaps || 0) + 1;
 
     const achievementBonuses = applyAchievements(user);
-    applyRankBonuses(user);
+    const rankBonuses = applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
     user.updatedAt = new Date();
     user.lastSeenAt = now;
@@ -1277,6 +1284,7 @@ router.post('/tap', async (req, res) => {
       },
       achievements: getAchievementsPayload(user),
       achievementBonuses,
+      rankBonuses,
       points,
     });
   } catch (error) {
