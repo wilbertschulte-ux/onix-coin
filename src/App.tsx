@@ -294,6 +294,7 @@ function App() {
   const [referralsCount, setReferralsCount] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [leaderboardWeek, setLeaderboardWeek] = useState('');
+  const [seasonSecondsLeft, setSeasonSecondsLeft] = useState(0);
   const [referralModalVisible, setReferralModalVisible] = useState(false);
   const [copySuccessVisible, setCopySuccessVisible] = useState(false);
   const [referralLimit, setReferralLimit] = useState<ReferralLimit>({
@@ -473,6 +474,7 @@ function App() {
 
         setLeaderboard(response.data.leaderboard || []);
         setLeaderboardWeek(response.data.week || '');
+        setSeasonSecondsLeft(Number(response.data.secondsUntilSeasonEnd || 0));
         setCurrentUserPlace(response.data.currentUserPlace || null);
         setWeeklyEarned(Number(response.data.currentUserWeeklyEarned || weeklyEarned));
       } catch (error) {
@@ -482,6 +484,20 @@ function App() {
 
     loadLeaderboard();
   }, []);
+
+  useEffect(() => {
+    if (seasonSecondsLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setSeasonSecondsLeft((prev) => {
+        if (prev <= 1) return 0;
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [seasonSecondsLeft]);
 
   useEffect(() => {
     if (referralLimit.secondsUntilReset <= 0) return;
@@ -1081,6 +1097,7 @@ function App() {
   );
 
   const referralResetTime = formatTime(referralLimit.secondsUntilReset * 1000);
+  const seasonTimeLeft = formatTime(seasonSecondsLeft * 1000);
 
   const nextDailyStreakDay =
     dailyCooldown > 0
@@ -1865,6 +1882,13 @@ function App() {
               </div>
 
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">До конца сезона</p>
+                <p className="mt-1 text-lg font-bold text-emerald-400">
+                  {seasonSecondsLeft > 0 ? seasonTimeLeft : 'обновляется'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Всего заработано</p>
                 <p className="mt-1 text-lg font-bold text-white">
                   {formatOnix(totalEarned)}
@@ -1927,11 +1951,17 @@ function App() {
                 </p>
               </div>
 
-              {leaderboardWeek && (
-                <span className="rounded-full bg-[#0a0f1c] px-3 py-1 text-xs font-bold text-yellow-400">
-                  {leaderboardWeek}
-                </span>
-              )}
+              <div className="text-right">
+                {leaderboardWeek && (
+                  <span className="rounded-full bg-[#0a0f1c] px-3 py-1 text-xs font-bold text-yellow-400">
+                    {leaderboardWeek}
+                  </span>
+                )}
+
+                <p className="mt-2 text-xs text-emerald-400">
+                  До конца: {seasonSecondsLeft > 0 ? seasonTimeLeft : 'обновляется'}
+                </p>
+              </div>
             </div>
 
             {leaderboard.length > 0 ? (
