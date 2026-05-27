@@ -74,26 +74,56 @@ body {
 }
 
 .onix-brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 50% 44%, rgba(0, 229, 255, 0.55), transparent 28%),
-    linear-gradient(135deg, rgba(136,92,246,0.95), rgba(91,33,246,0.85));
+    radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.22), transparent 54%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.92), rgba(8, 15, 23, 0.98));
+  border: 1px solid rgba(136, 92, 246, 0.45);
   box-shadow:
-    0 0 24px rgba(136, 92, 246, 0.65),
-    0 0 34px rgba(6, 182, 212, 0.25);
-  transform: rotate(45deg);
+    0 0 24px rgba(136, 92, 246, 0.55),
+    0 0 34px rgba(6, 182, 212, 0.24),
+    inset 0 0 22px rgba(136, 92, 246, 0.12);
+  position: relative;
 }
 
-.onix-brand-mark span {
-  transform: rotate(-45deg);
-  color: #B7F9FF;
-  font-size: 22px;
-  line-height: 1;
-  text-shadow: 0 0 14px rgba(6, 182, 212, 0.85);
+.onix-brand-mark::before,
+.onix-brand-mark::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 36px;
+  border: 1px solid rgba(136, 92, 246, 0.55);
+  opacity: 0.8;
+}
+
+.onix-brand-mark::before {
+  left: -9px;
+  transform: skewY(-28deg);
+  border-right: 0;
+}
+
+.onix-brand-mark::after {
+  right: -9px;
+  transform: skewY(28deg);
+  border-left: 0;
+}
+
+.onix-crystal-svg {
+  display: block;
+  overflow: visible;
+}
+
+.onix-crystal-svg-tap {
+  width: 68%;
+  height: 68%;
+  filter:
+    drop-shadow(0 0 12px rgba(0, 229, 255, 0.75))
+    drop-shadow(0 0 28px rgba(136, 92, 246, 0.75));
+  animation: onixCrystalFloat 3.2s ease-in-out infinite;
 }
 
 .onix-brand-title {
@@ -139,47 +169,103 @@ body {
 
 .onix-tap-orb {
   background:
-    radial-gradient(circle at 50% 42%, rgba(0, 229, 255, 0.40), transparent 20%),
-    radial-gradient(circle at 50% 55%, rgba(136, 92, 246, 0.56), transparent 48%),
-    linear-gradient(145deg, rgba(17,24,39,0.95), rgba(8,15,23,0.98)) !important;
-  border: 2px solid rgba(136, 92, 246, 0.70) !important;
+    radial-gradient(circle at 50% 42%, rgba(0, 229, 255, 0.24), transparent 24%),
+    radial-gradient(circle at 50% 55%, rgba(136, 92, 246, 0.34), transparent 48%),
+    linear-gradient(145deg, rgba(17,24,39,0.72), rgba(8,15,23,0.98)) !important;
+  border: 2px solid rgba(136, 92, 246, 0.72) !important;
   box-shadow:
-    0 0 42px rgba(136, 92, 246, 0.70),
-    0 0 72px rgba(6, 182, 212, 0.28),
-    inset 0 0 38px rgba(136, 92, 246, 0.30) !important;
+    0 0 42px rgba(136, 92, 246, 0.72),
+    0 0 78px rgba(6, 182, 212, 0.28),
+    inset 0 0 38px rgba(136, 92, 246, 0.24) !important;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .onix-tap-orb::before {
   content: '';
   position: absolute;
-  inset: 18%;
-  border-radius: 28%;
-  transform: rotate(45deg);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.78), rgba(136,92,246,0.18) 38%, rgba(6,182,212,0.74) 52%, rgba(91,33,246,0.44));
-  clip-path: polygon(50% 0%, 88% 50%, 50% 100%, 12% 50%);
+  inset: -10px;
+  border-radius: 999px;
+  border: 2px solid rgba(136, 92, 246, 0.62);
   box-shadow:
-    0 0 28px rgba(6, 182, 212, 0.70),
-    0 0 44px rgba(136, 92, 246, 0.72);
+    0 0 18px rgba(136, 92, 246, 0.45),
+    inset 0 0 24px rgba(6, 182, 212, 0.16);
+  animation: onixOrbPulse 2.8s ease-in-out infinite;
 }
 
 .onix-tap-orb::after {
   content: '';
   position: absolute;
-  inset: 6%;
+  inset: 20px;
   border-radius: 999px;
   border: 1px solid rgba(0, 229, 255, 0.34);
-  box-shadow: inset 0 0 26px rgba(6, 182, 212, 0.12);
+  box-shadow:
+    inset 0 0 26px rgba(6, 182, 212, 0.14),
+    0 0 18px rgba(0, 229, 255, 0.12);
+  animation: onixOrbSpin 8s linear infinite;
 }
 
 .onix-tap-orb:active {
   transform: scale(0.94);
   box-shadow:
-    0 0 58px rgba(6, 182, 212, 0.78),
-    0 0 92px rgba(136, 92, 246, 0.58),
-    inset 0 0 46px rgba(255, 255, 255, 0.18) !important;
+    0 0 62px rgba(6, 182, 212, 0.78),
+    0 0 96px rgba(136, 92, 246, 0.62),
+    inset 0 0 46px rgba(255, 255, 255, 0.16) !important;
+}
+
+.onix-crystal-shards {
+  position: absolute;
+  inset: -18px;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 18% 26%, rgba(168,85,247,0.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 18%, rgba(0,229,255,0.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 70%, rgba(136,92,246,0.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 28% 84%, rgba(0,229,255,0.65) 0 1px, transparent 3px);
+  filter: drop-shadow(0 0 8px rgba(136,92,246,0.85));
+  opacity: 0.85;
+  animation: onixShardTwinkle 2.4s ease-in-out infinite;
+}
+
+@keyframes onixOrbPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.035);
+    opacity: 1;
+  }
+}
+
+@keyframes onixOrbSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes onixCrystalFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.025);
+  }
+}
+
+@keyframes onixShardTwinkle {
+  0%, 100% {
+    opacity: 0.55;
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(5deg) scale(1.02);
+  }
 }
 
 .onix-floating-number {
@@ -245,6 +331,141 @@ body {
   text-shadow: 0 0 16px rgba(250, 204, 21, 0.28);
 }
 `;
+
+
+type OnixCrystalProps = {
+  size?: number;
+  variant?: 'logo' | 'tap';
+};
+
+function OnixCrystal({ size = 44, variant = 'logo' }: OnixCrystalProps) {
+  const uid = `onixCrystal${variant}${size}`;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 120 120"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={variant === 'tap' ? 'onix-crystal-svg onix-crystal-svg-tap' : 'onix-crystal-svg'}
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={`${uid}Outer`} x1="16" y1="12" x2="104" y2="108">
+          <stop offset="0%" stopColor="#B7F9FF" />
+          <stop offset="18%" stopColor="#885CF6" />
+          <stop offset="52%" stopColor="#5B21F6" />
+          <stop offset="100%" stopColor="#06B6D4" />
+        </linearGradient>
+
+        <linearGradient id={`${uid}Left`} x1="22" y1="20" x2="60" y2="108">
+          <stop offset="0%" stopColor="#A855F7" />
+          <stop offset="46%" stopColor="#5B21F6" />
+          <stop offset="100%" stopColor="#1A1F2E" />
+        </linearGradient>
+
+        <linearGradient id={`${uid}Right`} x1="98" y1="18" x2="60" y2="108">
+          <stop offset="0%" stopColor="#B7F9FF" />
+          <stop offset="42%" stopColor="#06B6D4" />
+          <stop offset="100%" stopColor="#5B21F6" />
+        </linearGradient>
+
+        <linearGradient id={`${uid}Core`} x1="42" y1="32" x2="80" y2="86">
+          <stop offset="0%" stopColor="#B7F9FF" />
+          <stop offset="46%" stopColor="#00E5FF" />
+          <stop offset="100%" stopColor="#885CF6" />
+        </linearGradient>
+
+        <radialGradient id={`${uid}Glow`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.95" />
+          <stop offset="45%" stopColor="#885CF6" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#885CF6" stopOpacity="0" />
+        </radialGradient>
+
+        <filter id={`${uid}Shadow`} x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00E5FF" floodOpacity="0.55" />
+          <feDropShadow dx="0" dy="0" stdDeviation="9" floodColor="#885CF6" floodOpacity="0.55" />
+        </filter>
+      </defs>
+
+      <ellipse cx="60" cy="60" rx="42" ry="48" fill={`url(#${uid}Glow)`} opacity="0.45" />
+
+      <g filter={`url(#${uid}Shadow)`}>
+        <path
+          d="M60 5 L107 60 L60 115 L13 60 Z"
+          fill={`url(#${uid}Outer)`}
+          opacity="0.95"
+        />
+
+        <path
+          d="M60 5 L60 115 L13 60 Z"
+          fill={`url(#${uid}Left)`}
+          opacity="0.84"
+        />
+
+        <path
+          d="M60 5 L107 60 L60 115 Z"
+          fill={`url(#${uid}Right)`}
+          opacity="0.88"
+        />
+
+        <path
+          d="M60 17 L86 60 L60 103 L34 60 Z"
+          fill="#080F17"
+          opacity="0.42"
+        />
+
+        <path
+          d="M60 22 L79 60 L60 98 L41 60 Z"
+          fill={`url(#${uid}Core)`}
+          opacity="0.98"
+        />
+
+        <path
+          d="M60 22 L60 98 L41 60 Z"
+          fill="#885CF6"
+          opacity="0.55"
+        />
+
+        <path
+          d="M60 22 L79 60 L60 98 Z"
+          fill="#00E5FF"
+          opacity="0.55"
+        />
+
+        <path
+          d="M60 5 L86 60 L60 115 L34 60 Z"
+          stroke="#B7F9FF"
+          strokeOpacity="0.65"
+          strokeWidth="1.6"
+        />
+
+        <path
+          d="M13 60 L34 60 M86 60 L107 60 M60 5 L60 22 M60 98 L60 115"
+          stroke="#FFFFFF"
+          strokeOpacity="0.32"
+          strokeWidth="1.2"
+        />
+
+        <path
+          d="M31 31 L13 60 L31 89"
+          stroke="#A855F7"
+          strokeOpacity="0.8"
+          strokeWidth="2"
+        />
+
+        <path
+          d="M89 31 L107 60 L89 89"
+          stroke="#06B6D4"
+          strokeOpacity="0.75"
+          strokeWidth="2"
+        />
+      </g>
+    </svg>
+  );
+}
+
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends' | 'wallet' | 'launch';
 
@@ -3265,7 +3486,7 @@ function App() {
       <div className="onix-header p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="onix-brand-mark">
-            <span>◆</span>
+            <OnixCrystal size={42} variant="logo" />
           </div>
           <div>
             <h1 className="onix-brand-title text-2xl font-black">$ONIX coin</h1>
@@ -3349,6 +3570,8 @@ function App() {
               isTapped ? 'scale-90' : ''
             }`}
           >
+            <div className="onix-crystal-shards" />
+            <OnixCrystal size={210} variant="tap" />
             <span className="sr-only">$ONIX crystal</span>
 
             {floatingNumbers.map((num) => (
