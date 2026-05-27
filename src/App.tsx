@@ -592,6 +592,8 @@ function getTransactionIcon(type: string) {
   if (type.includes('perk')) return '🧩';
   if (type.includes('chest')) return '🎁';
   if (type.includes('mission')) return '📋';
+  if (type.includes('promo')) return '🎟';
+  if (type.includes('welcome')) return '🎁';
   if (type.includes('withdrawal')) return '💸';
   if (type.includes('admin')) return '🛠️';
 
@@ -696,6 +698,10 @@ function App() {
   const [adminSecurityLogsVisible, setAdminSecurityLogsVisible] = useState(false);
   const [launchChecklistVisible, setLaunchChecklistVisible] = useState(false);
   const [backendHealth, setBackendHealth] = useState<any>(null);
+  const [promoModalVisible, setPromoModalVisible] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [withdrawalCheck, setWithdrawalCheck] = useState('');
+  const [shareCardVisible, setShareCardVisible] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
   const [channelJoined, setChannelJoined] = useState(false);
 
@@ -1199,6 +1205,59 @@ function App() {
       }
 
       console.log('Ошибка тапа:', error);
+    }
+  };
+
+
+  const syncGrowthUser = (user: any, fallbackData: any = {}) => {
+    if (!user) return;
+
+    setBalance(user.balance || 0);
+    setWeeklyEarned(Number(user.weeklyEarned || 0));
+    setTotalEarned(user.totalEarned || 0);
+    setLevel(user.level || 1);
+    setTransactions(user.transactions || []);
+    setAchievements(user.achievements || fallbackData.achievements || ACHIEVEMENTS);
+    setOwnedPerks(user.ownedPerks || []);
+    setPerkLevels(normalizePerkLevels(user.perkLevels));
+    applyUserStats(user);
+  };
+
+  const claimWelcomeBonus = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      const response = await axios.post(`${API_URL}/claim-welcome-bonus`, {
+        telegramId,
+      });
+
+      syncGrowthUser(response.data.user, response.data);
+      showRewardPopupFromResponse(response.data);
+      showToast(`🎁 Welcome bonus: +${formatOnix(response.data.reward)} ONIX`, 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Welcome bonus недоступен', 'error');
+    }
+  };
+
+  const applyPromoCode = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      const response = await axios.post(`${API_URL}/apply-promo`, {
+        telegramId,
+        code: promoCodeInput,
+      });
+
+      syncGrowthUser(response.data.user, response.data);
+      showRewardPopupFromResponse(response.data);
+      setPromoCodeInput('');
+      setPromoModalVisible(false);
+      showToast(
+        `🎟 Промокод активирован: +${formatOnix(response.data.promo.reward)} ONIX`,
+        'success'
+      );
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось активировать промокод', 'error');
     }
   };
 
@@ -1953,6 +2012,11 @@ function App() {
 
     if (!canWithdraw || isWithdrawalLoading) return;
 
+    if (withdrawalCheck.trim().toUpperCase() !== 'ONIX') {
+      showToast('Введите ONIX в поле антибот-проверки', 'error');
+      return;
+    }
+
     const confirmed = window.confirm(
       `Создать заявку на вывод ${formatOnix(minWithdrawOnix)} ONIX?`
     );
@@ -1965,6 +2029,7 @@ function App() {
       const response = await axios.post(`${API_URL}/request-withdrawal`, {
         telegramId,
         amount: minWithdrawOnix,
+        withdrawalCheck,
       });
 
       const user = response.data.user;
@@ -1972,6 +2037,7 @@ function App() {
       setBalance(user.balance || 0);
       setTransactions(user.transactions || []);
       setWithdrawalRequests(user.withdrawalRequests || []);
+      setWithdrawalCheck('');
       showToast('✅ Заявка на вывод создана', 'success');
       refreshAfterAction();
     } catch (error: any) {
@@ -3878,6 +3944,47 @@ function App() {
             >
               👥 Пригласить друга
             </button>
+            <div className="mt-5 rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-bold text-white">🚀 Referral campaign</h3>
+                  <p className="text-sm text-gray-400">
+                    Приглашай друзей и делись результатом
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                  <p className="text-xs text-gray-400">За друга</p>
+                  <p className="font-bold text-yellow-400">
+                    +{formatOnix(economyConfig.referralReward)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <button
+                  onClick={claimWelcomeBonus}
+                  className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-emerald-400 active:scale-95"
+                >
+                  🎁 Welcome bonus
+                </button>
+
+                <button
+                  onClick={() => setPromoModalVisible(true)}
+                  className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-yellow-400 active:scale-95"
+                >
+                  🎟 Промокод
+                </button>
+
+                <button
+                  onClick={() => setShareCardVisible(true)}
+                  className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-sky-400 active:scale-95"
+                >
+                  📣 Share card
+                </button>
+              </div>
+            </div>
+
 
             {isAdmin() && (
               <button
@@ -4261,6 +4368,20 @@ function App() {
               </p>
             </div>
 
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <p className="text-sm font-bold text-white">🛡 Антибот-проверка</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Перед созданием заявки введите ONIX.
+              </p>
+
+              <input
+                value={withdrawalCheck}
+                onChange={(event) => setWithdrawalCheck(event.target.value)}
+                placeholder="Введите ONIX"
+                className="mt-3 w-full rounded-2xl bg-[#111827] px-4 py-3 text-sm text-white outline-none"
+              />
+            </div>
+
             <button
               onClick={requestWithdrawal}
               disabled={!canWithdraw || isWithdrawalLoading}
@@ -4437,6 +4558,98 @@ function App() {
 
 
 
+
+
+      {promoModalVisible && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">🎟 Промокод</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Введите промокод кампании
+                </p>
+              </div>
+
+              <button
+                onClick={() => setPromoModalVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <input
+              value={promoCodeInput}
+              onChange={(event) => setPromoCodeInput(event.target.value.toUpperCase())}
+              placeholder="Например: LAUNCH"
+              className="w-full rounded-2xl bg-[#0a0f1c] px-4 py-4 text-center text-lg font-bold text-white outline-none"
+            />
+
+            <button
+              onClick={applyPromoCode}
+              className="mt-4 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+            >
+              Активировать
+            </button>
+
+            <p className="mt-3 text-center text-xs text-gray-500">
+              Промокод можно использовать только один раз.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {shareCardVisible && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-sky-400/30 bg-[#111827] p-6 text-center shadow-2xl">
+            <button
+              onClick={() => setShareCardVisible(false)}
+              className="ml-auto block text-2xl text-gray-400"
+            >
+              ×
+            </button>
+
+            <div className="mx-auto mt-2 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 text-4xl">
+              🔗
+            </div>
+
+            <h2 className="mt-4 text-3xl font-black text-white">ONIX COIN</h2>
+            <p className="mt-2 text-sm text-gray-400">Мой результат</p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Баланс</p>
+                <p className="font-bold text-yellow-400">{formatOnix(balance)}</p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Всего</p>
+                <p className="font-bold text-yellow-400">{formatOnix(totalEarned)}</p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Ранг</p>
+                <p className="font-bold text-yellow-400">{rankInfo.currentRank.name}</p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Топ</p>
+                <p className="font-bold text-yellow-400">
+                  {currentUserPlace ? `#${currentUserPlace}` : '—'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={shareReferralLink}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+            >
+              Поделиться в Telegram
+            </button>
+          </div>
+        </div>
+      )}
 
       {launchChecklistVisible && (
         <div className="fixed inset-0 z-[89] flex items-center justify-center bg-black/70 px-4">
