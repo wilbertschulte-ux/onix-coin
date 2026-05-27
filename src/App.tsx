@@ -37,6 +37,16 @@ type Achievement = {
   isCompleted: boolean;
 };
 
+type AchievementCategory =
+  | 'all'
+  | 'taps'
+  | 'miner'
+  | 'referrals'
+  | 'seasons'
+  | 'perks'
+  | 'daily'
+  | 'ranks';
+
 type RewardPopupItem = {
   icon: string;
   title: string;
@@ -293,6 +303,69 @@ const ACHIEVEMENTS: Achievement[] = [
     progress: 0,
     isCompleted: false,
   },
+  {
+    id: 'taps_50000',
+    title: '50 000 тапов',
+    description: 'Сделайте 50 000 тапов',
+    reward: 150000,
+    goal: 50000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'taps_100000',
+    title: '100 000 тапов',
+    description: 'Сделайте 100 000 тапов',
+    reward: 300000,
+    goal: 100000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'earned_1m',
+    title: 'Миллионер ONIX',
+    description: 'Заработайте 1 000 000 ONIX всего',
+    reward: 100000,
+    goal: 1000000,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'friends_10',
+    title: '10 друзей',
+    description: 'Пригласите 10 друзей',
+    reward: 200000,
+    goal: 10,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'upgrade_master',
+    title: 'Мастер апгрейдов',
+    description: 'Купите 25 улучшений',
+    reward: 100000,
+    goal: 25,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'boost_master',
+    title: 'Boost Master',
+    description: 'Используйте 10 бустов',
+    reward: 75000,
+    goal: 10,
+    progress: 0,
+    isCompleted: false,
+  },
+  {
+    id: 'offline_master',
+    title: 'Оффлайн мастер',
+    description: 'Заберите оффлайн-доход 10 раз',
+    reward: 75000,
+    goal: 10,
+    progress: 0,
+    isCompleted: false,
+  },
 ];
 
 function formatOnix(value: number) {
@@ -437,6 +510,9 @@ function App() {
     maxPaidReferralsPerDay: 10,
   });
   const [username, setUsername] = useState('Пользователь');
+  const [selectedTitle, setSelectedTitle] = useState('ONIX Player');
+  const [achievementCategory, setAchievementCategory] =
+    useState<AchievementCategory>('all');
   const [weeklyEarned, setWeeklyEarned] = useState(0);
   const [currentUserPlace, setCurrentUserPlace] = useState<number | null>(null);
   const [energy, setEnergy] = useState(500);
@@ -1234,6 +1310,7 @@ function App() {
     setTotalUpgradesBought(Number(user.totalUpgradesBought || 0));
     setOfflineClaimsCount(Number(user.offlineClaimsCount || 0));
     setWithdrawalRequests(user.withdrawalRequests || []);
+    setSelectedTitle(user.selectedTitle || 'ONIX Player');
   };
 
   const showToast = (
@@ -1495,6 +1572,81 @@ function App() {
     }
   };
 
+
+  const getAchievementCategory = (id: string): AchievementCategory => {
+    if (id.includes('tap')) return 'taps';
+    if (id.includes('miner') || id.includes('offline')) return 'miner';
+    if (id.includes('friend')) return 'referrals';
+    if (id.includes('weekly') || id.includes('season')) return 'seasons';
+    if (id.includes('perk')) return 'perks';
+    if (id.includes('streak') || id.includes('daily')) return 'daily';
+    if (id.includes('rank')) return 'ranks';
+
+    return 'all';
+  };
+
+  const getProfileBadges = () => {
+    const badges: Array<{ icon: string; label: string }> = [];
+
+    if (rankInfo.currentRank.threshold >= 750000) {
+      badges.push({ icon: '🥇', label: 'Gold+' });
+    }
+
+    if (rankInfo.currentRank.id === 'diamond' || rankInfo.currentRank.threshold >= 5000000) {
+      badges.push({ icon: '💎', label: 'Diamond' });
+    }
+
+    if (referralsCount >= 5) {
+      badges.push({ icon: '👥', label: 'Referral' });
+    }
+
+    if (dailyStreak >= 7) {
+      badges.push({ icon: '🔥', label: 'Streak' });
+    }
+
+    if (ownedPerks.length >= 4) {
+      badges.push({ icon: '🧩', label: 'Perks' });
+    }
+
+    if (currentUserPlace && currentUserPlace <= 3) {
+      badges.push({ icon: '🏆', label: 'Top 3' });
+    }
+
+    return badges.slice(0, 6);
+  };
+
+  const getAvailableTitles = () => {
+    const titles = ['ONIX Player'];
+
+    if (totalTaps >= 10000) titles.push('Tap Master');
+    if (minerLevel >= 5) titles.push('Miner');
+    if (referralsCount >= 5) titles.push('Referral Master');
+    if (currentUserPlace && currentUserPlace <= 10) titles.push('Season Hunter');
+    if (rankInfo.currentRank.threshold >= 5000000) titles.push('Diamond');
+    if (totalBoostsUsed >= 10) titles.push('Boost Master');
+    if (ownedPerks.length >= 4) titles.push('Perk Collector');
+
+    return titles;
+  };
+
+  const selectProfileTitle = async (title: string) => {
+    const telegramId = getTelegramId();
+
+    try {
+      const response = await axios.post(`${API_URL}/select-title`, {
+        telegramId,
+        title,
+      });
+
+      const user = response.data.user;
+
+      setSelectedTitle(user.selectedTitle || title);
+      showToast('✅ Титул обновлён', 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось выбрать титул', 'error');
+    }
+  };
+
   const rankInfo = getRankInfo(totalEarned);
   const rankProgress = rankInfo.progressPercent;
   const rankProgressText = rankInfo.nextRank
@@ -1502,6 +1654,10 @@ function App() {
     : 'MAX';
   const currentRankBonus = rankInfo.currentRank.bonus || 0;
   const nextRankBonus = rankInfo.nextRank?.bonus || 0;
+  const profileLevel = Math.max(1, Math.floor(totalEarned / 100000) + 1);
+  const profileLevelProgress = Math.min(((totalEarned % 100000) / 100000) * 100, 100);
+  const profileBadges = getProfileBadges();
+  const availableTitles = getAvailableTitles();
   const activeBoostValue = normalizeBoost(activeBoost);
   const normalizedBoostEndTime = Number(boostEndTime || 0);
   const isBoostActive =
@@ -1623,11 +1779,27 @@ function App() {
     (item: Achievement) => item.isCompleted
   ).length;
 
-  const visibleAchievements = achievements.filter(
-    (item: Achievement) => !item.isCompleted
-  );
+  const visibleAchievements = achievements.filter((item: Achievement) => {
+    if (item.isCompleted) return false;
+    if (achievementCategory === 'all') return true;
+
+    return getAchievementCategory(item.id) === achievementCategory;
+  });
 
   const canWithdraw = balance >= minWithdrawOnix;
+  const achievementCategories: Array<{
+    id: AchievementCategory;
+    label: string;
+  }> = [
+    { id: 'all', label: 'Все' },
+    { id: 'taps', label: 'Тапы' },
+    { id: 'miner', label: 'Майнер' },
+    { id: 'referrals', label: 'Рефералы' },
+    { id: 'seasons', label: 'Сезоны' },
+    { id: 'perks', label: 'Перки' },
+    { id: 'daily', label: 'Daily' },
+    { id: 'ranks', label: 'Ранги' },
+  ];
 
   const referralProgress = Math.min(
     (Number(referralLimit.used || 0) / Number(referralLimit.max || 10)) * 100,
@@ -2434,6 +2606,22 @@ function App() {
               </span>
             </div>
 
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+              {achievementCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setAchievementCategory(category.id)}
+                  className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${
+                    achievementCategory === category.id
+                      ? 'bg-yellow-400 text-black'
+                      : 'bg-[#111827] text-gray-400'
+                  }`}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
+
             {visibleAchievements.length > 0 ? (
               <div className="space-y-4">
                 {visibleAchievements.map((achievement) => {
@@ -2509,7 +2697,62 @@ function App() {
 
             <h2 className="text-2xl font-bold text-white">{username}</h2>
 
-            <p className="mt-1 text-sm text-gray-400">Профиль игрока ONIX</p>
+            <p className="mt-1 text-sm text-gray-400">{selectedTitle}</p>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-400">Profile Level</p>
+                  <p className="text-lg font-bold text-yellow-400">
+                    Level {profileLevel}
+                  </p>
+                </div>
+
+                <p className="text-xs text-gray-400">
+                  {formatOnix(totalEarned % 100000)} / 100 000
+                </p>
+              </div>
+
+              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  style={{ width: `${profileLevelProgress}%` }}
+                />
+              </div>
+
+              {profileBadges.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {profileBadges.map((badge) => (
+                    <span
+                      key={badge.label}
+                      className="rounded-full bg-[#111827] px-3 py-1 text-xs font-bold text-yellow-400"
+                    >
+                      {badge.icon} {badge.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <p className="mb-3 text-sm font-bold text-white">🎖 Титул игрока</p>
+
+              <div className="flex flex-wrap gap-2">
+                {availableTitles.map((title) => (
+                  <button
+                    key={title}
+                    onClick={() => selectProfileTitle(title)}
+                    className={`rounded-full px-3 py-2 text-xs font-bold ${
+                      selectedTitle === title
+                        ? 'bg-yellow-400 text-black'
+                        : 'bg-[#111827] text-gray-300'
+                    }`}
+                  >
+                    {title}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
               <div className="mb-3 flex items-center justify-between gap-3">
