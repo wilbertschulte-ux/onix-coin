@@ -38,6 +38,48 @@ type TransactionFilter =
   | 'season'
   | 'missions';
 
+type AdminUserSearchResult = {
+  telegramId: string;
+  username: string;
+  balance: number;
+  totalEarned: number;
+  weeklyEarned: number;
+  referralsCount: number;
+  totalTaps: number;
+  isSuspicious: boolean;
+  isFrozen: boolean;
+  frozenReason: string;
+};
+
+type AdminUserProfile = AdminUserSearchResult & {
+  totalBoostsUsed: number;
+  totalUpgradesBought: number;
+  offlineClaimsCount: number;
+  level: number;
+  selectedTitle: string;
+  league: string;
+  suspiciousReasons: string[];
+  transactions: Transaction[];
+  withdrawalRequests: WithdrawalRequest[];
+  securityLogs: Array<{
+    type: string;
+    title: string;
+    details: string;
+    createdAt: number;
+  }>;
+};
+
+type AdminSecurityLog = {
+  telegramId: string;
+  username: string;
+  isFrozen: boolean;
+  isSuspicious: boolean;
+  type: string;
+  title: string;
+  details: string;
+  createdAt: number;
+};
+
 type AdminEconomyDashboard = {
   economyConfig: any;
   totals: {
@@ -551,6 +593,7 @@ function getTransactionIcon(type: string) {
   if (type.includes('chest')) return '🎁';
   if (type.includes('mission')) return '📋';
   if (type.includes('withdrawal')) return '💸';
+  if (type.includes('admin')) return '🛠️';
 
   return '🧾';
 }
@@ -642,6 +685,15 @@ function App() {
   const [adminEconomyDashboard, setAdminEconomyDashboard] =
     useState<AdminEconomyDashboard | null>(null);
   const [adminEconomyVisible, setAdminEconomyVisible] = useState(false);
+  const [adminSearchVisible, setAdminSearchVisible] = useState(false);
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
+  const [adminSearchResults, setAdminSearchResults] = useState<AdminUserSearchResult[]>([]);
+  const [adminSelectedUser, setAdminSelectedUser] =
+    useState<AdminUserProfile | null>(null);
+  const [adminAdjustAmount, setAdminAdjustAmount] = useState('');
+  const [adminActionReason, setAdminActionReason] = useState('');
+  const [adminSecurityLogs, setAdminSecurityLogs] = useState<AdminSecurityLog[]>([]);
+  const [adminSecurityLogsVisible, setAdminSecurityLogsVisible] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
   const [channelJoined, setChannelJoined] = useState(false);
 
@@ -1641,6 +1693,129 @@ function App() {
       showToast(`✅ Миссия выполнена: +${formatOnix(response.data.missionReward.reward)} ONIX`, 'success');
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось забрать миссию', 'error');
+    }
+  };
+
+  const searchAdminUsers = async () => {
+    const telegramId = getTelegramId();
+
+    if (!adminSearchQuery.trim()) {
+      setAdminSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-search-users`, {
+        params: {
+          telegramId,
+          query: adminSearchQuery.trim(),
+        },
+      });
+
+      setAdminSearchResults(response.data.users || []);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось найти пользователей', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const loadAdminUserProfile = async (targetTelegramId: string) => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-user-profile/${targetTelegramId}`, {
+        params: {
+          telegramId,
+        },
+      });
+
+      setAdminSelectedUser(response.data.user);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось загрузить профиль', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const adjustAdminUserBalance = async () => {
+    const telegramId = getTelegramId();
+
+    if (!adminSelectedUser) return;
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.post(`${API_URL}/admin-adjust-balance`, {
+        telegramId,
+        targetTelegramId: adminSelectedUser.telegramId,
+        amount: Number(adminAdjustAmount),
+        reason: adminActionReason,
+      });
+
+      showToast('✅ Баланс обновлён', 'success');
+      setAdminAdjustAmount('');
+      setAdminActionReason('');
+      await loadAdminUserProfile(response.data.user.telegramId);
+      await searchAdminUsers();
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось изменить баланс', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const toggleAdminUserBan = async () => {
+    const telegramId = getTelegramId();
+
+    if (!adminSelectedUser) return;
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.post(`${API_URL}/admin-ban-user`, {
+        telegramId,
+        targetTelegramId: adminSelectedUser.telegramId,
+        ban: !adminSelectedUser.isFrozen,
+        reason: adminActionReason || 'Решение администратора',
+      });
+
+      showToast(
+        response.data.user.isFrozen ? '🚫 Пользователь заблокирован' : '✅ Пользователь разблокирован',
+        'success'
+      );
+      setAdminActionReason('');
+      await loadAdminUserProfile(response.data.user.telegramId);
+      await searchAdminUsers();
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось изменить статус', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const loadAdminSecurityLogs = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-security-logs`, {
+        params: {
+          telegramId,
+        },
+      });
+
+      setAdminSecurityLogs(response.data.logs || []);
+      setAdminSecurityLogsVisible(true);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось загрузить логи', 'error');
+    } finally {
+      setIsAdminLoading(false);
     }
   };
 
@@ -3730,6 +3905,48 @@ function App() {
                 📊 Админ: экономика
               </button>
             )}
+{/* SECURITY_ADMIN_VISIBLE_BUTTONS_FIX */}
+
+            {isAdmin() && (
+              <button
+                onClick={() => setAdminSearchVisible(true)}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-purple-400 active:scale-95 disabled:opacity-50"
+              >
+                🔎 Админ: поиск игрока
+              </button>
+            )}
+
+            {isAdmin() && (
+              <button
+                onClick={loadAdminSecurityLogs}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-orange-400 active:scale-95 disabled:opacity-50"
+              >
+                🧾 Админ: security logs
+              </button>
+            )}
+
+
+            {isAdmin() && (
+              <button
+                onClick={() => setAdminSearchVisible(true)}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-purple-400 active:scale-95 disabled:opacity-50"
+              >
+                🔎 Админ: поиск игрока
+              </button>
+            )}
+
+            {isAdmin() && (
+              <button
+                onClick={loadAdminSecurityLogs}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-orange-400 active:scale-95 disabled:opacity-50"
+              >
+                🧾 Админ: security logs
+              </button>
+            )}
 
           </div>
 
@@ -4205,6 +4422,259 @@ function App() {
 
 
 
+
+
+      {adminSearchVisible && (
+        <div className="fixed inset-0 z-[88] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-purple-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">🔎 Админ: поиск игрока</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Поиск по username или Telegram ID
+                </p>
+              </div>
+
+              <button
+                onClick={() => setAdminSearchVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                value={adminSearchQuery}
+                onChange={(event) => setAdminSearchQuery(event.target.value)}
+                placeholder="username или telegramId"
+                className="min-w-0 flex-1 rounded-2xl bg-[#0a0f1c] px-4 py-3 text-sm text-white outline-none"
+              />
+
+              <button
+                onClick={searchAdminUsers}
+                disabled={isAdminLoading}
+                className="rounded-2xl bg-yellow-400 px-4 py-3 font-bold text-black active:scale-95 disabled:opacity-50"
+              >
+                Найти
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {adminSearchResults.length > 0 ? (
+                adminSearchResults.map((user) => (
+                  <button
+                    key={user.telegramId}
+                    onClick={() => loadAdminUserProfile(user.telegramId)}
+                    className="w-full rounded-2xl bg-[#0a0f1c] p-4 text-left active:scale-[0.99]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-white">{user.username}</p>
+                        <p className="text-xs text-gray-500">ID: {user.telegramId}</p>
+                      </div>
+
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          user.isFrozen
+                            ? 'bg-red-500/10 text-red-400'
+                            : user.isSuspicious
+                            ? 'bg-yellow-400/10 text-yellow-400'
+                            : 'bg-emerald-500/10 text-emerald-400'
+                        }`}
+                      >
+                        {user.isFrozen ? 'Banned' : user.isSuspicious ? 'Suspicious' : 'OK'}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Balance: {formatOnix(user.balance)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Earned: {formatOnix(user.totalEarned)}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-[#0a0f1c] p-4 text-center text-gray-400">
+                  Введите запрос и нажмите “Найти”
+                </p>
+              )}
+            </div>
+
+            {adminSelectedUser && (
+              <div className="mt-5 rounded-3xl border border-yellow-400/20 bg-[#0a0f1c] p-5">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      {adminSelectedUser.username}
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      ID: {adminSelectedUser.telegramId}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${
+                      adminSelectedUser.isFrozen
+                        ? 'bg-red-500/10 text-red-400'
+                        : 'bg-emerald-500/10 text-emerald-400'
+                    }`}
+                  >
+                    {adminSelectedUser.isFrozen ? 'Banned' : 'Active'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <p className="rounded-xl bg-[#111827] p-2">
+                    Balance: {formatOnix(adminSelectedUser.balance)}
+                  </p>
+                  <p className="rounded-xl bg-[#111827] p-2">
+                    Earned: {formatOnix(adminSelectedUser.totalEarned)}
+                  </p>
+                  <p className="rounded-xl bg-[#111827] p-2">
+                    Week: {formatOnix(adminSelectedUser.weeklyEarned)}
+                  </p>
+                  <p className="rounded-xl bg-[#111827] p-2">
+                    Taps: {adminSelectedUser.totalTaps}
+                  </p>
+                  <p className="rounded-xl bg-[#111827] p-2">
+                    Refs: {adminSelectedUser.referralsCount}
+                  </p>
+                  <p className="rounded-xl bg-[#111827] p-2">
+                    Upgrades: {adminSelectedUser.totalUpgradesBought}
+                  </p>
+                </div>
+
+                {adminSelectedUser.suspiciousReasons.length > 0 && (
+                  <p className="mt-3 rounded-xl bg-red-500/10 p-3 text-xs text-red-400">
+                    {adminSelectedUser.suspiciousReasons.join(', ')}
+                  </p>
+                )}
+
+                <div className="mt-4 space-y-2">
+                  <input
+                    value={adminAdjustAmount}
+                    onChange={(event) => setAdminAdjustAmount(event.target.value)}
+                    placeholder="+10000 или -10000"
+                    className="w-full rounded-2xl bg-[#111827] px-4 py-3 text-sm text-white outline-none"
+                  />
+
+                  <input
+                    value={adminActionReason}
+                    onChange={(event) => setAdminActionReason(event.target.value)}
+                    placeholder="Причина действия"
+                    className="w-full rounded-2xl bg-[#111827] px-4 py-3 text-sm text-white outline-none"
+                  />
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <button
+                    onClick={adjustAdminUserBalance}
+                    disabled={isAdminLoading}
+                    className="rounded-2xl bg-yellow-400 py-3 font-bold text-black active:scale-95 disabled:opacity-50"
+                  >
+                    Баланс
+                  </button>
+
+                  <button
+                    onClick={toggleAdminUserBan}
+                    disabled={isAdminLoading}
+                    className={`rounded-2xl py-3 font-bold active:scale-95 disabled:opacity-50 ${
+                      adminSelectedUser.isFrozen
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-red-500/20 text-red-400'
+                    }`}
+                  >
+                    {adminSelectedUser.isFrozen ? 'Разбан' : 'Бан'}
+                  </button>
+                </div>
+
+                <div className="mt-5">
+                  <h4 className="mb-3 font-bold text-white">🧾 Security logs</h4>
+
+                  <div className="max-h-56 space-y-2 overflow-y-auto">
+                    {adminSelectedUser.securityLogs.length > 0 ? (
+                      adminSelectedUser.securityLogs.slice(0, 10).map((log, index) => (
+                        <div
+                          key={`${log.createdAt}-${index}`}
+                          className="rounded-xl bg-[#111827] p-3 text-xs"
+                        >
+                          <p className="font-bold text-yellow-400">{log.title}</p>
+                          <p className="mt-1 text-gray-400">{log.details}</p>
+                          <p className="mt-1 text-gray-600">
+                            {formatTransactionTime(log.createdAt)}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-xl bg-[#111827] p-3 text-center text-xs text-gray-500">
+                        Логов пока нет
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {adminSecurityLogsVisible && (
+        <div className="fixed inset-0 z-[88] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-orange-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">🧾 Security logs</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Последние подозрительные и админские действия
+                </p>
+              </div>
+
+              <button
+                onClick={() => setAdminSecurityLogsVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {adminSecurityLogs.length > 0 ? (
+                adminSecurityLogs.map((log, index) => (
+                  <div
+                    key={`${log.telegramId}-${log.createdAt}-${index}`}
+                    className="rounded-2xl bg-[#0a0f1c] p-4"
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-white">{log.username}</p>
+                        <p className="text-xs text-gray-500">ID: {log.telegramId}</p>
+                      </div>
+
+                      <span className="rounded-full bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-400">
+                        {log.type}
+                      </span>
+                    </div>
+
+                    <p className="font-bold text-yellow-400">{log.title}</p>
+                    <p className="mt-1 text-sm text-gray-400">{log.details}</p>
+                    <p className="mt-2 text-xs text-gray-600">
+                      {formatTransactionTime(log.createdAt)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-[#0a0f1c] p-4 text-center text-gray-400">
+                  Логов пока нет
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {tutorialVisible && (
         <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/75 px-4">
