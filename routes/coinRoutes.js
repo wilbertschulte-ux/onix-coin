@@ -467,9 +467,18 @@ function getEconomyConfig() {
       energy: getNumberEnv('UPGRADE_ENERGY_BASE_COST', 600),
       recharge: getNumberEnv('UPGRADE_RECHARGE_BASE_COST', 650),
     },
-    perkBaseCosts: Object.fromEntries(
-      Object.entries(PERKS || {}).map(([id, perk]) => [id, perk.baseCost || perk.cost || 0])
-    ),
+    perkBaseCosts: {
+      offline_pro: getNumberEnv('PERK_OFFLINE_PRO_BASE_COST', 100000),
+      energy_saver: getNumberEnv('PERK_ENERGY_SAVER_BASE_COST', 150000),
+      daily_plus: getNumberEnv('PERK_DAILY_PLUS_BASE_COST', 200000),
+      miner_plus: getNumberEnv('PERK_MINER_PLUS_BASE_COST', 250000),
+      boost_master: getNumberEnv('PERK_BOOST_MASTER_BASE_COST', 180000),
+      streak_shield: getNumberEnv('PERK_STREAK_SHIELD_BASE_COST', 220000),
+      lucky_miner: getNumberEnv('PERK_LUCKY_MINER_BASE_COST', 300000),
+      referral_pro: getNumberEnv('PERK_REFERRAL_PRO_BASE_COST', 300000),
+      energy_max_pro: getNumberEnv('PERK_ENERGY_MAX_PRO_BASE_COST', 175000),
+      engineer: getNumberEnv('PERK_ENGINEER_BASE_COST', 250000),
+    },
   };
 }
 
