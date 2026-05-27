@@ -2720,16 +2720,38 @@ function App() {
                 />
               </div>
 
-              {profileBadges.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm font-bold text-white">🏅 Бейджи игрока</p>
+                <span className="rounded-full bg-[#111827] px-3 py-1 text-xs font-bold text-yellow-400">
+                  {profileBadges.length}
+                </span>
+              </div>
+
+              {profileBadges.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
                   {profileBadges.map((badge) => (
-                    <span
+                    <div
                       key={badge.label}
-                      className="rounded-full bg-[#111827] px-3 py-1 text-xs font-bold text-yellow-400"
+                      className="rounded-2xl border border-yellow-400/20 bg-[#111827] p-3 text-center"
                     >
-                      {badge.icon} {badge.label}
-                    </span>
+                      <p className="text-2xl">{badge.icon}</p>
+                      <p className="mt-1 text-sm font-bold text-yellow-400">
+                        {badge.label}
+                      </p>
+                    </div>
                   ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-[#111827] p-4 text-center">
+                  <p className="text-sm font-bold text-gray-300">
+                    Пока нет бейджей
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Получайте ранги, попадайте в топ и выполняйте достижения.
+                  </p>
                 </div>
               )}
             </div>
