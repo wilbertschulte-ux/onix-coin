@@ -1461,7 +1461,7 @@ router.post('/create', async (req, res) => {
           user.referredByUsername = refUser.username || 'пользователя';
 
           // Реферальный бонус пригласившему теперь начисляется не сразу,
-          // а после активности нового игрока: 100 тапов или 10 000 totalEarned.
+          // а после активности нового игрока: 100 тапов.
           user.referredByBonusPaid = false;
 
           user.balance = roundOnix(Number(user.balance || 0) + economyConfig.referredUserReward);
@@ -1785,7 +1785,10 @@ function ensureUserNotFrozen(user, res) {
 }
 
 function isReferralQualified(user) {
-  return Number(user.totalTaps || 0) >= 100 || Number(user.totalEarned || 0) >= 10000;
+  // Важно: НЕ используем totalEarned/balance для проверки,
+  // потому что новый игрок получает стартовый бонус 15 000 ONIX по реферальной ссылке.
+  // Иначе пригласивший получит большой бонус сразу.
+  return Number(user.totalTaps || 0) >= 100;
 }
 
 async function tryPayQualifiedReferralBonus(user) {
