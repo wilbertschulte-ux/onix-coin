@@ -150,6 +150,25 @@ const PERKS = {
   },
 };
 
+
+function getPerkLevelsPayload(user) {
+  const levels = {};
+
+  if (!user.perkLevels) return levels;
+
+  if (typeof user.perkLevels.forEach === 'function') {
+    user.perkLevels.forEach((value, key) => {
+      levels[key] = Number(value || 0);
+    });
+  } else {
+    Object.entries(user.perkLevels || {}).forEach(([key, value]) => {
+      levels[key] = Number(value || 0);
+    });
+  }
+
+  return levels;
+}
+
 function getPerkLevel(user, perkId) {
   if (!user.perkLevels) return 0;
 
@@ -1600,7 +1619,7 @@ router.get('/:telegramId', async (req, res) => {
     await user.save();
 
     return res.json({
-      ...user.toObject(),
+      ...user.toObject({ flattenMaps: true }),
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
     });
@@ -1751,7 +1770,7 @@ router.post('/create', async (req, res) => {
     }
 
     return res.json({
-      ...user.toObject(),
+      ...user.toObject({ flattenMaps: true }),
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
     });
@@ -1987,7 +2006,8 @@ router.post('/buy-upgrade', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2172,7 +2192,8 @@ router.post('/set-team', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2221,7 +2242,8 @@ router.post('/select-title', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2312,7 +2334,8 @@ router.post('/request-withdrawal', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2399,7 +2422,8 @@ router.post('/buy-perk', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2491,7 +2515,8 @@ router.post('/open-chest', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2588,7 +2613,8 @@ router.post('/claim-task', async (req, res) => {
       await user.save();
 
       return res.json({
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         claimedDailyReward: reward,
         rankBonuses,
@@ -2646,7 +2672,8 @@ router.post('/claim-task', async (req, res) => {
       await user.save();
 
       return res.json({
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
         rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
@@ -2688,7 +2715,8 @@ router.post('/claim-task', async (req, res) => {
       await user.save();
 
       return res.json({
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
         rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
@@ -2757,7 +2785,8 @@ router.post('/claim-offline-income', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2851,7 +2880,8 @@ router.post('/mine-tick', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -2942,7 +2972,8 @@ router.post('/activate-boost', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
@@ -3040,7 +3071,8 @@ router.post('/tap', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject(),
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
       },
