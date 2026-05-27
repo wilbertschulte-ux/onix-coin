@@ -939,26 +939,7 @@ function App() {
       });
     }, 1000);
 
-    if (isAppLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-white">
-        <div className="w-full max-w-sm rounded-3xl border border-yellow-400/20 bg-[#111827] p-8 text-center shadow-2xl">
-          <div className="mx-auto mb-5 flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-4xl">
-            🔗
-          </div>
-
-          <h1 className="text-3xl font-black text-white">ONIX COIN</h1>
-          <p className="mt-3 text-sm text-gray-400">Загрузка майнера...</p>
-
-          <div className="mt-6 h-3 overflow-hidden rounded-full bg-gray-800">
-            <div className="h-full w-2/3 animate-pulse rounded-full bg-yellow-400" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return () => clearInterval(timer);
+    return () => clearInterval(timer);
   }, [seasonSecondsLeft]);
 
   useEffect(() => {
@@ -2275,6 +2256,25 @@ function App() {
       isActive: isBoostActive && activeBoostValue === 'mining',
     },
   ];
+
+  if (isAppLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-white">
+        <div className="w-full max-w-sm rounded-3xl border border-yellow-400/20 bg-[#111827] p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-5 flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-4xl">
+            🔗
+          </div>
+
+          <h1 className="text-3xl font-black text-white">ONIX COIN</h1>
+          <p className="mt-3 text-sm text-gray-400">Загрузка майнера...</p>
+
+          <div className="mt-6 h-3 overflow-hidden rounded-full bg-gray-800">
+            <div className="h-full w-2/3 animate-pulse rounded-full bg-yellow-400" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
