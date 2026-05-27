@@ -2073,7 +2073,6 @@ function App() {
   const onixEurRate = Number(economyConfig.onixEurPer1000 || DEFAULT_ONIX_EUR_PER_1000) / 1000;
   const minWithdrawOnix = Number(economyConfig.minWithdrawOnix || DEFAULT_MIN_WITHDRAW_ONIX);
   const balanceInEur = balance * onixEurRate;
-  const minWithdrawEur = minWithdrawOnix * onixEurRate;
   const withdrawProgress = Math.min((balance / minWithdrawOnix) * 100, 100);
   const leftToWithdraw = Math.max(minWithdrawOnix - balance, 0);
 
