@@ -3227,27 +3227,50 @@ function App() {
             </div>
           )}
 
-          {seasonHistory.length > 0 && (
-            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
-              <h3 className="mb-4 text-xl font-bold text-white">📜 История сезонов</h3>
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-white">📜 История сезонов</h3>
 
+            {seasonHistory.length > 0 ? (
               <div className="space-y-3">
                 {seasonHistory.slice(0, 5).map((season) => (
                   <div key={season.week} className="rounded-2xl bg-[#0a0f1c] p-4">
-                    <p className="font-bold text-yellow-400">{season.week}</p>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="font-bold text-yellow-400">{season.week}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(season.awardedAt).toLocaleDateString('ru-RU')}
+                      </p>
+                    </div>
 
-                    <div className="mt-2 space-y-1">
-                      {season.winners.map((winner) => (
-                        <p key={`${season.week}-${winner.place}`} className="text-sm text-gray-300">
-                          #{winner.place} {winner.username} · +{formatOnix(winner.prize)} ONIX
-                        </p>
+                    <div className="space-y-2">
+                      {season.winners.slice(0, 10).map((winner) => (
+                        <div
+                          key={`${season.week}-${winner.place}`}
+                          className="flex items-center justify-between rounded-2xl bg-[#111827] px-3 py-2 text-sm"
+                        >
+                          <span className="font-bold text-white">
+                            #{winner.place} {winner.username}
+                          </span>
+
+                          <span className="font-bold text-yellow-400">
+                            +{formatOnix(winner.prize)}
+                          </span>
+                        </div>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="rounded-2xl bg-[#0a0f1c] p-5 text-center">
+                <p className="font-bold text-gray-300">
+                  Пока нет завершённых сезонов
+                </p>
+                <p className="mt-2 text-sm text-gray-500">
+                  После первой выдачи сезонных призов здесь появятся победители.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
