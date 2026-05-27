@@ -1810,11 +1810,6 @@ function App() {
 
   const miningMultiplier =
     activeBoostValue === 'mining' && isBoostActive ? 2 : 1;
-  const minerBaseMultiplier = 1 + 0.05 * minerPlusLevel + 0.03 * luckyMinerLevel;
-  const minerIncomePerSecond = Number(
-    (autoclickers * minerBaseMultiplier * miningMultiplier).toFixed(2)
-  );
-  const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
   const offlineProLevel = getPerkLevel('offline_pro');
   const energySaverLevel = getPerkLevel('energy_saver');
   const dailyPlusLevel = getPerkLevel('daily_plus');
@@ -1826,6 +1821,12 @@ function App() {
   const energyMaxProLevel = getPerkLevel('energy_max_pro');
   const engineerLevel = getPerkLevel('engineer');
 
+  const minerBaseMultiplier = 1 + 0.05 * minerPlusLevel + 0.03 * luckyMinerLevel;
+  const minerIncomePerSecond = Number(
+    (autoclickers * minerBaseMultiplier * miningMultiplier).toFixed(2)
+  );
+  const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
+
   const effectiveTapEnergyCost = Math.max(
     1,
     Number((tapPower * Math.max(0.7, 1 - 0.1 * energySaverLevel)).toFixed(2))
@@ -1836,79 +1837,6 @@ function App() {
   );
   const maxOfflineHours = 3 + offlineProLevel;
   const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
-
-  const nextTapCost = getTapUpgradeCost(tapLevel);
-  const nextMinerCost = getMinerUpgradeCost(minerLevel);
-  const nextEnergyCost = getEnergyUpgradeCost(energyLevel);
-  const nextRechargeCost = getRechargeUpgradeCost(rechargeLevel);
-
-  const minerUpgradeProgress = Math.min((balance / nextMinerCost) * 100, 100);
-  const nextMinerIncomePerSecond = Number(
-    ((autoclickers + 0.5) * miningMultiplier).toFixed(2)
-  );
-  const minerIncomeIncrease = nextMinerIncomePerSecond - minerIncomePerSecond;
-
-  const upgradeCards: Array<{
-    type: 'tap' | 'miner' | 'energy' | 'recharge';
-    icon: string;
-    title: string;
-    description: string;
-    level: number;
-    cost: number;
-    currentLabel: string;
-    currentValue: string;
-    nextLabel: string;
-    nextValue: string;
-  }> = [
-    {
-      type: 'tap',
-      icon: '🎯',
-      title: 'Сила тапа',
-      description: 'Больше ONIX за каждый тап',
-      level: tapLevel,
-      cost: nextTapCost,
-      currentLabel: 'Сейчас',
-      currentValue: `+${formatOnix(tapPower)} ONIX/тап`,
-      nextLabel: 'После апгрейда',
-      nextValue: `+${formatOnix(tapPower + 1)} ONIX/тап`,
-    },
-    {
-      type: 'miner',
-      icon: '⛏️',
-      title: 'Майнер',
-      description: 'Пассивный доход онлайн и оффлайн',
-      level: minerLevel,
-      cost: nextMinerCost,
-      currentLabel: 'Сейчас',
-      currentValue: `+${formatOnix(minerIncomePerSecond)} ONIX/сек`,
-      nextLabel: 'После апгрейда',
-      nextValue: `+${formatOnix(nextMinerIncomePerSecond)} ONIX/сек`,
-    },
-    {
-      type: 'energy',
-      icon: '🔋',
-      title: 'Энергия',
-      description: 'Больше максимальной энергии для тапов',
-      level: energyLevel,
-      cost: nextEnergyCost,
-      currentLabel: 'Сейчас',
-      currentValue: `${maxEnergy.toLocaleString('ru-RU')} энергии`,
-      nextLabel: 'После апгрейда',
-      nextValue: `${(maxEnergy + 100).toLocaleString('ru-RU')} энергии`,
-    },
-    {
-      type: 'recharge',
-      icon: '⚡',
-      title: 'Восстановление',
-      description: 'Энергия быстрее восстанавливается',
-      level: rechargeLevel,
-      cost: nextRechargeCost,
-      currentLabel: 'Сейчас',
-      currentValue: `+${formatOnix(energyRecharge)} энергии/сек`,
-      nextLabel: 'После апгрейда',
-      nextValue: `+${formatOnix(energyRecharge + 0.25)} энергии/сек`,
-    },
-  ];
 
   const boostRemainingMs = Math.max(boostEndTime - Date.now(), 0);
   const boostTimeLeft = boostRemainingMs > 0 ? formatTime(boostRemainingMs) : '';
@@ -1964,7 +1892,7 @@ function App() {
 
   const dailyRewardPreview = Math.round(
     getDailyRewardWithStreak(level, nextDailyStreakDay) *
-      (hasDailyPlus ? 1.1 : 1)
+      (1 + 0.1 * dailyPlusLevel)
   );
   const dailyStreakMultiplier = getDailyStreakMultiplier(nextDailyStreakDay);
 
