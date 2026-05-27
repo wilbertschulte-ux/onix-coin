@@ -1367,7 +1367,7 @@ function App() {
     setWithdrawalRequests(user.withdrawalRequests || []);
     setSelectedTitle(user.selectedTitle || 'ONIX Player');
     setTeamName(user.teamName || '');
-    setTeamNameInput(user.teamName || '');
+    setTeamNameInput((currentValue) => currentValue || user.teamName || '');
     setLeague(user.league || 'Bronze');
   };
 
