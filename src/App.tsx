@@ -27,6 +27,42 @@ type Transaction = {
   createdAt?: number;
 };
 
+type TransactionFilter =
+  | 'all'
+  | 'income'
+  | 'expense'
+  | 'withdrawal'
+  | 'referral'
+  | 'season'
+  | 'missions';
+
+type AdminEconomyDashboard = {
+  economyConfig: any;
+  totals: {
+    users: number;
+    frozenUsers: number;
+    suspiciousUsers: number;
+    totalBalance: number;
+    totalEarned: number;
+    weeklyEarned: number;
+    referrals: number;
+    taps: number;
+    pendingWithdrawals: number;
+    pendingWithdrawOnix: number;
+    approvedWithdrawals: number;
+    rejectedWithdrawals: number;
+    createdOnix: number;
+    spentOnix: number;
+    totalBalanceEur: number;
+    pendingWithdrawEur: number;
+  };
+  transactionTypes: Array<{
+    type: string;
+    count: number;
+    amount: number;
+  }>;
+};
+
 type Achievement = {
   id: string;
   title: string;
@@ -595,6 +631,11 @@ function App() {
   });
   const [dailyStreak, setDailyStreak] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionFilter, setTransactionFilter] =
+    useState<TransactionFilter>('all');
+  const [adminEconomyDashboard, setAdminEconomyDashboard] =
+    useState<AdminEconomyDashboard | null>(null);
+  const [adminEconomyVisible, setAdminEconomyVisible] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
   const [channelJoined, setChannelJoined] = useState(false);
 
@@ -1591,6 +1632,27 @@ function App() {
     }
   };
 
+  const loadAdminEconomyDashboard = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-economy-dashboard`, {
+        params: {
+          telegramId,
+        },
+      });
+
+      setAdminEconomyDashboard(response.data);
+      setAdminEconomyVisible(true);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось загрузить экономику', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
   const loadSuspiciousUsers = async () => {
     const telegramId = getTelegramId();
 
@@ -2027,6 +2089,68 @@ function App() {
   });
 
   const canWithdraw = balance >= minWithdrawOnix;
+
+  const transactionFilters: Array<{
+    id: TransactionFilter;
+    label: string;
+  }> = [
+    { id: 'all', label: 'Все' },
+    { id: 'income', label: 'Доходы' },
+    { id: 'expense', label: 'Расходы' },
+    { id: 'withdrawal', label: 'Выводы' },
+    { id: 'referral', label: 'Рефералы' },
+    { id: 'season', label: 'Сезоны' },
+    { id: 'missions', label: 'Миссии' },
+  ];
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    const type = transaction.type || '';
+    const amount = Number(transaction.amount || 0);
+
+    if (transactionFilter === 'all') return true;
+    if (transactionFilter === 'income') return amount > 0;
+    if (transactionFilter === 'expense') return amount < 0;
+    if (transactionFilter === 'withdrawal') return type.includes('withdrawal');
+    if (transactionFilter === 'referral') return type.includes('referral');
+    if (transactionFilter === 'season') return type.includes('season');
+    if (transactionFilter === 'missions') return type.includes('mission');
+
+    return true;
+  });
+
+  const walletIncomeTotal = transactions
+    .filter((transaction) => Number(transaction.amount || 0) > 0)
+    .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+  const walletExpenseTotal = transactions
+    .filter((transaction) => Number(transaction.amount || 0) < 0)
+    .reduce((sum, transaction) => sum + Math.abs(Number(transaction.amount || 0)), 0);
+  const walletPendingWithdrawal = withdrawalRequests
+    .filter((request) => request.status === 'pending')
+    .reduce((sum, request) => sum + Number(request.amount || 0), 0);
+
+  const earningChartDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - index));
+    const key = date.toISOString().slice(0, 10);
+
+    const amount = transactions
+      .filter((transaction) => {
+        if (Number(transaction.amount || 0) <= 0 || !transaction.createdAt) return false;
+
+        return new Date(transaction.createdAt).toISOString().slice(0, 10) === key;
+      })
+      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+
+    return {
+      key,
+      label: date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }),
+      amount,
+    };
+  });
+  const maxChartAmount = Math.max(
+    ...earningChartDays.map((item) => item.amount),
+    1
+  );
   const achievementCategories: Array<{
     id: AchievementCategory;
     label: string;
@@ -3517,6 +3641,16 @@ function App() {
               </button>
             )}
 
+            {isAdmin() && (
+              <button
+                onClick={loadAdminEconomyDashboard}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-sky-400 active:scale-95 disabled:opacity-50"
+              >
+                📊 Админ: экономика
+              </button>
+            )}
+
           </div>
 
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
@@ -3726,7 +3860,9 @@ function App() {
 
               <div>
                 <h2 className="text-2xl font-bold text-white">Кошелёк</h2>
-                <p className="text-sm text-gray-400">Баланс и будущий вывод ONIX</p>
+                <p className="text-sm text-gray-400">
+                  Баланс, выводы и экономика аккаунта
+                </p>
               </div>
             </div>
 
@@ -3741,6 +3877,36 @@ function App() {
                   maximumFractionDigits: 2,
                 })} €
               </p>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Всего заработано</p>
+                <p className="mt-1 text-sm font-bold text-yellow-400">
+                  {formatOnix(totalEarned)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">За неделю</p>
+                <p className="mt-1 text-sm font-bold text-emerald-400">
+                  +{formatOnix(weeklyEarned)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Доходы в истории</p>
+                <p className="mt-1 text-sm font-bold text-emerald-400">
+                  +{formatOnix(walletIncomeTotal)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Расходы в истории</p>
+                <p className="mt-1 text-sm font-bold text-red-400">
+                  -{formatOnix(walletExpenseTotal)}
+                </p>
+              </div>
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-3">
@@ -3781,20 +3947,52 @@ function App() {
               </p>
 
               <p className="mt-1 text-xs text-gray-500">
-                Минимальный вывод ≈ {minWithdrawEur.toLocaleString('ru-RU', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })} €
+                Pending-заявки: {formatOnix(walletPendingWithdrawal)} ONIX
               </p>
             </div>
 
+            <button
+              onClick={requestWithdrawal}
+              disabled={!canWithdraw || isWithdrawalLoading}
+              className={`mt-5 w-full rounded-2xl py-4 text-lg font-bold active:scale-95 ${
+                canWithdraw
+                  ? 'bg-yellow-400 text-black'
+                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {isWithdrawalLoading
+                ? 'Создаём заявку...'
+                : canWithdraw
+                ? 'Создать заявку на вывод'
+                : 'Недостаточно ONIX для вывода'}
+            </button>
+          </div>
 
-            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
-    
-          {withdrawalRequests.length > 0 && (
-            <div className="mt-6 rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
-              <h3 className="text-xl font-bold text-white">💸 Заявки на вывод</h3>
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <h3 className="text-xl font-bold text-white">📈 График заработка</h3>
+            <p className="mt-1 text-sm text-gray-400">Доходы за последние 7 дней</p>
 
+            <div className="mt-5 flex h-40 items-end gap-2 rounded-2xl bg-[#0a0f1c] p-4">
+              {earningChartDays.map((item) => (
+                <div key={item.key} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-t-xl bg-yellow-400 transition-all"
+                      style={{
+                        height: `${Math.max((item.amount / maxChartAmount) * 100, item.amount > 0 ? 8 : 2)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-500">{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <h3 className="text-xl font-bold text-white">💸 Заявки на вывод</h3>
+
+            {withdrawalRequests.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {withdrawalRequests.slice(0, 5).map((request, index) => (
                   <div
@@ -3835,77 +4033,87 @@ function App() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">История операций</h3>
-                <span className="text-xs text-gray-500">последние 20</span>
+            ) : (
+              <div className="mt-4 rounded-2xl bg-[#0a0f1c] p-5 text-center">
+                <p className="font-bold text-gray-300">Заявок пока нет</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Когда вы создадите заявку, она появится здесь.
+                </p>
               </div>
+            )}
+          </div>
 
-              {transactions.length > 0 ? (
-                <div className="space-y-3">
-                  {transactions.slice(0, 20).map((transaction, index) => {
-                    const isIncome = Number(transaction.amount || 0) >= 0;
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-bold text-white">🧾 История операций</h3>
+                <p className="text-sm text-gray-400">
+                  {filteredTransactions.length} операций
+                </p>
+              </div>
+            </div>
 
-                    return (
-                      <div
-                        key={`${transaction.createdAt || index}-${index}`}
-                        className="flex items-center justify-between gap-3 rounded-2xl bg-[#111827] p-3"
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0a0f1c] text-xl">
-                            {getTransactionIcon(transaction.type)}
-                          </div>
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+              {transactionFilters.map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => setTransactionFilter(filter.id)}
+                  className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${
+                    transactionFilter === filter.id
+                      ? 'bg-yellow-400 text-black'
+                      : 'bg-[#0a0f1c] text-gray-400'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
 
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-white">
-                              {transaction.title || 'Операция'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatTransactionTime(transaction.createdAt)}
-                            </p>
-                          </div>
+            {filteredTransactions.length > 0 ? (
+              <div className="space-y-3">
+                {filteredTransactions.slice(0, 40).map((transaction, index) => {
+                  const isIncome = Number(transaction.amount || 0) >= 0;
+
+                  return (
+                    <div
+                      key={`${transaction.createdAt || index}-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-[#0a0f1c] p-3"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-xl">
+                          {getTransactionIcon(transaction.type)}
                         </div>
 
-                        <p
-                          className={`shrink-0 text-sm font-bold ${
-                            isIncome ? 'text-emerald-400' : 'text-red-400'
-                          }`}
-                        >
-                          {isIncome ? '+' : ''}
-                          {formatOnix(transaction.amount)} ONIX
-                        </p>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-white">
+                            {transaction.title || 'Операция'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatTransactionTime(transaction.createdAt)}
+                          </p>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  Пока операций нет. Здесь будут отображаться награды, покупки, бонусы и будущие выводы.
+
+                      <p
+                        className={`shrink-0 text-sm font-bold ${
+                          isIncome ? 'text-emerald-400' : 'text-red-400'
+                        }`}
+                      >
+                        {isIncome ? '+' : ''}
+                        {formatOnix(transaction.amount)} ONIX
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-[#0a0f1c] p-5 text-center">
+                <p className="font-bold text-gray-300">Операций нет</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Попробуйте выбрать другой фильтр.
                 </p>
-              )}
-            </div>
-
-            <button
-              onClick={requestWithdrawal}
-              disabled={!canWithdraw || isWithdrawalLoading}
-              className={`mt-5 w-full rounded-2xl py-4 text-lg font-bold active:scale-95 ${
-                canWithdraw
-                  ? 'bg-yellow-400 text-black'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              {isWithdrawalLoading
-                ? 'Создаём заявку...'
-                : canWithdraw
-                ? 'Создать заявку на вывод'
-                : 'Недостаточно ONIX для вывода'}
-            </button>
-
-            <p className="mt-4 text-center text-xs text-gray-500">
-              Раздел вывода находится в подготовке. Сейчас это расчётный баланс по ориентировочному курсу.
-            </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -3915,6 +4123,122 @@ function App() {
 
 
 
+
+
+      {adminEconomyVisible && adminEconomyDashboard && (
+        <div className="fixed inset-0 z-[87] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-sky-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">📊 Админ: dashboard экономики</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Общая экономика ONIX COIN
+                </p>
+              </div>
+
+              <button
+                onClick={() => setAdminEconomyVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Пользователи</p>
+                <p className="font-bold text-yellow-400">
+                  {adminEconomyDashboard.totals.users}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Баланс всех</p>
+                <p className="font-bold text-yellow-400">
+                  {formatOnix(adminEconomyDashboard.totals.totalBalance)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Создано ONIX</p>
+                <p className="font-bold text-emerald-400">
+                  +{formatOnix(adminEconomyDashboard.totals.createdOnix)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Потрачено ONIX</p>
+                <p className="font-bold text-red-400">
+                  -{formatOnix(adminEconomyDashboard.totals.spentOnix)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Pending выводы</p>
+                <p className="font-bold text-yellow-400">
+                  {adminEconomyDashboard.totals.pendingWithdrawals}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Сумма pending</p>
+                <p className="font-bold text-yellow-400">
+                  {formatOnix(adminEconomyDashboard.totals.pendingWithdrawOnix)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Suspicious</p>
+                <p className="font-bold text-red-400">
+                  {adminEconomyDashboard.totals.suspiciousUsers}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Frozen</p>
+                <p className="font-bold text-red-400">
+                  {adminEconomyDashboard.totals.frozenUsers}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <h3 className="mb-3 font-bold text-white">⚙️ Backend config</h3>
+              <div className="space-y-2 text-sm text-gray-300">
+                <p>Курс: 1000 ONIX = {adminEconomyDashboard.economyConfig.onixEurPer1000}€</p>
+                <p>Мин. вывод: {formatOnix(adminEconomyDashboard.economyConfig.minWithdrawOnix)} ONIX</p>
+                <p>Реферал: +{formatOnix(adminEconomyDashboard.economyConfig.referralReward)} ONIX</p>
+                <p>Сундук: {formatOnix(adminEconomyDashboard.economyConfig.chestCost)} ONIX</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <h3 className="mb-3 font-bold text-white">🧾 Типы операций</h3>
+              <div className="space-y-2">
+                {adminEconomyDashboard.transactionTypes.slice(0, 8).map((item) => (
+                  <div
+                    key={item.type}
+                    className="flex items-center justify-between rounded-xl bg-[#111827] px-3 py-2 text-sm"
+                  >
+                    <span className="truncate text-gray-300">{item.type}</span>
+                    <span className="font-bold text-yellow-400">
+                      {formatOnix(item.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={loadAdminEconomyDashboard}
+              disabled={isAdminLoading}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95 disabled:opacity-50"
+            >
+              Обновить dashboard
+            </button>
+          </div>
+        </div>
+      )}
 
       {seasonPrizePopup && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4">
