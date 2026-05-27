@@ -1202,38 +1202,6 @@ function App() {
     }
   };
 
-  const syncUserFromResponse = (user: any, fallbackData: any = {}) => {
-    if (!user) return;
-
-    setBalance(user.balance || 0);
-    setUsername(user.username || username || 'Пользователь');
-    setWeeklyEarned(Number(user.weeklyEarned || 0));
-    setEnergy(user.energy ?? energy);
-    setMaxEnergy(user.maxEnergy ?? maxEnergy);
-    setTapPower(user.tapPower ?? tapPower);
-    setEnergyRecharge(user.energyRecharge ?? energyRecharge);
-    setAutoclickers(user.autoclickers ?? autoclickers);
-    setTotalEarned(user.totalEarned || totalEarned);
-    setLevel(user.level || level);
-    setReferralsCount(user.referralsCount || referralsCount);
-    setReferralLimit(user.referralLimit || fallbackData.referralLimit || referralLimit);
-    setCompletedTasks(user.completedTasks || completedTasks);
-    setOwnedPerks(user.ownedPerks || ownedPerks);
-    setPerkLevels(normalizePerkLevels(user.perkLevels));
-    setDailyStreak(Number(user.dailyStreak || dailyStreak));
-    setTransactions(user.transactions || transactions);
-    setAchievements(user.achievements || fallbackData.achievements || achievements);
-    setActiveBoost(normalizeBoost(user.activeBoost));
-    setBoostEndTime(Number(user.boostEndTime || 0));
-    setTapLevel(user.tapLevel || tapLevel);
-    setMinerLevel(user.minerLevel || minerLevel);
-    setEnergyLevel(user.energyLevel || energyLevel);
-    setRechargeLevel(user.rechargeLevel || rechargeLevel);
-    setWithdrawalRequests(user.withdrawalRequests || withdrawalRequests);
-    setLastChestReward(user.chestStats?.lastReward || lastChestReward);
-    applyUserStats(user);
-  };
-
   const refreshAfterAction = async () => {
     try {
       await loadMissions();
