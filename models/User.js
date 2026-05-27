@@ -347,6 +347,21 @@ const userSchema = new mongoose.Schema(
       default: '',
     },
 
+    teamJoinedAt: {
+      type: Number,
+      default: 0,
+    },
+
+    teamMissionClaims: {
+      type: [String],
+      default: [],
+    },
+
+    teamPrizeClaims: {
+      type: [String],
+      default: [],
+    },
+
     league: {
       type: String,
       default: 'Bronze',

@@ -151,6 +151,155 @@ const PERKS = {
 };
 
 
+
+function getTeamCode(teamName) {
+  return Buffer.from(String(teamName || '').trim(), 'utf8')
+    .toString('base64url')
+    .slice(0, 64);
+}
+
+function decodeTeamCode(code) {
+  try {
+    return Buffer.from(String(code || ''), 'base64url').toString('utf8').trim();
+  } catch {
+    return '';
+  }
+}
+
+function getTeamMissionDefinitions() {
+  return [
+    {
+      id: 'team_earn_250k',
+      title: 'Командный заработок',
+      description: 'Команда должна заработать 250 000 ONIX за неделю',
+      goal: 250000,
+      reward: 25000,
+    },
+    {
+      id: 'team_members_3',
+      title: 'Собрать команду',
+      description: 'В команде должно быть 3 участника',
+      goal: 3,
+      reward: 15000,
+    },
+    {
+      id: 'team_taps_1000',
+      title: 'Командные тапы',
+      description: 'Команда должна сделать 1 000 тапов всего',
+      goal: 1000,
+      reward: 20000,
+    },
+  ];
+}
+
+function getTeamPrizeByPlace(place) {
+  if (place === 1) return 100000;
+  if (place === 2) return 60000;
+  if (place === 3) return 30000;
+  if (place >= 4 && place <= 10) return 10000;
+
+  return 0;
+}
+
+async function getTeamStats(teamName) {
+  const cleanTeamName = String(teamName || '').trim();
+
+  if (!cleanTeamName) {
+    return {
+      teamName: '',
+      members: 0,
+      weeklyEarned: 0,
+      totalEarned: 0,
+      totalTaps: 0,
+      teamCode: '',
+      place: null,
+    };
+  }
+
+  const members = await User.find({ teamName: cleanTeamName }).select(
+    'telegramId username weeklyEarned totalEarned totalTaps referralsCount'
+  );
+
+  const stats = members.reduce(
+    (acc, member) => {
+      acc.weeklyEarned += Number(member.weeklyEarned || 0);
+      acc.totalEarned += Number(member.totalEarned || 0);
+      acc.totalTaps += Number(member.totalTaps || 0);
+      return acc;
+    },
+    {
+      weeklyEarned: 0,
+      totalEarned: 0,
+      totalTaps: 0,
+    }
+  );
+
+  const leaderboard = await User.aggregate([
+    {
+      $match: {
+        weeklyEarned: { $gt: 0 },
+        teamName: { $nin: ['', null] },
+      },
+    },
+    {
+      $group: {
+        _id: '$teamName',
+        weeklyEarned: { $sum: '$weeklyEarned' },
+      },
+    },
+    { $sort: { weeklyEarned: -1 } },
+  ]);
+
+  const placeIndex = leaderboard.findIndex((team) => team._id === cleanTeamName);
+
+  return {
+    teamName: cleanTeamName,
+    members: members.length,
+    weeklyEarned: roundOnix(stats.weeklyEarned),
+    totalEarned: roundOnix(stats.totalEarned),
+    totalTaps: Number(stats.totalTaps || 0),
+    teamCode: getTeamCode(cleanTeamName),
+    place: placeIndex >= 0 ? placeIndex + 1 : null,
+    membersList: members
+      .map((member) => ({
+        telegramId: member.telegramId,
+        username: member.username || 'Пользователь',
+        weeklyEarned: roundOnix(member.weeklyEarned || 0),
+        totalEarned: roundOnix(member.totalEarned || 0),
+        totalTaps: Number(member.totalTaps || 0),
+        referralsCount: Number(member.referralsCount || 0),
+      }))
+      .sort((a, b) => b.weeklyEarned - a.weeklyEarned)
+      .slice(0, 20),
+  };
+}
+
+async function getTeamMissionsPayload(user) {
+  normalizeUserFields(user);
+
+  const stats = await getTeamStats(user.teamName);
+  const week = getWeekKey();
+  const definitions = getTeamMissionDefinitions();
+
+  return definitions.map((mission) => {
+    let progress = 0;
+
+    if (mission.id === 'team_earn_250k') progress = stats.weeklyEarned;
+    if (mission.id === 'team_members_3') progress = stats.members;
+    if (mission.id === 'team_taps_1000') progress = stats.totalTaps;
+
+    const claimKey = `${week}_${mission.id}`;
+
+    return {
+      ...mission,
+      week,
+      progress: Math.min(Number(progress || 0), mission.goal),
+      isCompleted: Number(progress || 0) >= mission.goal,
+      isClaimed: user.teamMissionClaims.includes(claimKey),
+    };
+  });
+}
+
 function getMissionDifficulty(user) {
   const earned = Number(user.totalEarned || 0);
 
@@ -2424,6 +2573,9 @@ router.post('/create', async (req, res) => {
         selectedTitle: 'ONIX Player',
         lastSeenSeasonPrizeWeek: '',
         teamName: '',
+        teamJoinedAt: 0,
+        teamMissionClaims: [],
+        teamPrizeClaims: [],
         league: 'Bronze',
         isSuspicious: false,
         isFrozen: false,
@@ -2602,6 +2754,9 @@ router.post('/save', async (req, res) => {
         selectedTitle: 'ONIX Player',
         lastSeenSeasonPrizeWeek: '',
         teamName: '',
+        teamJoinedAt: 0,
+        teamMissionClaims: [],
+        teamPrizeClaims: [],
         league: 'Bronze',
         isSuspicious: false,
         isFrozen: false,
@@ -2962,6 +3117,7 @@ router.post('/set-team', async (req, res) => {
     normalizeUserFields(user);
 
     user.teamName = cleanTeamName;
+    if (!user.teamJoinedAt) user.teamJoinedAt = Date.now();
     user.updatedAt = new Date();
 
     await user.save();
@@ -2974,6 +3130,254 @@ router.post('/set-team', async (req, res) => {
         referralLimit: getReferralLimitPayload(user),
         missions: getMissionsPayload(user),
       },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
+// JOIN TEAM BY CODE
+router.post('/join-team', async (req, res) => {
+  try {
+    const { telegramId, teamCode, teamName } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const cleanTeamName = String(teamName || decodeTeamCode(teamCode) || '')
+      .trim()
+      .slice(0, 24);
+
+    if (!cleanTeamName) {
+      return res.status(400).json({ message: 'Команда не найдена' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
+    user.teamName = cleanTeamName;
+    user.teamJoinedAt = Date.now();
+    user.updatedAt = new Date();
+
+    addSecurityLog(user, 'team_join', 'Вступление в команду', cleanTeamName);
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
+      },
+      team: await getTeamStats(cleanTeamName),
+      teamMissions: await getTeamMissionsPayload(user),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// TEAM SOCIAL DASHBOARD
+router.get('/team-dashboard/:telegramId', async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const team = await getTeamStats(user.teamName);
+    const teamMissions = await getTeamMissionsPayload(user);
+
+    return res.json({
+      team,
+      teamMissions,
+      teamPrize: team.place ? getTeamPrizeByPlace(team.place) : 0,
+      week: getWeekKey(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// CLAIM TEAM MISSION
+router.post('/claim-team-mission', async (req, res) => {
+  try {
+    const { telegramId, missionId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
+    if (!user.teamName) {
+      return res.status(400).json({ message: 'Сначала вступите в команду' });
+    }
+
+    const missions = await getTeamMissionsPayload(user);
+    const mission = missions.find((item) => item.id === missionId);
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Командное задание не найдено' });
+    }
+
+    if (!mission.isCompleted) {
+      return res.status(400).json({ message: 'Командное задание ещё не выполнено' });
+    }
+
+    const claimKey = `${getWeekKey()}_${mission.id}`;
+
+    if (user.teamMissionClaims.includes(claimKey)) {
+      return res.status(400).json({ message: 'Награда уже получена' });
+    }
+
+    user.teamMissionClaims.push(claimKey);
+    user.balance = roundOnix(Number(user.balance || 0) + mission.reward);
+    addEarnings(user, mission.reward);
+    addTransaction(user, 'income_team_mission', mission.reward, `Командное задание: ${mission.title}`);
+
+    const achievementBonuses = applyAchievements(user);
+    const rankBonuses = applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
+      },
+      teamMissions: await getTeamMissionsPayload(user),
+      reward: {
+        title: mission.title,
+        amount: mission.reward,
+      },
+      achievementBonuses,
+      rankBonuses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// CLAIM TEAM WEEKLY PRIZE
+router.post('/claim-team-prize', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
+    if (!user.teamName) {
+      return res.status(400).json({ message: 'Сначала вступите в команду' });
+    }
+
+    const team = await getTeamStats(user.teamName);
+    const prize = team.place ? getTeamPrizeByPlace(team.place) : 0;
+    const claimKey = `${getWeekKey()}_${user.teamName}`;
+
+    if (!prize) {
+      return res.status(400).json({ message: 'Команда не в призовой зоне' });
+    }
+
+    if (user.teamPrizeClaims.includes(claimKey)) {
+      return res.status(400).json({ message: 'Командный приз уже получен' });
+    }
+
+    user.teamPrizeClaims.push(claimKey);
+    user.balance = roundOnix(Number(user.balance || 0) + prize);
+    addEarnings(user, prize);
+    addTransaction(user, 'income_team_prize', prize, `Командный приз: #${team.place} ${user.teamName}`);
+
+    const achievementBonuses = applyAchievements(user);
+    const rankBonuses = applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
+      },
+      team,
+      prize,
+      achievementBonuses,
+      rankBonuses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// FRIENDS LEADERBOARD
+router.get('/friends-leaderboard/:telegramId', async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+
+    const users = await User.find({
+      $or: [{ referredBy: telegramId }, { telegramId }],
+    })
+      .sort({ totalEarned: -1 })
+      .limit(30)
+      .select('telegramId username totalEarned weeklyEarned referralsCount');
+
+    return res.json({
+      friends: users.map((user, index) => ({
+        place: index + 1,
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        totalEarned: roundOnix(user.totalEarned || 0),
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        referralsCount: Number(user.referralsCount || 0),
+        isMe: String(user.telegramId) === String(telegramId),
+      })),
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
