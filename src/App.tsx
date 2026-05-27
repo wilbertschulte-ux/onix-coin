@@ -10,6 +10,242 @@ if (tg) {
   tg.expand();
 }
 
+
+const ONIX_THEME_STYLE = `
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800;900&family=Orbitron:wght@600;700;800;900&display=swap');
+
+:root {
+  --onix-bg-main: #080F17;
+  --onix-bg-card: #111827;
+  --onix-bg-soft: #1A1F2E;
+  --onix-bg-deep: #0F1115;
+
+  --onix-purple: #885CF6;
+  --onix-violet: #A855F7;
+  --onix-deep-purple: #5B21F6;
+  --onix-cyan: #06B6D4;
+  --onix-cyan-bright: #00E5FF;
+  --onix-gold: #FACC15;
+
+  --onix-text-main: #F8FAFC;
+  --onix-text-muted: #94A3B8;
+  --onix-border: rgba(136, 92, 246, 0.28);
+  --onix-border-cyan: rgba(6, 182, 212, 0.28);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #080F17;
+}
+
+.onix-app-bg {
+  font-family: 'Exo 2', 'Inter', system-ui, sans-serif;
+  background:
+    radial-gradient(circle at 12% -8%, rgba(136, 92, 246, 0.22), transparent 28%),
+    radial-gradient(circle at 88% 6%, rgba(6, 182, 212, 0.14), transparent 26%),
+    radial-gradient(circle at 50% 100%, rgba(91, 33, 246, 0.18), transparent 38%),
+    linear-gradient(180deg, #080F17 0%, #0A0F1C 45%, #050914 100%);
+  color: var(--onix-text-main);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.onix-app-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.38;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.16) 0 1px, transparent 1px),
+    radial-gradient(circle at 76% 18%, rgba(0,229,255,0.22) 0 1px, transparent 1px),
+    radial-gradient(circle at 62% 76%, rgba(168,85,247,0.18) 0 1px, transparent 1px);
+  background-size: 140px 140px, 220px 220px, 180px 180px;
+}
+
+.onix-header {
+  background: rgba(8, 15, 23, 0.86) !important;
+  border-bottom: 1px solid rgba(136, 92, 246, 0.22);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+}
+
+.onix-brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(0, 229, 255, 0.55), transparent 28%),
+    linear-gradient(135deg, rgba(136,92,246,0.95), rgba(91,33,246,0.85));
+  box-shadow:
+    0 0 24px rgba(136, 92, 246, 0.65),
+    0 0 34px rgba(6, 182, 212, 0.25);
+  transform: rotate(45deg);
+}
+
+.onix-brand-mark span {
+  transform: rotate(-45deg);
+  color: #B7F9FF;
+  font-size: 22px;
+  line-height: 1;
+  text-shadow: 0 0 14px rgba(6, 182, 212, 0.85);
+}
+
+.onix-brand-title {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 18px rgba(136, 92, 246, 0.36);
+}
+
+.onix-energy-pill {
+  background: rgba(17, 24, 39, 0.82) !important;
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.16);
+}
+
+.onix-balance-number {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  background: linear-gradient(90deg, #FFFFFF 0%, #B7F9FF 36%, #A855F7 72%, #FACC15 100%);
+  -webkit-background-clip: text;
+  color: transparent !important;
+  text-shadow: 0 0 28px rgba(136, 92, 246, 0.22);
+}
+
+.onix-nav {
+  background: rgba(8, 15, 23, 0.82) !important;
+  border: 1px solid rgba(136, 92, 246, 0.24);
+  box-shadow:
+    0 18px 50px rgba(0,0,0,0.42),
+    inset 0 0 24px rgba(136, 92, 246, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.onix-nav button {
+  color: #94A3B8;
+}
+
+.onix-nav button.onix-nav-active {
+  background: linear-gradient(135deg, rgba(6,182,212,0.18), rgba(136,92,246,0.28)) !important;
+  color: #B7F9FF !important;
+  box-shadow:
+    inset 0 0 18px rgba(136, 92, 246, 0.24),
+    0 0 18px rgba(6, 182, 212, 0.12);
+}
+
+.onix-tap-orb {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0, 229, 255, 0.40), transparent 20%),
+    radial-gradient(circle at 50% 55%, rgba(136, 92, 246, 0.56), transparent 48%),
+    linear-gradient(145deg, rgba(17,24,39,0.95), rgba(8,15,23,0.98)) !important;
+  border: 2px solid rgba(136, 92, 246, 0.70) !important;
+  box-shadow:
+    0 0 42px rgba(136, 92, 246, 0.70),
+    0 0 72px rgba(6, 182, 212, 0.28),
+    inset 0 0 38px rgba(136, 92, 246, 0.30) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.onix-tap-orb::before {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border-radius: 28%;
+  transform: rotate(45deg);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.78), rgba(136,92,246,0.18) 38%, rgba(6,182,212,0.74) 52%, rgba(91,33,246,0.44));
+  clip-path: polygon(50% 0%, 88% 50%, 50% 100%, 12% 50%);
+  box-shadow:
+    0 0 28px rgba(6, 182, 212, 0.70),
+    0 0 44px rgba(136, 92, 246, 0.72);
+}
+
+.onix-tap-orb::after {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 229, 255, 0.34);
+  box-shadow: inset 0 0 26px rgba(6, 182, 212, 0.12);
+}
+
+.onix-tap-orb:active {
+  transform: scale(0.94);
+  box-shadow:
+    0 0 58px rgba(6, 182, 212, 0.78),
+    0 0 92px rgba(136, 92, 246, 0.58),
+    inset 0 0 46px rgba(255, 255, 255, 0.18) !important;
+}
+
+.onix-floating-number {
+  color: #00E5FF !important;
+  text-shadow:
+    0 0 10px rgba(6, 182, 212, 0.9),
+    0 0 18px rgba(136, 92, 246, 0.65);
+  font-weight: 900;
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+}
+
+.onix-card,
+.bg-\\[\\#111827\\] {
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.94), rgba(8, 15, 23, 0.98)) !important;
+  border-color: rgba(136, 92, 246, 0.22) !important;
+}
+
+.bg-\\[\\#0a0f1c\\],
+.bg-\\[\\#0A0F1C\\] {
+  background: rgba(8, 15, 23, 0.72) !important;
+}
+
+.bg-yellow-400 {
+  background: linear-gradient(135deg, #06B6D4 0%, #885CF6 46%, #A855F7 100%) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 22px rgba(136, 92, 246, 0.38),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+.text-yellow-400 {
+  color: #B7F9FF !important;
+}
+
+.border-yellow-400\\/20,
+.border-yellow-400\\/30,
+.border-yellow-400 {
+  border-color: rgba(136, 92, 246, 0.34) !important;
+}
+
+.bg-gray-800 {
+  background: rgba(15, 23, 42, 0.92) !important;
+}
+
+.bg-emerald-500 {
+  background: linear-gradient(135deg, #10B981, #06B6D4) !important;
+}
+
+.shadow-xl,
+.shadow-2xl {
+  box-shadow:
+    0 18px 60px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(136, 92, 246, 0.10) !important;
+}
+
+.onix-progress-fill {
+  background: linear-gradient(90deg, #06B6D4, #885CF6, #A855F7) !important;
+  box-shadow: 0 0 18px rgba(136, 92, 246, 0.55);
+}
+
+.onix-gold-accent {
+  color: #FACC15 !important;
+  text-shadow: 0 0 16px rgba(250, 204, 21, 0.28);
+}
+`;
+
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends' | 'wallet' | 'launch';
 
 type BoostSubTab = 'upgrades' | 'perks' | 'boosts';
@@ -3008,7 +3244,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1c] text-white pb-20">
+    <div className="onix-app-bg min-h-screen text-white pb-20">
+      <style>{ONIX_THEME_STYLE}</style>
       <div className="fixed left-0 right-0 top-4 z-[100] flex flex-col items-center gap-2 px-4">
         {toastMessages.map((toast) => (
           <div
@@ -3025,13 +3262,20 @@ function App() {
           </div>
         ))}
       </div>
-      <div className="bg-[#111827] p-4 flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <Coins className="w-9 h-9 text-yellow-400" />
-          <h1 className="text-2xl font-bold">ONIX COIN</h1>
+      <div className="onix-header p-4 flex justify-between items-center sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="onix-brand-mark">
+            <span>◆</span>
+          </div>
+          <div>
+            <h1 className="onix-brand-title text-2xl font-black">$ONIX coin</h1>
+            <p className="text-[10px] uppercase tracking-[0.32em] text-cyan-300">
+              Web3 tap economy
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-[#1f2937] px-4 py-1 rounded-full">
+        <div className="onix-energy-pill flex items-center gap-2 px-4 py-1 rounded-full">
           <Zap className="w-5 h-5 text-yellow-400" />
           <span>
             {Math.floor(energy)}/{maxEnergy}
@@ -3055,16 +3299,16 @@ function App() {
 
         <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-yellow-400 transition-all"
+            className="onix-progress-fill h-full transition-all"
             style={{ width: `${Math.min(rankProgress, 100)}%` }}
           />
         </div>
       </div>
 
       <div className="text-center pt-6 pb-4">
-        <p className="text-gray-400 text-sm">Баланс</p>
+        <p className="text-gray-400 text-sm">Баланс $ONIX</p>
 
-        <p className="text-6xl font-bold text-yellow-400 tracking-tighter">
+        <p className="onix-balance-number text-6xl font-black tracking-tighter">
           {balance.toLocaleString('ru-RU')}
         </p>
 
@@ -3073,7 +3317,7 @@ function App() {
         )}
       </div>
 
-      <div className="mx-2 sm:mx-4 bg-[#111827] p-1 rounded-2xl flex sticky top-16 z-50 overflow-x-auto">
+      <div className="onix-nav mx-2 sm:mx-4 p-1 rounded-2xl flex sticky top-16 z-50 overflow-x-auto">
         {[
           { id: 'home', label: 'Главная', icon: Home },
           { id: 'boosts', label: 'Улучшения', icon: Zap },
@@ -3087,8 +3331,8 @@ function App() {
             onClick={() => setActiveTab(tab.id as Tab)}
             className={`min-w-[64px] flex-1 py-3 rounded-xl flex flex-col items-center gap-1 text-[11px] sm:text-sm transition-all ${
               activeTab === tab.id
-                ? 'bg-[#1e2937] text-yellow-400'
-                : 'text-gray-400'
+                ? 'onix-nav-active'
+                : ''
             }`}
           >
             <tab.icon className="w-5 h-5 shrink-0" />
@@ -3101,16 +3345,16 @@ function App() {
         <div className="flex flex-col items-center mt-8 relative">
           <div
             onClick={handleTap}
-            className={`h-64 w-64 sm:w-80 sm:h-80 rounded-full bg-gradient-to-br from-yellow-300 to-amber-600 flex items-center justify-center text-[170px] cursor-pointer border-8 border-yellow-400 shadow-2xl transition-transform relative ${
+            className={`onix-tap-orb h-64 w-64 sm:w-80 sm:h-80 rounded-full flex items-center justify-center cursor-pointer shadow-2xl transition-transform relative ${
               isTapped ? 'scale-90' : ''
             }`}
           >
-            🪙
+            <span className="sr-only">$ONIX crystal</span>
 
             {floatingNumbers.map((num) => (
               <div
                 key={num.id}
-                className="absolute text-3xl font-bold text-yellow-200 animate-float"
+                className="onix-floating-number absolute text-3xl font-bold animate-float"
                 style={{ left: num.x - 20, top: num.y - 30 }}
               >
                 +{num.value}
@@ -3130,9 +3374,9 @@ function App() {
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-bold text-white">ONIX COIN launch</h2>
+                  <h2 className="text-xl font-bold text-white">$ONIX coin launch</h2>
                   <p className="text-sm text-gray-400">
-                    Tap-to-earn, команды, сезоны и выводы
+                    Web3 tap economy, команды, сезоны и выводы
                   </p>
                 </div>
               </div>
