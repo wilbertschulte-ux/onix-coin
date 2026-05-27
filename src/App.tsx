@@ -126,6 +126,28 @@ type SeasonPrizePopup = {
   prize: number;
 };
 
+type MissionItem = {
+  id: string;
+  title: string;
+  description: string;
+  goal: number;
+  progress: number;
+  reward: number;
+  category: string;
+  secret?: boolean;
+  unlocked?: boolean;
+  isCompleted: boolean;
+  isClaimed: boolean;
+};
+
+type MissionsPayload = {
+  daily: MissionItem[];
+  weekly: MissionItem[];
+  difficulty: number;
+  dailyKey: string;
+  weeklyKey: string;
+};
+
 type WithdrawalRequest = {
   amount: number;
   eurAmount: number;
@@ -489,6 +511,7 @@ function getTransactionIcon(type: string) {
   if (type.includes('boost')) return '⚡';
   if (type.includes('perk')) return '🧩';
   if (type.includes('chest')) return '🎁';
+  if (type.includes('mission')) return '📋';
   if (type.includes('withdrawal')) return '💸';
 
   return '🧾';
@@ -563,6 +586,13 @@ function App() {
   const [perkLevels, setPerkLevels] = useState<Record<string, number>>({});
   const [lastChestReward, setLastChestReward] = useState('');
   const [dailyCooldown, setDailyCooldown] = useState(0);
+  const [missions, setMissions] = useState<MissionsPayload>({
+    daily: [],
+    weekly: [],
+    difficulty: 1,
+    dailyKey: '',
+    weeklyKey: '',
+  });
   const [dailyStreak, setDailyStreak] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
@@ -700,7 +730,7 @@ function App() {
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -956,7 +986,7 @@ function App() {
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1016,14 +1046,12 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
-
-      showToast('✅ Перк улучшен', 'success');
 
       setTapLevel(user.tapLevel || 1);
       setMinerLevel(user.minerLevel || 1);
@@ -1097,7 +1125,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1143,7 +1171,7 @@ function App() {
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
       setLastChestReward(user.chestStats?.lastReward || '');
 
       showToast(
@@ -1189,7 +1217,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1244,7 +1272,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1379,7 +1407,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1416,11 +1444,12 @@ function App() {
     setOfflineClaimsCount(Number(user.offlineClaimsCount || 0));
     setWithdrawalRequests(user.withdrawalRequests || []);
     setSelectedTitle(user.selectedTitle || 'ONIX Player');
-    setPerkLevels(normalizePerkLevels(user.perkLevels));
+    setPerkLevels(user.perkLevels || {});
     setLastChestReward(user.chestStats?.lastReward || '');
     setTeamName(user.teamName || '');
     setTeamNameInput((currentValue) => currentValue || user.teamName || '');
     setLeague(user.league || 'Bronze');
+    if (user.missions) setMissions(user.missions);
   };
 
   const showToast = (
@@ -1517,6 +1546,49 @@ function App() {
       showToast(error?.response?.data?.message || 'Не удалось загрузить preview');
     } finally {
       setIsAdminLoading(false);
+    }
+  };
+
+  const loadMissions = async () => {
+    const telegramId = getTelegramId();
+
+    if (!telegramId) return;
+
+    try {
+      const response = await axios.get(`${API_URL}/missions/${telegramId}`);
+      setMissions(response.data);
+    } catch (error) {
+      console.log('Ошибка загрузки миссий:', error);
+    }
+  };
+
+  const claimMission = async (mission: MissionItem, missionType: 'daily' | 'weekly') => {
+    const telegramId = getTelegramId();
+
+    if (!mission.isCompleted || mission.isClaimed) return;
+
+    try {
+      const response = await axios.post(`${API_URL}/claim-mission`, {
+        telegramId,
+        missionId: mission.id,
+        missionType,
+      });
+
+      const user = response.data.user;
+
+      setBalance(user.balance || 0);
+      setWeeklyEarned(Number(user.weeklyEarned || 0));
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+      setTransactions(user.transactions || []);
+      setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
+      applyUserStats(user);
+      setMissions(response.data.missions || user.missions || missions);
+
+      showRewardPopupFromResponse(response.data);
+      showToast(`✅ Миссия выполнена: +${formatOnix(response.data.missionReward.reward)} ONIX`, 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось забрать миссию', 'error');
     }
   };
 
@@ -1683,24 +1755,8 @@ function App() {
   };
 
 
-  const normalizePerkLevels = (levels: any) => {
-    if (!levels) return {};
-
-    if (levels instanceof Map) {
-      return Object.fromEntries(levels.entries());
-    }
-
-    if (typeof levels === 'object') {
-      return Object.fromEntries(
-        Object.entries(levels).map(([key, value]) => [key, Number(value || 0)])
-      );
-    }
-
-    return {};
-  };
-
   const getPerkLevel = (perkId: string) => {
-    return Number((perkLevels as any)?.[perkId] || 0);
+    return Number(perkLevels?.[perkId] || 0);
   };
 
   const getPerkCost = (baseCost: number, nextLevel: number) => {
@@ -2732,6 +2788,7 @@ function App() {
 
                 showRewardPopupFromResponse(response.data);
       showReferralBonusPaidToast(response.data);
+                loadMissions();
 
                 const rankBonusText =
                   Array.isArray(response.data.rankBonuses) && response.data.rankBonuses.length
@@ -2773,6 +2830,179 @@ function App() {
             </span>
           </div>
 
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-bold text-white">☀️ Ежедневные миссии</h3>
+                <p className="text-sm text-gray-400">
+                  Сложность ×{missions.difficulty}
+                </p>
+              </div>
+
+              <button
+                onClick={loadMissions}
+                className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-xs font-bold text-yellow-400"
+              >
+                Обновить
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {missions.daily.length > 0 ? (
+                missions.daily.map((mission) => {
+                  const progressPercent = Math.min(
+                    (Number(mission.progress || 0) / Number(mission.goal || 1)) * 100,
+                    100
+                  );
+
+                  return (
+                    <div
+                      key={mission.id}
+                      className="rounded-2xl bg-[#0a0f1c] p-4"
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-white">
+                            {mission.secret ? '🔒 ' : ''}{mission.title}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {mission.description}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-[#111827] px-3 py-2 text-right">
+                          <p className="text-xs text-gray-400">Награда</p>
+                          <p className="font-bold text-yellow-400">
+                            +{formatOnix(mission.reward)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="text-gray-400">Прогресс</span>
+                        <span className="font-bold text-emerald-400">
+                          {formatOnix(mission.progress)} / {formatOnix(mission.goal)}
+                        </span>
+                      </div>
+
+                      <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-yellow-400 transition-all"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => claimMission(mission, 'daily')}
+                        disabled={!mission.isCompleted || mission.isClaimed}
+                        className={`mt-3 w-full rounded-2xl py-3 font-bold ${
+                          mission.isClaimed
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : mission.isCompleted
+                            ? 'bg-yellow-400 text-black active:scale-95'
+                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {mission.isClaimed
+                          ? 'Получено'
+                          : mission.isCompleted
+                          ? 'Забрать'
+                          : 'В процессе'}
+                      </button>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="rounded-2xl bg-[#0a0f1c] p-4 text-center text-gray-400">
+                  Миссии загружаются...
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-bold text-white">📅 Еженедельные миссии</h3>
+                <p className="text-sm text-gray-400">
+                  Секретные задания открываются по прогрессу
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {missions.weekly.length > 0 ? (
+                missions.weekly.map((mission) => {
+                  const progressPercent = Math.min(
+                    (Number(mission.progress || 0) / Number(mission.goal || 1)) * 100,
+                    100
+                  );
+
+                  return (
+                    <div
+                      key={mission.id}
+                      className="rounded-2xl bg-[#0a0f1c] p-4"
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-white">
+                            {mission.secret ? '🔒 ' : ''}{mission.title}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {mission.description}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-[#111827] px-3 py-2 text-right">
+                          <p className="text-xs text-gray-400">Награда</p>
+                          <p className="font-bold text-yellow-400">
+                            +{formatOnix(mission.reward)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="text-gray-400">Прогресс</span>
+                        <span className="font-bold text-emerald-400">
+                          {formatOnix(mission.progress)} / {formatOnix(mission.goal)}
+                        </span>
+                      </div>
+
+                      <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-yellow-400 transition-all"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => claimMission(mission, 'weekly')}
+                        disabled={!mission.isCompleted || mission.isClaimed}
+                        className={`mt-3 w-full rounded-2xl py-3 font-bold ${
+                          mission.isClaimed
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : mission.isCompleted
+                            ? 'bg-yellow-400 text-black active:scale-95'
+                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {mission.isClaimed
+                          ? 'Получено'
+                          : mission.isCompleted
+                          ? 'Забрать'
+                          : 'В процессе'}
+                      </button>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="rounded-2xl bg-[#0a0f1c] p-4 text-center text-gray-400">
+                  Миссии загружаются...
+                </p>
+              )}
+            </div>
+          </div>
+
           <div
             onClick={async () => {
               if (completedTasks.includes('channel')) return;
@@ -2800,11 +3030,12 @@ function App() {
                 applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
                 setTransactions(user.transactions || []);
                 setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
                 showRewardPopupFromResponse(response.data);
       showReferralBonusPaidToast(response.data);
+                loadMissions();
 
                 showToast('🎉 Подписка подтверждена! +25000 ONIX');
               } catch (error: any) {
@@ -2856,7 +3087,7 @@ function App() {
                 applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(normalizePerkLevels(user.perkLevels));
+      setPerkLevels(user.perkLevels || {});
 
                 showToast(`🎉 Вы получили +${formatOnix(economyConfig.referralReward)} ONIX!`, 'success');
               } catch (error: any) {
