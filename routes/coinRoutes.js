@@ -2088,6 +2088,34 @@ router.post('/admin-review-withdrawal', async (req, res) => {
 
 
 
+
+// PUBLIC LAUNCH INFO
+router.get('/launch-info', async (req, res) => {
+  try {
+    const userCount = await User.countDocuments({});
+
+    return res.json({
+      ok: true,
+      title: 'ONIX COIN',
+      status: 'Public beta preparation',
+      users: userCount,
+      version: APP_VERSION,
+      roadmap: [
+        'Tap-to-earn core',
+        'Seasons and teams',
+        'Growth tools',
+        'Public beta',
+        'Listing preparation',
+      ],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
 // PUBLIC APP VERSION
 router.get('/version', async (req, res) => {
   return res.json({
