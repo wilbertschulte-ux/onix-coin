@@ -488,6 +488,7 @@ function getTransactionIcon(type: string) {
   if (type.includes('upgrade')) return '⬆️';
   if (type.includes('boost')) return '⚡';
   if (type.includes('perk')) return '🧩';
+  if (type.includes('chest')) return '🎁';
   if (type.includes('withdrawal')) return '💸';
 
   return '🧾';
@@ -559,6 +560,8 @@ function App() {
   });
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [ownedPerks, setOwnedPerks] = useState<string[]>([]);
+  const [perkLevels, setPerkLevels] = useState<Record<string, number>>({});
+  const [lastChestReward, setLastChestReward] = useState('');
   const [dailyCooldown, setDailyCooldown] = useState(0);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -697,6 +700,7 @@ function App() {
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -952,6 +956,7 @@ function App() {
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1011,6 +1016,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1089,6 +1095,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1112,7 +1119,45 @@ function App() {
   };
 
 
-  const buyPerk = async (perkId: 'offline_pro' | 'energy_saver' | 'daily_plus' | 'miner_plus') => {
+  const openChest = async () => {
+    const telegramId = getTelegramId();
+
+    if (!telegramId) {
+      showToast('Не удалось получить Telegram ID', 'error');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/open-chest`, {
+        telegramId,
+      });
+
+      const user = response.data.user;
+
+      setBalance(user.balance || 0);
+      setWeeklyEarned(Number(user.weeklyEarned || 0));
+      setTotalEarned(user.totalEarned || 0);
+      setLevel(user.level || 1);
+      setTransactions(user.transactions || []);
+      setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
+      setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
+      setLastChestReward(user.chestStats?.lastReward || '');
+
+      showToast(
+        `🎁 ${response.data.chest.rewardTitle}: +${formatOnix(
+          response.data.chest.rewardAmount
+        )} ONIX`,
+        'success'
+      );
+
+      showRewardPopupFromResponse(response.data);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось открыть сундук', 'error');
+    }
+  };
+
+  const buyPerk = async (perkId: string) => {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
@@ -1142,6 +1187,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1196,6 +1242,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1330,6 +1377,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1366,6 +1414,8 @@ function App() {
     setOfflineClaimsCount(Number(user.offlineClaimsCount || 0));
     setWithdrawalRequests(user.withdrawalRequests || []);
     setSelectedTitle(user.selectedTitle || 'ONIX Player');
+    setPerkLevels(user.perkLevels || {});
+    setLastChestReward(user.chestStats?.lastReward || '');
     setTeamName(user.teamName || '');
     setTeamNameInput((currentValue) => currentValue || user.teamName || '');
     setLeague(user.league || 'Bronze');
@@ -1631,6 +1681,14 @@ function App() {
   };
 
 
+  const getPerkLevel = (perkId: string) => {
+    return Number(perkLevels?.[perkId] || 0);
+  };
+
+  const getPerkCost = (baseCost: number, nextLevel: number) => {
+    return Math.round(baseCost * Math.pow(1.85, nextLevel - 1));
+  };
+
   const getAchievementCategory = (id: string): AchievementCategory => {
     if (id.includes('tap')) return 'taps';
     if (id.includes('miner') || id.includes('offline')) return 'miner';
@@ -1752,30 +1810,31 @@ function App() {
 
   const miningMultiplier =
     activeBoostValue === 'mining' && isBoostActive ? 2 : 1;
-  const minerBaseMultiplier = ownedPerks.includes('miner_plus') ? 1.05 : 1;
+  const minerBaseMultiplier = 1 + 0.05 * minerPlusLevel + 0.03 * luckyMinerLevel;
   const minerIncomePerSecond = Number(
     (autoclickers * minerBaseMultiplier * miningMultiplier).toFixed(2)
   );
   const minerIncomePerHour = minerIncomePerSecond * 60 * 60;
-  const hasOfflinePro = ownedPerks.includes('offline_pro');
-  const hasEnergySaver = ownedPerks.includes('energy_saver');
-  const hasDailyPlus = ownedPerks.includes('daily_plus');
-  const hasMinerPlus = ownedPerks.includes('miner_plus');
-
-  const offlineProCost = 100000;
-  const energySaverCost = 150000;
-  const dailyPlusCost = 200000;
-  const minerPlusCost = 250000;
+  const offlineProLevel = getPerkLevel('offline_pro');
+  const energySaverLevel = getPerkLevel('energy_saver');
+  const dailyPlusLevel = getPerkLevel('daily_plus');
+  const minerPlusLevel = getPerkLevel('miner_plus');
+  const boostMasterLevel = getPerkLevel('boost_master');
+  const streakShieldLevel = getPerkLevel('streak_shield');
+  const luckyMinerLevel = getPerkLevel('lucky_miner');
+  const referralProLevel = getPerkLevel('referral_pro');
+  const energyMaxProLevel = getPerkLevel('energy_max_pro');
+  const engineerLevel = getPerkLevel('engineer');
 
   const effectiveTapEnergyCost = Math.max(
     1,
-    Number((tapPower * (hasEnergySaver ? 0.9 : 1)).toFixed(2))
+    Number((tapPower * Math.max(0.7, 1 - 0.1 * energySaverLevel)).toFixed(2))
   );
   const baseDailyPreview = getDailyReward(level);
   const effectiveDailyPreview = Math.round(
-    baseDailyPreview * (hasDailyPlus ? 1.1 : 1)
+    baseDailyPreview * (1 + 0.1 * dailyPlusLevel)
   );
-  const maxOfflineHours = hasOfflinePro ? 4 : 3;
+  const maxOfflineHours = 3 + offlineProLevel;
   const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
 
   const nextTapCost = getTapUpgradeCost(tapLevel);
@@ -2150,121 +2209,238 @@ function App() {
 
 
 
+
           <div>
-            <h2 className="text-2xl font-bold mb-4">🧩 Перки</h2>
+            <h2 className="text-2xl font-bold mb-4">🧩 Перки и магазин</h2>
+
+            <div className="mb-5 rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-bold text-white">🎁 ONIX сундук</h3>
+                  <p className="text-sm text-gray-400">
+                    Случайная награда: от 25 000 до 300 000 ONIX
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                  <p className="text-xs text-gray-400">Цена</p>
+                  <p className="font-bold text-yellow-400">50 000</p>
+                </div>
+              </div>
+
+              {lastChestReward && (
+                <p className="mb-3 rounded-2xl bg-[#0a0f1c] p-3 text-sm font-bold text-emerald-400">
+                  Последний сундук: {lastChestReward}
+                </p>
+              )}
+
+              <button
+                onClick={openChest}
+                disabled={balance < 50000}
+                className={`w-full rounded-2xl py-4 text-lg font-bold transition ${
+                  balance >= 50000
+                    ? 'bg-yellow-400 text-black active:scale-95'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {balance >= 50000
+                  ? 'Открыть сундук'
+                  : `Не хватает ${(50000 - balance).toLocaleString('ru-RU')} ONIX`}
+              </button>
+            </div>
 
             <div className="space-y-4">
               {[
                 {
-                  id: 'offline_pro' as const,
+                  id: 'offline_pro',
                   icon: '🧲',
                   title: 'Offline Pro',
-                  description: 'Увеличивает максимум оффлайн-дохода с 3 до 4 часов',
-                  cost: offlineProCost,
-                  owned: hasOfflinePro,
-                  current: hasOfflinePro ? '4 часа' : '3 часа',
-                  next: '4 часа оффлайн',
+                  description: '+1 час к максимуму оффлайн-дохода за уровень',
+                  baseCost: 100000,
+                  level: offlineProLevel,
+                  maxLevel: 3,
+                  current: `${maxOfflineHours} ч. оффлайн`,
+                  next: `${Math.min(maxOfflineHours + 1, 6)} ч. оффлайн`,
                 },
                 {
-                  id: 'energy_saver' as const,
+                  id: 'energy_saver',
                   icon: '🔋',
                   title: 'Energy Saver',
-                  description: 'Снижает расход энергии на тап на 10%',
-                  cost: energySaverCost,
-                  owned: hasEnergySaver,
+                  description: '-10% расход энергии на тап за уровень',
+                  baseCost: 150000,
+                  level: energySaverLevel,
+                  maxLevel: 3,
                   current: `${formatOnix(effectiveTapEnergyCost)} энергии/тап`,
-                  next: `${formatOnix(Math.max(1, tapPower * 0.9))} энергии/тап`,
+                  next: `${formatOnix(Math.max(1, tapPower * Math.max(0.7, 1 - 0.1 * (energySaverLevel + 1))))} энергии/тап`,
                 },
                 {
-                  id: 'daily_plus' as const,
+                  id: 'daily_plus',
                   icon: '🎁',
                   title: 'Daily Plus',
-                  description: 'Увеличивает ежедневную награду на 10%',
-                  cost: dailyPlusCost,
-                  owned: hasDailyPlus,
+                  description: '+10% к daily reward за уровень',
+                  baseCost: 200000,
+                  level: dailyPlusLevel,
+                  maxLevel: 3,
                   current: `+${formatOnix(effectiveDailyPreview)} ONIX`,
-                  next: `+${formatOnix(Math.round(baseDailyPreview * 1.1))} ONIX`,
+                  next: `+${formatOnix(Math.round(baseDailyPreview * (1 + 0.1 * (dailyPlusLevel + 1))))} ONIX`,
                 },
                 {
-                  id: 'miner_plus' as const,
+                  id: 'miner_plus',
                   icon: '⛏️',
                   title: 'Miner Plus',
-                  description: 'Увеличивает доход майнера на 5% навсегда',
-                  cost: minerPlusCost,
-                  owned: hasMinerPlus,
+                  description: '+5% к доходу майнера за уровень',
+                  baseCost: 250000,
+                  level: minerPlusLevel,
+                  maxLevel: 3,
                   current: `+${formatOnix(minerIncomePerSecond)} ONIX/сек`,
-                  next: `+${formatOnix(Number((autoclickers * 1.05 * miningMultiplier).toFixed(2)))} ONIX/сек`,
+                  next: `+${formatOnix(Number((autoclickers * (1 + 0.05 * (minerPlusLevel + 1) + 0.03 * luckyMinerLevel) * miningMultiplier).toFixed(2)))} ONIX/сек`,
                 },
-              ].map((perk) => (
-                <div
-                  key={perk.id}
-                  className={`rounded-3xl border p-5 shadow-xl ${
-                    perk.owned
-                      ? 'border-emerald-400/30 bg-emerald-500/10'
-                      : 'border-yellow-400/20 bg-[#111827]'
-                  }`}
-                >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${
-                          perk.owned ? 'bg-emerald-400' : 'bg-yellow-400'
-                        }`}
-                      >
-                        {perk.icon}
+                {
+                  id: 'boost_master',
+                  icon: '⚡',
+                  title: 'Boost Master',
+                  description: '+20% длительность бустов за уровень',
+                  baseCost: 180000,
+                  level: boostMasterLevel,
+                  maxLevel: 3,
+                  current: `+${boostMasterLevel * 20}% времени`,
+                  next: `+${Math.min((boostMasterLevel + 1) * 20, 60)}% времени`,
+                },
+                {
+                  id: 'streak_shield',
+                  icon: '🛡️',
+                  title: 'Streak Shield',
+                  description: 'Защищает daily streak от одного пропуска',
+                  baseCost: 220000,
+                  level: streakShieldLevel,
+                  maxLevel: 1,
+                  current: streakShieldLevel > 0 ? 'Активно' : 'Нет защиты',
+                  next: 'Защита streak',
+                },
+                {
+                  id: 'lucky_miner',
+                  icon: '🍀',
+                  title: 'Lucky Miner',
+                  description: '+3% к доходу майнера за уровень',
+                  baseCost: 300000,
+                  level: luckyMinerLevel,
+                  maxLevel: 3,
+                  current: `+${luckyMinerLevel * 3}%`,
+                  next: `+${Math.min((luckyMinerLevel + 1) * 3, 9)}%`,
+                },
+                {
+                  id: 'referral_pro',
+                  icon: '👥',
+                  title: 'Referral Pro',
+                  description: '+5% к реферальному бонусу за уровень',
+                  baseCost: 300000,
+                  level: referralProLevel,
+                  maxLevel: 3,
+                  current: `+${referralProLevel * 5}%`,
+                  next: `+${Math.min((referralProLevel + 1) * 5, 15)}%`,
+                },
+                {
+                  id: 'energy_max_pro',
+                  icon: '🔋',
+                  title: 'Energy Max Pro',
+                  description: '+500 max energy за уровень',
+                  baseCost: 175000,
+                  level: energyMaxProLevel,
+                  maxLevel: 3,
+                  current: `+${energyMaxProLevel * 500} энергии`,
+                  next: `+${Math.min((energyMaxProLevel + 1) * 500, 1500)} энергии`,
+                },
+                {
+                  id: 'engineer',
+                  icon: '🛠️',
+                  title: 'Engineer',
+                  description: '-5% стоимость апгрейдов за уровень',
+                  baseCost: 250000,
+                  level: engineerLevel,
+                  maxLevel: 3,
+                  current: `-${engineerLevel * 5}%`,
+                  next: `-${Math.min((engineerLevel + 1) * 5, 15)}%`,
+                },
+              ].map((perk) => {
+                const nextLevel = perk.level + 1;
+                const cost = getPerkCost(perk.baseCost, nextLevel);
+                const isMaxed = perk.level >= perk.maxLevel;
+
+                return (
+                  <div
+                    key={perk.id}
+                    className={`rounded-3xl border p-5 shadow-xl ${
+                      isMaxed
+                        ? 'border-emerald-400/30 bg-emerald-500/10'
+                        : perk.level > 0
+                        ? 'border-yellow-400/30 bg-[#111827]'
+                        : 'border-yellow-400/20 bg-[#111827]'
+                    }`}
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${
+                            isMaxed ? 'bg-emerald-400' : 'bg-yellow-400'
+                          }`}
+                        >
+                          {perk.icon}
+                        </div>
+
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {perk.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {perk.description}
+                          </p>
+                        </div>
                       </div>
 
-                      <div>
-                        <h3 className="text-xl font-bold text-white">
-                          {perk.title}
-                        </h3>
-                        <p className="text-sm text-gray-400">
-                          {perk.description}
+                      <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                        <p className="text-xs text-gray-400">Уровень</p>
+                        <p className="font-bold text-yellow-400">
+                          {perk.level}/{perk.maxLevel}
                         </p>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
-                      <p className="text-xs text-gray-400">Тип</p>
-                      <p className="font-bold text-yellow-400">Навсегда</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">Сейчас</p>
+                        <p className="mt-1 text-sm font-bold text-white">
+                          {perk.current}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">Следующий ур.</p>
+                        <p className="mt-1 text-sm font-bold text-emerald-400">
+                          {isMaxed ? 'Максимум' : perk.next}
+                        </p>
+                      </div>
                     </div>
+
+                    <button
+                      onClick={() => buyPerk(perk.id)}
+                      disabled={isMaxed || balance < cost}
+                      className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
+                        isMaxed
+                          ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed'
+                          : balance >= cost
+                          ? 'bg-yellow-400 text-black active:scale-95'
+                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {isMaxed
+                        ? 'Максимум'
+                        : balance >= cost
+                        ? `Купить ур. ${nextLevel} за ${cost.toLocaleString('ru-RU')} ONIX`
+                        : `Не хватает ${(cost - balance).toLocaleString('ru-RU')} ONIX`}
+                    </button>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl bg-[#0a0f1c] p-4">
-                      <p className="text-xs text-gray-400">Сейчас</p>
-                      <p className="mt-1 text-sm font-bold text-white">
-                        {perk.current}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl bg-[#0a0f1c] p-4">
-                      <p className="text-xs text-gray-400">После покупки</p>
-                      <p className="mt-1 text-sm font-bold text-emerald-400">
-                        {perk.next}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => buyPerk(perk.id)}
-                    disabled={perk.owned || balance < perk.cost}
-                    className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
-                      perk.owned
-                        ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed'
-                        : balance >= perk.cost
-                        ? 'bg-yellow-400 text-black active:scale-95'
-                        : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {perk.owned
-                      ? 'Куплено'
-                      : balance >= perk.cost
-                      ? `Купить за ${perk.cost.toLocaleString('ru-RU')} ONIX`
-                      : `Не хватает ${(perk.cost - balance).toLocaleString('ru-RU')} ONIX`}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -2601,6 +2777,7 @@ function App() {
                 applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
                 setTransactions(user.transactions || []);
                 setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
                 showRewardPopupFromResponse(response.data);
@@ -2656,6 +2833,7 @@ function App() {
                 applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
+      setPerkLevels(user.perkLevels || {});
 
                 showToast(`🎉 Вы получили +${formatOnix(economyConfig.referralReward)} ONIX!`, 'success');
               } catch (error: any) {
