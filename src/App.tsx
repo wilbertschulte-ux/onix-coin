@@ -113,6 +113,19 @@ type SeasonHistoryItem = {
   }>;
 };
 
+type TeamLeaderboardItem = {
+  place: number;
+  teamName: string;
+  weeklyEarned: number;
+  members: number;
+};
+
+type SeasonPrizePopup = {
+  week: string;
+  place: number;
+  prize: number;
+};
+
 type WithdrawalRequest = {
   amount: number;
   eurAmount: number;
@@ -565,6 +578,12 @@ function App() {
   const [rewardPopupVisible, setRewardPopupVisible] = useState(false);
   const [toastMessages, setToastMessages] = useState<ToastMessage[]>([]);
   const [seasonHistory, setSeasonHistory] = useState<SeasonHistoryItem[]>([]);
+  const [teamLeaderboard, setTeamLeaderboard] = useState<TeamLeaderboardItem[]>([]);
+  const [seasonPrizePopup, setSeasonPrizePopup] =
+    useState<SeasonPrizePopup | null>(null);
+  const [teamName, setTeamName] = useState('');
+  const [teamNameInput, setTeamNameInput] = useState('');
+  const [league, setLeague] = useState('Bronze');
   const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [adminWithdrawals, setAdminWithdrawals] = useState<AdminWithdrawalRequest[]>([]);
@@ -760,6 +779,42 @@ function App() {
     };
 
     loadSeasonHistory();
+  }, []);
+
+  useEffect(() => {
+    const loadTeamLeaderboard = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/leaderboard/teams`);
+
+        setTeamLeaderboard(response.data.teams || []);
+      } catch (error) {
+        console.log('Ошибка загрузки командного рейтинга:', error);
+      }
+    };
+
+    loadTeamLeaderboard();
+  }, []);
+
+  useEffect(() => {
+    const loadSeasonPrizePopup = async () => {
+      const telegramId = getTelegramId();
+
+      if (!telegramId) return;
+
+      try {
+        const response = await axios.post(`${API_URL}/season-prize-popup`, {
+          telegramId,
+        });
+
+        if (response.data.prize) {
+          setSeasonPrizePopup(response.data.prize);
+        }
+      } catch (error) {
+        console.log('Ошибка загрузки сезонного popup:', error);
+      }
+    };
+
+    loadSeasonPrizePopup();
   }, []);
 
   useEffect(() => {
@@ -1311,6 +1366,9 @@ function App() {
     setOfflineClaimsCount(Number(user.offlineClaimsCount || 0));
     setWithdrawalRequests(user.withdrawalRequests || []);
     setSelectedTitle(user.selectedTitle || 'ONIX Player');
+    setTeamName(user.teamName || '');
+    setTeamNameInput(user.teamName || '');
+    setLeague(user.league || 'Bronze');
   };
 
   const showToast = (
@@ -1610,6 +1668,8 @@ function App() {
 
     if (currentUserPlace && currentUserPlace <= 3) {
       badges.push({ icon: '🏆', label: 'Top 3' });
+    } else if (currentUserPlace && currentUserPlace <= 10) {
+      badges.push({ icon: '🎖', label: 'Top 10' });
     }
 
     return badges.slice(0, 6);
@@ -1627,6 +1687,33 @@ function App() {
     if (ownedPerks.length >= 4) titles.push('Perk Collector');
 
     return titles;
+  };
+
+  const getLeagueIcon = (value: string) => {
+    if (value === 'Diamond') return '💎';
+    if (value === 'Gold') return '🥇';
+    if (value === 'Silver') return '🥈';
+
+    return '🥉';
+  };
+
+  const saveTeamName = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      const response = await axios.post(`${API_URL}/set-team`, {
+        telegramId,
+        teamName: teamNameInput,
+      });
+
+      const user = response.data.user;
+
+      setTeamName(user.teamName || '');
+      setTeamNameInput(user.teamName || '');
+      showToast('✅ Команда обновлена', 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось сохранить команду', 'error');
+    }
   };
 
   const selectProfileTitle = async (title: string) => {
@@ -2723,6 +2810,24 @@ function App() {
             </div>
 
             <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-white">🏟 Лига</p>
+                  <p className="mt-1 text-2xl font-bold text-yellow-400">
+                    {getLeagueIcon(league)} {league}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] px-4 py-3 text-right">
+                  <p className="text-xs text-gray-400">Сезон</p>
+                  <p className="font-bold text-emerald-400">
+                    {seasonSecondsLeft > 0 ? seasonTimeLeft : 'обновляется'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-sm font-bold text-white">🏅 Бейджи игрока</p>
                 <span className="rounded-full bg-[#111827] px-3 py-1 text-xs font-bold text-yellow-400">
@@ -2813,6 +2918,30 @@ function App() {
                   </span>
                 )}
               </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+              <p className="mb-3 text-sm font-bold text-white">👥 Команда игрока</p>
+
+              <div className="flex gap-2">
+                <input
+                  value={teamNameInput}
+                  onChange={(event) => setTeamNameInput(event.target.value)}
+                  placeholder="Название команды"
+                  className="min-w-0 flex-1 rounded-2xl bg-[#111827] px-4 py-3 text-sm text-white outline-none"
+                />
+
+                <button
+                  onClick={saveTeamName}
+                  className="rounded-2xl bg-yellow-400 px-4 py-3 text-sm font-bold text-black active:scale-95"
+                >
+                  OK
+                </button>
+              </div>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Текущая команда: {teamName || 'не выбрана'}
+              </p>
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-3">
@@ -3006,6 +3135,24 @@ function App() {
                   </p>
                 </div>
               </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-lg">🎖</p>
+                  <p className="mt-1 text-xs text-gray-400">4–10 место</p>
+                  <p className="mt-1 text-sm font-bold text-yellow-400">
+                    +25 000
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-lg">⭐</p>
+                  <p className="mt-1 text-xs text-gray-400">11–50 место</p>
+                  <p className="mt-1 text-sm font-bold text-yellow-400">
+                    +5 000
+                  </p>
+                </div>
+              </div>
             </div>
 
             {leaderboard.length > 0 ? (
@@ -3051,6 +3198,34 @@ function App() {
               </p>
             )}
           </div>
+
+          {teamLeaderboard.length > 0 && (
+            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+              <h3 className="mb-4 text-xl font-bold text-white">🏟 Топ команд</h3>
+
+              <div className="space-y-3">
+                {teamLeaderboard.map((team) => (
+                  <div
+                    key={team.teamName}
+                    className="flex items-center justify-between rounded-2xl bg-[#0a0f1c] p-4"
+                  >
+                    <div>
+                      <p className="font-bold text-white">
+                        #{team.place} {team.teamName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        участников: {team.members}
+                      </p>
+                    </div>
+
+                    <p className="font-bold text-yellow-400">
+                      +{formatOnix(team.weeklyEarned)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {seasonHistory.length > 0 && (
             <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
@@ -3274,6 +3449,40 @@ function App() {
 
 
 
+
+
+      {seasonPrizePopup && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-yellow-400/40 bg-[#111827] p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 text-4xl">
+              🏆
+            </div>
+
+            <h2 className="text-2xl font-bold text-white">
+              Приз сезона получен
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-400">
+              Неделя {seasonPrizePopup.week}
+            </p>
+
+            <p className="mt-4 text-lg font-bold text-yellow-400">
+              #{seasonPrizePopup.place} место
+            </p>
+
+            <p className="mt-2 text-3xl font-black text-yellow-400">
+              +{formatOnix(seasonPrizePopup.prize)} ONIX
+            </p>
+
+            <button
+              onClick={() => setSeasonPrizePopup(null)}
+              className="mt-6 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+            >
+              Забрать
+            </button>
+          </div>
+        </div>
+      )}
 
       {suspiciousUsersVisible && (
         <div className="fixed inset-0 z-[86] flex items-center justify-center bg-black/70 px-4">
