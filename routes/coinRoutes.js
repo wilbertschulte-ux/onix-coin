@@ -803,32 +803,35 @@ router.get('/cron-award-weekly-prizes', async (req, res) => {
       });
     }
 
-    const prizes = [250000, 150000, 75000];
+    const prizes = Array.from({ length: 50 }, (_, index) => getSeasonPrizeByPlace(index + 1));
 
     const topUsers = await User.find({
       weeklyEarnedWeek: targetWeek,
       weeklyEarned: { $gt: 0 },
     })
       .sort({ weeklyEarned: -1 })
-      .limit(3);
+      .limit(50);
 
     const winners = [];
 
     for (let i = 0; i < topUsers.length; i += 1) {
       const user = topUsers[i];
       const prize = prizes[i];
+      const place = i + 1;
+      const seasonBadge = getSeasonBadgeByPlace(place);
+
+      if (!prize) continue;
 
       normalizeUserFields(user);
 
       user.balance = roundOnix(Number(user.balance || 0) + prize);
       addEarnings(user, prize);
 
-      const badge = `season_${targetWeek}_top_${i + 1}`;
-      if (!user.seasonBadges.includes(badge)) {
-        user.seasonBadges.push(badge);
+      if (seasonBadge && !user.seasonBadges.includes(seasonBadge)) {
+        user.seasonBadges.push(seasonBadge);
       }
 
-      addTransaction(user, 'income_season_prize', prize, `Приз сезона: ${i + 1} место`);
+      addTransaction(user, 'income_season_prize', prize, `Приз сезона: ${place} место`);
 
       applyRankBonuses(user);
       user.level = calculateLevel(user.totalEarned);
@@ -839,7 +842,7 @@ router.get('/cron-award-weekly-prizes', async (req, res) => {
     await user.save();
 
       winners.push({
-        place: i + 1,
+        place,
         telegramId: user.telegramId,
         username: user.username || 'Пользователь',
         weeklyEarned: roundOnix(user.weeklyEarned || 0),
@@ -880,7 +883,7 @@ router.get('/admin-weekly-prize-preview', async (req, res) => {
     }
 
     const targetWeek = req.query.week ? String(req.query.week) : getWeekKey();
-    const prizes = [250000, 150000, 75000];
+    const prizes = Array.from({ length: 50 }, (_, index) => getSeasonPrizeByPlace(index + 1));
 
     const alreadyAwarded = await WeeklyPrize.findOne({ week: targetWeek });
 
@@ -889,7 +892,7 @@ router.get('/admin-weekly-prize-preview', async (req, res) => {
       weeklyEarned: { $gt: 0 },
     })
       .sort({ weeklyEarned: -1 })
-      .limit(3)
+      .limit(50)
       .select('telegramId username weeklyEarned totalEarned balance');
 
     return res.json({
@@ -943,14 +946,14 @@ router.post('/admin-award-weekly-prizes', async (req, res) => {
       });
     }
 
-    const prizes = [250000, 150000, 75000];
+    const prizes = Array.from({ length: 50 }, (_, index) => getSeasonPrizeByPlace(index + 1));
 
     const topUsers = await User.find({
       weeklyEarnedWeek: targetWeek,
       weeklyEarned: { $gt: 0 },
     })
       .sort({ weeklyEarned: -1 })
-      .limit(3);
+      .limit(50);
 
     if (!topUsers.length) {
       return res.status(400).json({
@@ -964,17 +967,25 @@ router.post('/admin-award-weekly-prizes', async (req, res) => {
     for (let i = 0; i < topUsers.length; i += 1) {
       const user = topUsers[i];
       const prize = prizes[i];
+      const place = i + 1;
+      const seasonBadge = getSeasonBadgeByPlace(place);
+
+      if (!prize) continue;
 
       normalizeUserFields(user);
 
       user.balance = roundOnix(Number(user.balance || 0) + prize);
       addEarnings(user, prize);
 
+      if (seasonBadge && !user.seasonBadges.includes(seasonBadge)) {
+        user.seasonBadges.push(seasonBadge);
+      }
+
       addTransaction(
         user,
         'income_season_prize',
         prize,
-        `Приз сезона: ${i + 1} место`
+        `Приз сезона: ${place} место`
       );
 
       const rankBonuses = applyRankBonuses(user);
@@ -986,7 +997,7 @@ router.post('/admin-award-weekly-prizes', async (req, res) => {
     await user.save();
 
       winners.push({
-        place: i + 1,
+        place,
         telegramId: user.telegramId,
         username: user.username || 'Пользователь',
         weeklyEarned: roundOnix(user.weeklyEarned || 0),
@@ -1019,6 +1030,53 @@ router.post('/admin-award-weekly-prizes', async (req, res) => {
   }
 });
 
+
+
+// SEASON PRIZE POPUP FOR USER
+router.post('/season-prize-popup', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const latestSeason = await WeeklyPrize.findOne({
+      'winners.telegramId': telegramId,
+    }).sort({ awardedAt: -1 });
+
+    if (!latestSeason || user.lastSeenSeasonPrizeWeek === latestSeason.week) {
+      return res.json({ prize: null });
+    }
+
+    const winner = latestSeason.winners.find(
+      (item) => String(item.telegramId) === String(telegramId)
+    );
+
+    user.lastSeenSeasonPrizeWeek = latestSeason.week;
+    await user.save();
+
+    return res.json({
+      prize: winner
+        ? {
+            week: latestSeason.week,
+            place: winner.place,
+            prize: winner.prize,
+          }
+        : null,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 // SEASON HISTORY
 router.get('/season-history', async (req, res) => {
@@ -1273,6 +1331,45 @@ router.get('/config', async (req, res) => {
   }
 });
 
+
+// TEAM WEEKLY LEADERBOARD
+router.get('/leaderboard/teams', async (req, res) => {
+  try {
+    const currentWeek = getWeekKey();
+
+    const teams = await User.aggregate([
+      {
+        $match: {
+          weeklyEarnedWeek: currentWeek,
+          weeklyEarned: { $gt: 0 },
+          teamName: { $nin: ['', null] },
+        },
+      },
+      {
+        $group: {
+          _id: '$teamName',
+          weeklyEarned: { $sum: '$weeklyEarned' },
+          members: { $sum: 1 },
+        },
+      },
+      { $sort: { weeklyEarned: -1 } },
+      { $limit: 20 },
+    ]);
+
+    return res.json({
+      week: currentWeek,
+      teams: teams.map((team, index) => ({
+        place: index + 1,
+        teamName: team._id,
+        weeklyEarned: roundOnix(team.weeklyEarned || 0),
+        members: team.members,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // WEEKLY LEADERBOARD
 router.get('/leaderboard/weekly', async (req, res) => {
   try {
@@ -1481,6 +1578,9 @@ router.post('/create', async (req, res) => {
         withdrawalRequests: [],
         seasonBadges: [],
         selectedTitle: 'ONIX Player',
+        lastSeenSeasonPrizeWeek: '',
+        teamName: '',
+        league: 'Bronze',
         isSuspicious: false,
         isFrozen: false,
         frozenReason: '',
@@ -1631,6 +1731,9 @@ router.post('/save', async (req, res) => {
         withdrawalRequests: [],
         seasonBadges: [],
         selectedTitle: 'ONIX Player',
+        lastSeenSeasonPrizeWeek: '',
+        teamName: '',
+        league: 'Bronze',
         isSuspicious: false,
         isFrozen: false,
         frozenReason: '',
@@ -1908,6 +2011,78 @@ async function tryPayQualifiedReferralBonus(user) {
   };
 }
 
+
+
+function getLeagueByTotalEarned(totalEarned) {
+  const earned = Number(totalEarned || 0);
+
+  if (earned >= 5000000) return 'Diamond';
+  if (earned >= 1500000) return 'Gold';
+  if (earned >= 500000) return 'Silver';
+
+  return 'Bronze';
+}
+
+function getSeasonPrizeByPlace(place) {
+  if (place === 1) return 250000;
+  if (place === 2) return 150000;
+  if (place === 3) return 75000;
+  if (place >= 4 && place <= 10) return 25000;
+  if (place >= 11 && place <= 50) return 5000;
+
+  return 0;
+}
+
+function getSeasonBadgeByPlace(place) {
+  if (place === 1) return 'Season Winner';
+  if (place === 2) return 'Season Top 2';
+  if (place === 3) return 'Season Top 3';
+  if (place <= 10) return 'Season Top 10';
+  if (place <= 50) return 'Season Top 50';
+
+  return '';
+}
+
+
+// SET TEAM NAME
+router.post('/set-team', async (req, res) => {
+  try {
+    const { telegramId, teamName } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const cleanTeamName = String(teamName || '').trim().slice(0, 24);
+
+    if (!cleanTeamName) {
+      return res.status(400).json({ message: 'Введите название команды' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    user.teamName = cleanTeamName;
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 // SELECT PROFILE TITLE
 router.post('/select-title', async (req, res) => {

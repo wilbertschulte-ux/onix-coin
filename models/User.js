@@ -248,6 +248,21 @@ const userSchema = new mongoose.Schema(
       default: 'ONIX Player',
     },
 
+    lastSeenSeasonPrizeWeek: {
+      type: String,
+      default: '',
+    },
+
+    teamName: {
+      type: String,
+      default: '',
+    },
+
+    league: {
+      type: String,
+      default: 'Bronze',
+    },
+
     isSuspicious: {
       type: Boolean,
       default: false,
