@@ -1,0 +1,16 @@
+name: Award weekly ONIX prizes
+
+on:
+  schedule:
+    # Every Monday at 00:05 UTC
+    - cron: "5 0 * * 1"
+  workflow_dispatch:
+
+jobs:
+  award-prizes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call ONIX weekly prizes endpoint
+        run: |
+          curl -fsS "https://onix-coin.onrender.com/api/coins/cron-award-weekly-prizes?secret=${{ secrets.CRON_SECRET }}"
