@@ -1978,6 +1978,28 @@ router.get('/admin-economy-dashboard', async (req, res) => {
   }
 });
 
+
+// PUBLIC HEALTH CHECK
+router.get('/health', async (req, res) => {
+  try {
+    const userCount = await User.countDocuments({});
+
+    return res.json({
+      ok: true,
+      service: 'onix-coin',
+      users: userCount,
+      week: getWeekKey(),
+      time: Date.now(),
+      economyConfig: getEconomyConfig(),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
 // PUBLIC ECONOMY CONFIG
 router.get('/config', async (req, res) => {
   try {
