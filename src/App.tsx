@@ -2508,8 +2508,7 @@ function App() {
             </div>
           </div>
 
-          {boostSubTab === 'perks' && (
-          <div>
+          <div className={boostSubTab === 'perks' ? '' : 'hidden'}>
             <h2 className="text-2xl font-bold mb-4">🧩 Перки и магазин</h2>
 
             <div className="mb-5 rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
@@ -2743,11 +2742,7 @@ function App() {
             </div>
           </div>
 
-          </div>
-          )}
-
-          {boostSubTab === 'upgrades' && (
-          <div>
+          <div className={boostSubTab === 'upgrades' ? '' : 'hidden'}>
             <h2 className="text-2xl font-bold mb-4">⬆️ Апгрейды</h2>
 
             <div className="space-y-4">
@@ -2850,11 +2845,7 @@ function App() {
             </div>
           </div>
 
-          </div>
-          )}
-
-          {boostSubTab === 'boosts' && (
-          <div>
+          <div className={boostSubTab === 'boosts' ? '' : 'hidden'}>
             <h2 className="text-2xl font-bold mb-4">⚡ Временные бусты</h2>
 
             {isAnyBoostActive && (
@@ -2981,9 +2972,6 @@ function App() {
           </div>
         </div>
       )}
-
-          </div>
-          )}
 
       {activeTab === 'tasks' && (
         <div className="px-5 mt-8 space-y-4">
