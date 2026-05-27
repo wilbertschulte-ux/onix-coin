@@ -200,6 +200,50 @@ type TeamLeaderboardItem = {
   members: number;
 };
 
+type TeamMissionItem = {
+  id: string;
+  title: string;
+  description: string;
+  goal: number;
+  progress: number;
+  reward: number;
+  isCompleted: boolean;
+  isClaimed: boolean;
+};
+
+type TeamSocialDashboard = {
+  team: {
+    teamName: string;
+    members: number;
+    weeklyEarned: number;
+    totalEarned: number;
+    totalTaps: number;
+    teamCode: string;
+    place: number | null;
+    membersList: Array<{
+      telegramId: string;
+      username: string;
+      weeklyEarned: number;
+      totalEarned: number;
+      totalTaps: number;
+      referralsCount: number;
+    }>;
+  };
+  teamMissions: TeamMissionItem[];
+  teamPrize: number;
+  week: string;
+};
+
+type FriendLeaderboardItem = {
+  place: number;
+  telegramId: string;
+  username: string;
+  totalEarned: number;
+  weeklyEarned: number;
+  referralsCount: number;
+  isMe: boolean;
+};
+
 type SeasonPrizePopup = {
   week: string;
   place: number;
@@ -594,6 +638,7 @@ function getTransactionIcon(type: string) {
   if (type.includes('mission')) return '📋';
   if (type.includes('promo')) return '🎟';
   if (type.includes('welcome')) return '🎁';
+  if (type.includes('team')) return '👥';
   if (type.includes('withdrawal')) return '💸';
   if (type.includes('admin')) return '🛠️';
 
@@ -723,6 +768,9 @@ function App() {
     useState<SeasonPrizePopup | null>(null);
   const [teamName, setTeamName] = useState('');
   const [teamNameInput, setTeamNameInput] = useState('');
+  const [teamSocialDashboard, setTeamSocialDashboard] =
+    useState<TeamSocialDashboard | null>(null);
+  const [friendLeaderboard, setFriendLeaderboard] = useState<FriendLeaderboardItem[]>([]);
   const [league, setLeague] = useState('Bronze');
   const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
@@ -1725,6 +1773,123 @@ function App() {
     }
   };
 
+
+  const loadTeamSocialDashboard = async () => {
+    const telegramId = getTelegramId();
+
+    if (!telegramId) return;
+
+    try {
+      const response = await axios.get(`${API_URL}/team-dashboard/${telegramId}`);
+      setTeamSocialDashboard(response.data);
+    } catch (error) {
+      console.log('Ошибка загрузки команды:', error);
+    }
+  };
+
+  const loadFriendLeaderboard = async () => {
+    const telegramId = getTelegramId();
+
+    if (!telegramId) return;
+
+    try {
+      const response = await axios.get(`${API_URL}/friends-leaderboard/${telegramId}`);
+      setFriendLeaderboard(response.data.friends || []);
+    } catch (error) {
+      console.log('Ошибка загрузки рейтинга друзей:', error);
+    }
+  };
+
+  const getTeamInviteLink = () => {
+    const teamCode = teamSocialDashboard?.team?.teamCode;
+
+    if (!teamCode) return 'https://t.me/coinonix_bot/onix';
+
+    return `https://t.me/coinonix_bot/onix?startapp=team_${teamCode}`;
+  };
+
+  const shareTeamInviteLink = () => {
+    const link = getTeamInviteLink();
+    const text = `Вступай в мою команду ${teamName || 'ONIX'} в ONIX COIN ⚡`;
+
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+      link
+    )}&text=${encodeURIComponent(text)}`;
+
+    try {
+      WebApp.openTelegramLink(shareUrl);
+    } catch {
+      window.open(shareUrl, '_blank');
+    }
+  };
+
+  const joinTeamByCode = async (teamCode: string) => {
+    const telegramId = getTelegramId();
+
+    if (!telegramId || !teamCode) return;
+
+    try {
+      const response = await axios.post(`${API_URL}/join-team`, {
+        telegramId,
+        teamCode,
+      });
+
+      const user = response.data.user;
+
+      setTeamName(user.teamName || '');
+      setTeamNameInput(user.teamName || '');
+      setTeamSocialDashboard({
+        team: response.data.team,
+        teamMissions: response.data.teamMissions || [],
+        teamPrize: 0,
+        week: '',
+      });
+
+      showToast(`👥 Вы вступили в команду ${user.teamName}`, 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось вступить в команду', 'error');
+    }
+  };
+
+  const claimTeamMission = async (mission: TeamMissionItem) => {
+    const telegramId = getTelegramId();
+
+    if (!mission.isCompleted || mission.isClaimed) return;
+
+    try {
+      const response = await axios.post(`${API_URL}/claim-team-mission`, {
+        telegramId,
+        missionId: mission.id,
+      });
+
+      const user = response.data.user;
+
+      syncGrowthUser(user, response.data);
+      showRewardPopupFromResponse(response.data);
+      showToast(`✅ Командная миссия: +${formatOnix(response.data.reward.amount)} ONIX`, 'success');
+      await loadTeamSocialDashboard();
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось забрать награду', 'error');
+    }
+  };
+
+  const claimTeamPrize = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      const response = await axios.post(`${API_URL}/claim-team-prize`, {
+        telegramId,
+      });
+
+      syncGrowthUser(response.data.user, response.data);
+      showRewardPopupFromResponse(response.data);
+      showToast(`🏆 Командный приз: +${formatOnix(response.data.prize)} ONIX`, 'success');
+      await loadTeamSocialDashboard();
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось забрать командный приз', 'error');
+    }
+  };
+
   const loadMissions = async () => {
     const telegramId = getTelegramId();
 
@@ -2186,6 +2351,7 @@ function App() {
       setTeamName(user.teamName || '');
       setTeamNameInput(user.teamName || '');
       showToast('✅ Команда обновлена', 'success');
+      loadTeamSocialDashboard();
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось сохранить команду', 'error');
     }
@@ -3844,6 +4010,115 @@ function App() {
               </p>
             </div>
 
+            {teamSocialDashboard && teamName && (
+              <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4 text-left">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-white">🤝 Командная активность</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {teamSocialDashboard.team.members} участников · место {teamSocialDashboard.team.place ? `#${teamSocialDashboard.team.place}` : '—'}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={shareTeamInviteLink}
+                    className="rounded-2xl bg-yellow-400 px-4 py-3 text-xs font-bold text-black active:scale-95"
+                  >
+                    Ссылка
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-2xl bg-[#111827] p-3">
+                    <p className="text-xs text-gray-400">Неделя</p>
+                    <p className="mt-1 text-sm font-bold text-yellow-400">
+                      {formatOnix(teamSocialDashboard.team.weeklyEarned)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-[#111827] p-3">
+                    <p className="text-xs text-gray-400">Тапы</p>
+                    <p className="mt-1 text-sm font-bold text-yellow-400">
+                      {teamSocialDashboard.team.totalTaps}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-[#111827] p-3">
+                    <p className="text-xs text-gray-400">Приз</p>
+                    <p className="mt-1 text-sm font-bold text-emerald-400">
+                      +{formatOnix(teamSocialDashboard.teamPrize)}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={claimTeamPrize}
+                  disabled={!teamSocialDashboard.teamPrize}
+                  className={`mt-3 w-full rounded-2xl py-3 font-bold ${
+                    teamSocialDashboard.teamPrize
+                      ? 'bg-yellow-400 text-black active:scale-95'
+                      : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  {teamSocialDashboard.teamPrize ? 'Забрать командный приз' : 'Команда вне призовой зоны'}
+                </button>
+
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm font-bold text-white">📋 Командные задания</p>
+
+                  {teamSocialDashboard.teamMissions.map((mission) => {
+                    const progressPercent = Math.min(
+                      (Number(mission.progress || 0) / Number(mission.goal || 1)) * 100,
+                      100
+                    );
+
+                    return (
+                      <div key={mission.id} className="rounded-2xl bg-[#111827] p-3">
+                        <div className="mb-2 flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-bold text-white">{mission.title}</p>
+                            <p className="text-xs text-gray-400">{mission.description}</p>
+                          </div>
+
+                          <p className="shrink-0 font-bold text-yellow-400">
+                            +{formatOnix(mission.reward)}
+                          </p>
+                        </div>
+
+                        <div className="h-2 overflow-hidden rounded-full bg-gray-800">
+                          <div
+                            className="h-full rounded-full bg-yellow-400"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between text-xs">
+                          <span className="text-gray-400">
+                            {formatOnix(mission.progress)} / {formatOnix(mission.goal)}
+                          </span>
+
+                          <button
+                            onClick={() => claimTeamMission(mission)}
+                            disabled={!mission.isCompleted || mission.isClaimed}
+                            className={`rounded-full px-3 py-1 font-bold ${
+                              mission.isClaimed
+                                ? 'bg-emerald-500/10 text-emerald-400'
+                                : mission.isCompleted
+                                ? 'bg-yellow-400 text-black'
+                                : 'bg-gray-700 text-gray-400'
+                            }`}
+                          >
+                            {mission.isClaimed ? 'Получено' : mission.isCompleted ? 'Забрать' : 'В процессе'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-[#0a0f1c] p-4">
                 <p className="text-xs text-gray-400">Место в топе</p>
@@ -4068,6 +4343,44 @@ function App() {
 
 
 
+          </div>
+
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-white">👥 Рейтинг друзей</h3>
+
+            {friendLeaderboard.length > 0 ? (
+              <div className="space-y-3">
+                {friendLeaderboard.map((friend) => (
+                  <div
+                    key={friend.telegramId}
+                    className={`flex items-center justify-between rounded-2xl p-4 ${
+                      friend.isMe ? 'bg-yellow-400/10 border border-yellow-400/30' : 'bg-[#0a0f1c]'
+                    }`}
+                  >
+                    <div>
+                      <p className="font-bold text-white">
+                        #{friend.place} {friend.username}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        неделя +{formatOnix(friend.weeklyEarned)} · refs {friend.referralsCount}
+                      </p>
+                    </div>
+
+                    <p className="font-bold text-yellow-400">
+                      {formatOnix(friend.totalEarned)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-[#0a0f1c] p-5 text-center">
+                <p className="font-bold text-gray-300">Пока нет друзей</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Пригласите игроков по ссылке, и они появятся здесь.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
