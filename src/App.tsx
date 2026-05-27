@@ -3928,25 +3928,6 @@ function App() {
             )}
 
 
-            {isAdmin() && (
-              <button
-                onClick={() => setAdminSearchVisible(true)}
-                disabled={isAdminLoading}
-                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-purple-400 active:scale-95 disabled:opacity-50"
-              >
-                🔎 Админ: поиск игрока
-              </button>
-            )}
-
-            {isAdmin() && (
-              <button
-                onClick={loadAdminSecurityLogs}
-                disabled={isAdminLoading}
-                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-orange-400 active:scale-95 disabled:opacity-50"
-              >
-                🧾 Админ: security logs
-              </button>
-            )}
 
           </div>
 
