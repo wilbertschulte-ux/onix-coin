@@ -137,6 +137,20 @@ type AdminWithdrawalRequest = {
   };
 };
 
+type SuspiciousUser = {
+  telegramId: string;
+  username: string;
+  balance: number;
+  totalEarned: number;
+  weeklyEarned: number;
+  referralsCount: number;
+  totalTaps: number;
+  isSuspicious: boolean;
+  suspiciousReasons: string[];
+  isFrozen: boolean;
+  frozenReason: string;
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_ONIX_EUR_PER_1000 = 0.68;
@@ -480,6 +494,8 @@ function App() {
   const [adminWithdrawals, setAdminWithdrawals] = useState<AdminWithdrawalRequest[]>([]);
   const [adminWithdrawalsVisible, setAdminWithdrawalsVisible] = useState(false);
   const [adminWithdrawalComment, setAdminWithdrawalComment] = useState('');
+  const [suspiciousUsers, setSuspiciousUsers] = useState<SuspiciousUser[]>([]);
+  const [suspiciousUsersVisible, setSuspiciousUsersVisible] = useState(false);
 
   const [totalTaps, setTotalTaps] = useState(0);
   const [totalBoostsUsed, setTotalBoostsUsed] = useState(0);
@@ -1292,6 +1308,49 @@ function App() {
       setAdminPanelVisible(true);
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось загрузить preview');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const loadSuspiciousUsers = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-suspicious-users`, {
+        params: {
+          telegramId,
+        },
+      });
+
+      setSuspiciousUsers(response.data.users || []);
+      setSuspiciousUsersVisible(true);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось загрузить список', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const toggleFreezeUser = async (target: SuspiciousUser) => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      await axios.post(`${API_URL}/admin-freeze-user`, {
+        telegramId,
+        targetTelegramId: target.telegramId,
+        freeze: !target.isFrozen,
+        reason: target.isFrozen ? '' : 'Заморожен из админ-панели',
+      });
+
+      showToast(target.isFrozen ? '✅ Аккаунт разморожен' : '🧊 Аккаунт заморожен', 'success');
+      await loadSuspiciousUsers();
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось изменить статус', 'error');
     } finally {
       setIsAdminLoading(false);
     }
@@ -2590,6 +2649,16 @@ function App() {
               </button>
             )}
 
+            {isAdmin() && (
+              <button
+                onClick={loadSuspiciousUsers}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-red-400 active:scale-95 disabled:opacity-50"
+              >
+                🚨 Админ: suspicious
+              </button>
+            )}
+
           </div>
 
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
@@ -2917,6 +2986,99 @@ function App() {
 
 
 
+
+
+      {suspiciousUsersVisible && (
+        <div className="fixed inset-0 z-[86] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-red-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">🚨 Suspicious users</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Подозрительные и замороженные аккаунты
+                </p>
+              </div>
+
+              <button
+                onClick={() => setSuspiciousUsersVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {suspiciousUsers.length > 0 ? (
+                suspiciousUsers.map((user) => (
+                  <div key={user.telegramId} className="rounded-2xl bg-[#0a0f1c] p-4">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-white">{user.username}</p>
+                        <p className="text-xs text-gray-500">ID: {user.telegramId}</p>
+                      </div>
+
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          user.isFrozen
+                            ? 'bg-red-500/10 text-red-400'
+                            : 'bg-yellow-400/10 text-yellow-400'
+                        }`}
+                      >
+                        {user.isFrozen ? 'Frozen' : 'Suspicious'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Balance: {formatOnix(user.balance)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Earned: {formatOnix(user.totalEarned)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Week: {formatOnix(user.weeklyEarned)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Refs: {user.referralsCount}
+                      </p>
+                    </div>
+
+                    {user.suspiciousReasons.length > 0 && (
+                      <p className="mt-3 rounded-xl bg-red-500/10 p-2 text-xs text-red-400">
+                        {user.suspiciousReasons.join(', ')}
+                      </p>
+                    )}
+
+                    <button
+                      onClick={() => toggleFreezeUser(user)}
+                      disabled={isAdminLoading}
+                      className={`mt-4 w-full rounded-2xl py-3 font-bold active:scale-95 disabled:opacity-50 ${
+                        user.isFrozen
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}
+                    >
+                      {user.isFrozen ? 'Разморозить' : 'Заморозить'}
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-[#0a0f1c] p-4 text-center text-gray-400">
+                  Подозрительных аккаунтов нет
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={loadSuspiciousUsers}
+              disabled={isAdminLoading}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95 disabled:opacity-50"
+            >
+              Обновить список
+            </button>
+          </div>
+        </div>
+      )}
 
       {adminWithdrawalsVisible && (
         <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/70 px-4">
