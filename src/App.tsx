@@ -700,7 +700,7 @@ function App() {
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -956,7 +956,7 @@ function App() {
         setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
         setCompletedTasks(user.completedTasks || []);
         setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
         setDailyStreak(Number(user.dailyStreak || 0));
         setTransactions(user.transactions || []);
         setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1016,12 +1016,14 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setActiveBoost(normalizeBoost(user.activeBoost));
       setBoostEndTime(Number(user.boostEndTime || 0));
+
+      showToast('✅ Перк улучшен', 'success');
 
       setTapLevel(user.tapLevel || 1);
       setMinerLevel(user.minerLevel || 1);
@@ -1095,7 +1097,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1141,7 +1143,7 @@ function App() {
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
       setLastChestReward(user.chestStats?.lastReward || '');
 
       showToast(
@@ -1187,7 +1189,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1242,7 +1244,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1377,7 +1379,7 @@ function App() {
       setReferralLimit(user.referralLimit || response.data.referralLimit || referralLimit);
       setCompletedTasks(user.completedTasks || []);
       setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
       setDailyStreak(Number(user.dailyStreak || 0));
       setTransactions(user.transactions || []);
       setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
@@ -1414,7 +1416,7 @@ function App() {
     setOfflineClaimsCount(Number(user.offlineClaimsCount || 0));
     setWithdrawalRequests(user.withdrawalRequests || []);
     setSelectedTitle(user.selectedTitle || 'ONIX Player');
-    setPerkLevels(user.perkLevels || {});
+    setPerkLevels(normalizePerkLevels(user.perkLevels));
     setLastChestReward(user.chestStats?.lastReward || '');
     setTeamName(user.teamName || '');
     setTeamNameInput((currentValue) => currentValue || user.teamName || '');
@@ -1681,8 +1683,24 @@ function App() {
   };
 
 
+  const normalizePerkLevels = (levels: any) => {
+    if (!levels) return {};
+
+    if (levels instanceof Map) {
+      return Object.fromEntries(levels.entries());
+    }
+
+    if (typeof levels === 'object') {
+      return Object.fromEntries(
+        Object.entries(levels).map(([key, value]) => [key, Number(value || 0)])
+      );
+    }
+
+    return {};
+  };
+
   const getPerkLevel = (perkId: string) => {
-    return Number(perkLevels?.[perkId] || 0);
+    return Number((perkLevels as any)?.[perkId] || 0);
   };
 
   const getPerkCost = (baseCost: number, nextLevel: number) => {
@@ -2782,7 +2800,7 @@ function App() {
                 applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
                 setTransactions(user.transactions || []);
                 setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
                 showRewardPopupFromResponse(response.data);
@@ -2838,7 +2856,7 @@ function App() {
                 applyUserStats(user);
                 setCompletedTasks(user.completedTasks || []);
                 setOwnedPerks(user.ownedPerks || []);
-      setPerkLevels(user.perkLevels || {});
+      setPerkLevels(normalizePerkLevels(user.perkLevels));
 
                 showToast(`🎉 Вы получили +${formatOnix(economyConfig.referralReward)} ONIX!`, 'success');
               } catch (error: any) {
