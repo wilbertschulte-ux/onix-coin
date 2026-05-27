@@ -790,6 +790,14 @@ function App() {
   const [isAdminLoading, setIsAdminLoading] = useState(false);
 
   useEffect(() => {
+    const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+
+    if (startParam.startsWith('team_')) {
+      joinTeamByCode(startParam.replace('team_', ''));
+    }
+  }, []);
+
+  useEffect(() => {
     try {
       WebApp.ready();
       WebApp.expand();
@@ -928,6 +936,10 @@ function App() {
         }
 
         localStorage.setItem('knownReferrals', newRefs.toString());
+
+        if (startParam && startParam.startsWith('team_')) {
+          await joinTeamByCode(startParam.replace('team_', ''));
+        }
 
         if (
           user.referredBy &&
@@ -2352,6 +2364,7 @@ function App() {
       setTeamNameInput(user.teamName || '');
       showToast('✅ Команда обновлена', 'success');
       loadTeamSocialDashboard();
+      loadFriendLeaderboard();
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось сохранить команду', 'error');
     }
