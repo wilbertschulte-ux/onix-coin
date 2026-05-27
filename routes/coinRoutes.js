@@ -1058,6 +1058,7 @@ router.post('/admin-freeze-user', async (req, res) => {
         isFrozen: user.isFrozen,
         frozenReason: user.frozenReason,
       },
+      referralBonusPaid: typeof referralBonus !== 'undefined' ? referralBonus : null,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -1741,6 +1742,7 @@ router.post('/buy-upgrade', async (req, res) => {
         type,
         cost,
       },
+      referralBonusPaid: typeof referralBonus !== 'undefined' ? referralBonus : null,
     });
   } catch (error) {
     return res.status(500).json({
@@ -1818,7 +1820,9 @@ async function tryPayQualifiedReferralBonus(user) {
 
   refUser.dailyReferralBonusCount = Number(refUser.dailyReferralBonusCount || 0) + 1;
   refUser.hourlyReferralBonusCount = Number(refUser.hourlyReferralBonusCount || 0) + 1;
-  refUser.balance = roundOnix(Number(refUser.balance || 0) + economyConfig.referralReward);
+  refUser.balance = roundOnix(
+    Number(refUser.balance || 0) + economyConfig.referralReward
+  );
   addEarnings(refUser, economyConfig.referralReward);
   refUser.lastReferralUsername = user.username || 'новый пользователь';
 
@@ -1826,7 +1830,7 @@ async function tryPayQualifiedReferralBonus(user) {
     refUser,
     'income_referral',
     economyConfig.referralReward,
-    `Реферальный бонус за активного друга ${refUser.dailyReferralBonusCount}/${economyConfig.maxPaidReferralsPerDay}`
+    `Реферальный бонус за активного друга: ${user.username || 'новый пользователь'}`
   );
 
   applyAchievements(refUser);
@@ -2008,6 +2012,7 @@ router.post('/buy-perk', async (req, res) => {
         title: perk.title,
         cost: perk.cost,
       },
+      referralBonusPaid: typeof referralBonus !== 'undefined' ? referralBonus : null,
     });
   } catch (error) {
     return res.status(500).json({
