@@ -431,6 +431,30 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    frontendErrorLogs: {
+      type: [
+        {
+          message: {
+            type: String,
+            default: '',
+          },
+          stack: {
+            type: String,
+            default: '',
+          },
+          appVersion: {
+            type: String,
+            default: '',
+          },
+          createdAt: {
+            type: Number,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+
     dailyRewardLastClaim: {
       type: Number,
       default: null,

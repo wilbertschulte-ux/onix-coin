@@ -6,6 +6,17 @@ const router = express.Router();
 
 const API_RATE_LIMITS = new Map();
 const ECONOMY_OVERRIDES = {};
+const APP_VERSION = process.env.APP_VERSION || '1.0.0';
+
+function cleanupRateLimits(now = Date.now()) {
+  if (API_RATE_LIMITS.size < 5000) return;
+
+  for (const [key, item] of API_RATE_LIMITS.entries()) {
+    if (now - item.startedAt > 10 * 60 * 1000) {
+      API_RATE_LIMITS.delete(key);
+    }
+  }
+}
 
 router.use((req, res, next) => {
   try {
@@ -13,28 +24,48 @@ router.use((req, res, next) => {
       return next();
     }
 
-    const key =
-      String(req.body?.telegramId || req.query?.telegramId || req.ip || 'unknown') +
-      ':' +
-      req.path;
+    const identity = String(
+      req.body?.telegramId ||
+        req.query?.telegramId ||
+        req.params?.telegramId ||
+        req.headers['x-telegram-id'] ||
+        req.ip ||
+        'unknown'
+    );
 
+    const key = `${identity}:${req.path}`;
+    const globalKey = `${identity}:global`;
     const now = Date.now();
     const windowMs = 60 * 1000;
-    const maxRequests = req.path.includes('/tap') ? 900 : 180;
-    const item = API_RATE_LIMITS.get(key) || {
-      count: 0,
-      startedAt: now,
+    const routeMaxRequests = req.path.includes('/tap')
+      ? 900
+      : req.path.includes('/request-withdrawal')
+      ? 8
+      : req.path.includes('/apply-promo')
+      ? 15
+      : 180;
+    const globalMaxRequests = 1200;
+
+    const updateBucket = (bucketKey, maxRequests) => {
+      const item = API_RATE_LIMITS.get(bucketKey) || {
+        count: 0,
+        startedAt: now,
+      };
+
+      if (now - item.startedAt > windowMs) {
+        item.count = 0;
+        item.startedAt = now;
+      }
+
+      item.count += 1;
+      API_RATE_LIMITS.set(bucketKey, item);
+
+      return item.count <= maxRequests;
     };
 
-    if (now - item.startedAt > windowMs) {
-      item.count = 0;
-      item.startedAt = now;
-    }
+    cleanupRateLimits(now);
 
-    item.count += 1;
-    API_RATE_LIMITS.set(key, item);
-
-    if (item.count > maxRequests) {
+    if (!updateBucket(globalKey, globalMaxRequests) || !updateBucket(key, routeMaxRequests)) {
       return res.status(429).json({
         message: 'Слишком много запросов. Попробуйте позже.',
       });
@@ -2056,6 +2087,115 @@ router.post('/admin-review-withdrawal', async (req, res) => {
 
 
 
+
+// PUBLIC APP VERSION
+router.get('/version', async (req, res) => {
+  return res.json({
+    version: APP_VERSION,
+    service: 'onix-coin',
+    time: Date.now(),
+  });
+});
+
+// FRONTEND ERROR LOG
+router.post('/frontend-error', async (req, res) => {
+  try {
+    const { telegramId, message, stack, appVersion } = req.body;
+
+    const user = telegramId ? await User.findOne({ telegramId }) : null;
+
+    if (user) {
+      normalizeUserFields(user);
+
+      user.frontendErrorLogs.unshift({
+        message: String(message || '').slice(0, 500),
+        stack: String(stack || '').slice(0, 2000),
+        appVersion: String(appVersion || '').slice(0, 50),
+        createdAt: Date.now(),
+      });
+
+      user.frontendErrorLogs = user.frontendErrorLogs.slice(0, 30);
+
+      addSecurityLog(user, 'frontend_error', 'Frontend error', String(message || '').slice(0, 500));
+
+      await user.save();
+    }
+
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ ok: false });
+  }
+});
+
+// ADMIN: DOWNLOAD JSON BACKUP
+router.get('/admin-backup', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const users = await User.find({}).lean();
+    const weeklyPrizes = await WeeklyPrize.find({}).lean();
+
+    const payload = {
+      version: APP_VERSION,
+      exportedAt: new Date().toISOString(),
+      users,
+      weeklyPrizes,
+    };
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="onix-backup.json"');
+
+    return res.send(JSON.stringify(payload, null, 2));
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN: FRONTEND ERROR LOGS
+router.get('/admin-frontend-errors', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const users = await User.find({
+      'frontendErrorLogs.0': { $exists: true },
+    })
+      .limit(100)
+      .select('telegramId username frontendErrorLogs');
+
+    const logs = [];
+
+    users.forEach((user) => {
+      (user.frontendErrorLogs || []).forEach((log) => {
+        logs.push({
+          telegramId: user.telegramId,
+          username: user.username || 'Пользователь',
+          message: log.message || '',
+          stack: log.stack || '',
+          appVersion: log.appVersion || '',
+          createdAt: log.createdAt || 0,
+        });
+      });
+    });
+
+    logs.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+    return res.json({ logs: logs.slice(0, 100) });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
 // ADMIN 2.0: GET ECONOMY CONFIG
 router.get('/admin-economy-config', async (req, res) => {
   try {
@@ -2569,7 +2709,9 @@ router.get('/health', async (req, res) => {
     return res.json({
       ok: true,
       service: 'onix-coin',
+      version: APP_VERSION,
       users: userCount,
+      rateLimitBuckets: API_RATE_LIMITS.size,
       week: getWeekKey(),
       time: Date.now(),
       economyConfig: getEconomyConfig(),
@@ -2864,6 +3006,7 @@ router.post('/create', async (req, res) => {
         suspiciousReasons: [],
         securityLogs: [],
         adminNotes: [],
+        frontendErrorLogs: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -3046,6 +3189,7 @@ router.post('/save', async (req, res) => {
         suspiciousReasons: [],
         securityLogs: [],
         adminNotes: [],
+        frontendErrorLogs: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -3234,6 +3378,7 @@ router.post('/buy-upgrade', async (req, res) => {
 function addSecurityLog(user, type, title, details = '') {
   if (!user.securityLogs) user.securityLogs = [];
   if (!user.adminNotes) user.adminNotes = [];
+  if (!user.frontendErrorLogs) user.frontendErrorLogs = [];
 
   user.securityLogs.unshift({
     type,
