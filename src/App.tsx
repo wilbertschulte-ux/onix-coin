@@ -1838,6 +1838,83 @@ function App() {
   const maxOfflineHours = 3 + offlineProLevel;
   const maxOfflineIncome = minerIncomePerSecond * maxOfflineHours * 60 * 60;
 
+  const upgradeDiscountMultiplier = Math.max(0.85, 1 - 0.05 * engineerLevel);
+
+  const nextTapCost = Math.round(getTapUpgradeCost(tapLevel) * upgradeDiscountMultiplier);
+  const nextMinerCost = Math.round(getMinerUpgradeCost(minerLevel) * upgradeDiscountMultiplier);
+  const nextEnergyCost = Math.round(getEnergyUpgradeCost(energyLevel) * upgradeDiscountMultiplier);
+  const nextRechargeCost = Math.round(
+    getRechargeUpgradeCost(rechargeLevel) * upgradeDiscountMultiplier
+  );
+
+  const minerUpgradeProgress = Math.min((balance / nextMinerCost) * 100, 100);
+  const nextMinerIncomePerSecond = Number(
+    ((autoclickers + 0.5) * minerBaseMultiplier * miningMultiplier).toFixed(2)
+  );
+  const minerIncomeIncrease = nextMinerIncomePerSecond - minerIncomePerSecond;
+
+  const upgradeCards: Array<{
+    type: 'tap' | 'miner' | 'energy' | 'recharge';
+    icon: string;
+    title: string;
+    description: string;
+    level: number;
+    cost: number;
+    currentLabel: string;
+    currentValue: string;
+    nextLabel: string;
+    nextValue: string;
+  }> = [
+    {
+      type: 'tap',
+      icon: '🎯',
+      title: 'Сила тапа',
+      description: 'Больше ONIX за каждый тап',
+      level: tapLevel,
+      cost: nextTapCost,
+      currentLabel: 'Сейчас',
+      currentValue: `+${formatOnix(tapPower)} ONIX/тап`,
+      nextLabel: 'После апгрейда',
+      nextValue: `+${formatOnix(tapPower + 1)} ONIX/тап`,
+    },
+    {
+      type: 'miner',
+      icon: '⛏️',
+      title: 'Майнер',
+      description: 'Пассивный доход ONIX',
+      level: minerLevel,
+      cost: nextMinerCost,
+      currentLabel: 'Сейчас',
+      currentValue: `+${formatOnix(minerIncomePerSecond)} ONIX/сек`,
+      nextLabel: 'После апгрейда',
+      nextValue: `+${formatOnix(nextMinerIncomePerSecond)} ONIX/сек`,
+    },
+    {
+      type: 'energy',
+      icon: '🔋',
+      title: 'Энергия',
+      description: 'Больше максимальной энергии',
+      level: energyLevel,
+      cost: nextEnergyCost,
+      currentLabel: 'Сейчас',
+      currentValue: `${maxEnergy.toLocaleString('ru-RU')} энергии`,
+      nextLabel: 'После апгрейда',
+      nextValue: `${(maxEnergy + 500).toLocaleString('ru-RU')} энергии`,
+    },
+    {
+      type: 'recharge',
+      icon: '⚡',
+      title: 'Восстановление',
+      description: 'Энергия быстрее восстанавливается',
+      level: rechargeLevel,
+      cost: nextRechargeCost,
+      currentLabel: 'Сейчас',
+      currentValue: `+${formatOnix(energyRecharge)} энергии/сек`,
+      nextLabel: 'После апгрейда',
+      nextValue: `+${formatOnix(energyRecharge + 0.25)} энергии/сек`,
+    },
+  ];
+
   const boostRemainingMs = Math.max(boostEndTime - Date.now(), 0);
   const boostTimeLeft = boostRemainingMs > 0 ? formatTime(boostRemainingMs) : '';
   const isAnyBoostActive = isBoostActive && activeBoost !== 'none';
