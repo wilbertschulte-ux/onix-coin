@@ -450,6 +450,26 @@ function getEconomyConfig() {
     referralReward: getNumberEnv('REFERRAL_REWARD', 75000),
     referredUserReward: getNumberEnv('REFERRED_USER_REWARD', 15000),
     maxPaidReferralsPerDay: getNumberEnv('MAX_PAID_REFERRALS_PER_DAY', 10),
+    maxPaidReferralsPerHour: getNumberEnv('MAX_PAID_REFERRALS_PER_HOUR', 5),
+    chestCost: getNumberEnv('CHEST_COST', 50000),
+    dailyMissionBaseReward: getNumberEnv('DAILY_MISSION_BASE_REWARD', 10000),
+    weeklyMissionBaseReward: getNumberEnv('WEEKLY_MISSION_BASE_REWARD', 50000),
+    seasonPrizes: {
+      top1: getNumberEnv('SEASON_PRIZE_TOP_1', 250000),
+      top2: getNumberEnv('SEASON_PRIZE_TOP_2', 150000),
+      top3: getNumberEnv('SEASON_PRIZE_TOP_3', 75000),
+      top10: getNumberEnv('SEASON_PRIZE_TOP_10', 25000),
+      top50: getNumberEnv('SEASON_PRIZE_TOP_50', 5000),
+    },
+    upgradeBaseCosts: {
+      tap: getNumberEnv('UPGRADE_TAP_BASE_COST', 500),
+      miner: getNumberEnv('UPGRADE_MINER_BASE_COST', 750),
+      energy: getNumberEnv('UPGRADE_ENERGY_BASE_COST', 600),
+      recharge: getNumberEnv('UPGRADE_RECHARGE_BASE_COST', 650),
+    },
+    perkBaseCosts: Object.fromEntries(
+      Object.entries(PERKS || {}).map(([id, perk]) => [id, perk.baseCost || perk.cost || 0])
+    ),
   };
 }
 
@@ -1597,6 +1617,108 @@ router.post('/admin-review-withdrawal', async (req, res) => {
   }
 });
 
+
+// ADMIN: ECONOMY DASHBOARD
+router.get('/admin-economy-dashboard', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const users = await User.find({}).select(
+      'balance totalEarned weeklyEarned referralsCount totalTaps transactions withdrawalRequests isSuspicious isFrozen'
+    );
+
+    const totals = {
+      users: users.length,
+      frozenUsers: 0,
+      suspiciousUsers: 0,
+      totalBalance: 0,
+      totalEarned: 0,
+      weeklyEarned: 0,
+      referrals: 0,
+      taps: 0,
+      pendingWithdrawals: 0,
+      pendingWithdrawOnix: 0,
+      approvedWithdrawals: 0,
+      rejectedWithdrawals: 0,
+      createdOnix: 0,
+      spentOnix: 0,
+    };
+
+    const transactionTypes = {};
+
+    users.forEach((user) => {
+      totals.totalBalance += Number(user.balance || 0);
+      totals.totalEarned += Number(user.totalEarned || 0);
+      totals.weeklyEarned += Number(user.weeklyEarned || 0);
+      totals.referrals += Number(user.referralsCount || 0);
+      totals.taps += Number(user.totalTaps || 0);
+
+      if (user.isFrozen) totals.frozenUsers += 1;
+      if (user.isSuspicious) totals.suspiciousUsers += 1;
+
+      (user.withdrawalRequests || []).forEach((request) => {
+        if (request.status === 'pending') {
+          totals.pendingWithdrawals += 1;
+          totals.pendingWithdrawOnix += Number(request.amount || 0);
+        }
+
+        if (request.status === 'approved') totals.approvedWithdrawals += 1;
+        if (request.status === 'rejected') totals.rejectedWithdrawals += 1;
+      });
+
+      (user.transactions || []).forEach((transaction) => {
+        const amount = Number(transaction.amount || 0);
+        const type = transaction.type || 'unknown';
+
+        if (!transactionTypes[type]) {
+          transactionTypes[type] = {
+            count: 0,
+            amount: 0,
+          };
+        }
+
+        transactionTypes[type].count += 1;
+        transactionTypes[type].amount += amount;
+
+        if (amount > 0) totals.createdOnix += amount;
+        if (amount < 0) totals.spentOnix += Math.abs(amount);
+      });
+    });
+
+    const rate = getOnixEurRate();
+
+    return res.json({
+      economyConfig: getEconomyConfig(),
+      totals: {
+        ...totals,
+        totalBalance: roundOnix(totals.totalBalance),
+        totalEarned: roundOnix(totals.totalEarned),
+        weeklyEarned: roundOnix(totals.weeklyEarned),
+        pendingWithdrawOnix: roundOnix(totals.pendingWithdrawOnix),
+        createdOnix: roundOnix(totals.createdOnix),
+        spentOnix: roundOnix(totals.spentOnix),
+        totalBalanceEur: roundOnix(totals.totalBalance * rate),
+        pendingWithdrawEur: roundOnix(totals.pendingWithdrawOnix * rate),
+      },
+      transactionTypes: Object.entries(transactionTypes)
+        .map(([type, data]) => ({
+          type,
+          count: data.count,
+          amount: roundOnix(data.amount),
+        }))
+        .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+        .slice(0, 20),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // PUBLIC ECONOMY CONFIG
 router.get('/config', async (req, res) => {
   try {
@@ -2658,7 +2780,7 @@ router.post('/open-chest', async (req, res) => {
     const frozenResponse = ensureUserNotFrozen(user, res);
     if (frozenResponse) return frozenResponse;
 
-    const chestCost = 50000;
+    const chestCost = getEconomyConfig().chestCost;
 
     if (Number(user.balance || 0) < chestCost) {
       return res.status(400).json({
