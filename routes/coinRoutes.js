@@ -288,6 +288,55 @@ const ACHIEVEMENTS = [
     reward: 50000,
     goal: 7,
   },
+  {
+    id: 'taps_50000',
+    title: '50 000 тапов',
+    description: 'Сделайте 50 000 тапов',
+    reward: 150000,
+    goal: 50000,
+  },
+  {
+    id: 'taps_100000',
+    title: '100 000 тапов',
+    description: 'Сделайте 100 000 тапов',
+    reward: 300000,
+    goal: 100000,
+  },
+  {
+    id: 'earned_1m',
+    title: 'Миллионер ONIX',
+    description: 'Заработайте 1 000 000 ONIX всего',
+    reward: 100000,
+    goal: 1000000,
+  },
+  {
+    id: 'friends_10',
+    title: '10 друзей',
+    description: 'Пригласите 10 друзей',
+    reward: 200000,
+    goal: 10,
+  },
+  {
+    id: 'upgrade_master',
+    title: 'Мастер апгрейдов',
+    description: 'Купите 25 улучшений',
+    reward: 100000,
+    goal: 25,
+  },
+  {
+    id: 'boost_master',
+    title: 'Boost Master',
+    description: 'Используйте 10 бустов',
+    reward: 75000,
+    goal: 10,
+  },
+  {
+    id: 'offline_master',
+    title: 'Оффлайн мастер',
+    description: 'Заберите оффлайн-доход 10 раз',
+    reward: 75000,
+    goal: 10,
+  },
 ];
 
 function getAchievementProgressValue(user, achievementId) {
@@ -295,6 +344,13 @@ function getAchievementProgressValue(user, achievementId) {
   if (achievementId === 'taps_100') return Number(user.totalTaps || 0);
   if (achievementId === 'taps_1000') return Number(user.totalTaps || 0);
   if (achievementId === 'taps_10000') return Number(user.totalTaps || 0);
+  if (achievementId === 'taps_50000') return Number(user.totalTaps || 0);
+  if (achievementId === 'taps_100000') return Number(user.totalTaps || 0);
+  if (achievementId === 'earned_1m') return Number(user.totalEarned || 0);
+  if (achievementId === 'friends_10') return Number(user.referralsCount || 0);
+  if (achievementId === 'upgrade_master') return Number(user.totalUpgradesBought || 0);
+  if (achievementId === 'boost_master') return Number(user.totalBoostsUsed || 0);
+  if (achievementId === 'offline_master') return Number(user.offlineClaimsCount || 0);
   if (achievementId === 'weekly_100k') return Number(user.weeklyEarned || 0);
   if (achievementId === 'all_perks') return Array.isArray(user.ownedPerks) ? user.ownedPerks.length : 0;
   if (achievementId === 'rank_gold') return Number(user.totalEarned || 0);
@@ -1424,6 +1480,7 @@ router.post('/create', async (req, res) => {
         lastReferralBonusDay: null,
         withdrawalRequests: [],
         seasonBadges: [],
+        selectedTitle: 'ONIX Player',
         isSuspicious: false,
         isFrozen: false,
         frozenReason: '',
@@ -1573,6 +1630,7 @@ router.post('/save', async (req, res) => {
         lastReferralBonusDay: null,
         withdrawalRequests: [],
         seasonBadges: [],
+        selectedTitle: 'ONIX Player',
         isSuspicious: false,
         isFrozen: false,
         frozenReason: '',
@@ -1849,6 +1907,56 @@ async function tryPayQualifiedReferralBonus(user) {
     reward: economyConfig.referralReward,
   };
 }
+
+
+// SELECT PROFILE TITLE
+router.post('/select-title', async (req, res) => {
+  try {
+    const { telegramId, title } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const allowedTitles = [
+      'ONIX Player',
+      'Tap Master',
+      'Miner',
+      'Referral Master',
+      'Season Hunter',
+      'Diamond',
+      'Boost Master',
+      'Perk Collector',
+    ];
+
+    if (!allowedTitles.includes(title)) {
+      return res.status(400).json({ message: 'Недоступный титул' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    user.selectedTitle = title;
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 // REQUEST WITHDRAWAL — creates a pending withdrawal request
 router.post('/request-withdrawal', async (req, res) => {

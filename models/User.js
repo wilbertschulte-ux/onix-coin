@@ -243,6 +243,11 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    selectedTitle: {
+      type: String,
+      default: 'ONIX Player',
+    },
+
     isSuspicious: {
       type: Boolean,
       default: false,
