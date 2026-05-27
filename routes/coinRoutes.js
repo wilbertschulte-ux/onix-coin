@@ -91,57 +91,116 @@ const PERKS = {
   offline_pro: {
     id: 'offline_pro',
     title: 'Offline Pro',
-    cost: 100000,
-    maxOfflineSecondsBonus: 60 * 60,
+    baseCost: 100000,
+    maxLevel: 3,
   },
   energy_saver: {
     id: 'energy_saver',
     title: 'Energy Saver',
-    cost: 150000,
-    energyCostMultiplier: 0.9,
+    baseCost: 150000,
+    maxLevel: 3,
   },
   daily_plus: {
     id: 'daily_plus',
     title: 'Daily Plus',
-    cost: 200000,
-    dailyRewardMultiplier: 1.1,
+    baseCost: 200000,
+    maxLevel: 3,
   },
   miner_plus: {
     id: 'miner_plus',
     title: 'Miner Plus',
-    cost: 250000,
-    minerIncomeMultiplier: 1.05,
+    baseCost: 250000,
+    maxLevel: 3,
+  },
+  boost_master: {
+    id: 'boost_master',
+    title: 'Boost Master',
+    baseCost: 180000,
+    maxLevel: 3,
+  },
+  streak_shield: {
+    id: 'streak_shield',
+    title: 'Streak Shield',
+    baseCost: 220000,
+    maxLevel: 1,
+  },
+  lucky_miner: {
+    id: 'lucky_miner',
+    title: 'Lucky Miner',
+    baseCost: 300000,
+    maxLevel: 3,
+  },
+  referral_pro: {
+    id: 'referral_pro',
+    title: 'Referral Pro',
+    baseCost: 300000,
+    maxLevel: 3,
+  },
+  energy_max_pro: {
+    id: 'energy_max_pro',
+    title: 'Energy Max Pro',
+    baseCost: 175000,
+    maxLevel: 3,
+  },
+  engineer: {
+    id: 'engineer',
+    title: 'Engineer',
+    baseCost: 250000,
+    maxLevel: 3,
   },
 };
 
-function getMaxOfflineSeconds(user) {
-  const ownedPerks = Array.isArray(user.ownedPerks) ? user.ownedPerks : [];
+function getPerkLevel(user, perkId) {
+  if (!user.perkLevels) return 0;
 
-  return ownedPerks.includes('offline_pro')
-    ? MAX_OFFLINE_SECONDS + PERKS.offline_pro.maxOfflineSecondsBonus
-    : MAX_OFFLINE_SECONDS;
+  const rawLevel =
+    typeof user.perkLevels.get === 'function'
+      ? user.perkLevels.get(perkId)
+      : user.perkLevels[perkId];
+
+  return Number(rawLevel || 0);
+}
+
+function setPerkLevel(user, perkId, level) {
+  if (!user.perkLevels) user.perkLevels = new Map();
+
+  if (typeof user.perkLevels.set === 'function') {
+    user.perkLevels.set(perkId, level);
+  } else {
+    user.perkLevels[perkId] = level;
+  }
+}
+
+function getPerkCost(perkId, nextLevel) {
+  const perk = PERKS[perkId];
+
+  if (!perk) return 0;
+
+  return Math.round(perk.baseCost * Math.pow(1.85, Number(nextLevel || 1) - 1));
+}
+
+function getMaxOfflineSeconds(user) {
+  const level = getPerkLevel(user, 'offline_pro');
+
+  return MAX_OFFLINE_SECONDS + level * 60 * 60;
 }
 
 function hasPerk(user, perkId) {
-  const ownedPerks = Array.isArray(user.ownedPerks) ? user.ownedPerks : [];
-
-  return ownedPerks.includes(perkId);
+  return getPerkLevel(user, perkId) > 0;
 }
 
 function getEnergyCost(user) {
+  const level = getPerkLevel(user, 'energy_saver');
   const baseCost = Number(user.tapPower || DEFAULT_TAP_POWER);
-  const multiplier = hasPerk(user, 'energy_saver')
-    ? PERKS.energy_saver.energyCostMultiplier
-    : 1;
+  const multiplier = Math.max(0.7, 1 - 0.1 * level);
 
   return Math.max(1, roundOnix(baseCost * multiplier));
 }
 
 function getDailyRewardForUser(user) {
+  const level = getPerkLevel(user, 'daily_plus');
   const baseReward = getDailyReward(user.level);
-  const multiplier = hasPerk(user, 'daily_plus')
-    ? PERKS.daily_plus.dailyRewardMultiplier
-    : 1;
+  const multiplier = 1 + 0.1 * level;
 
   return Math.round(baseReward * multiplier);
 }
@@ -153,12 +212,37 @@ function getDailyRewardWithStreakForUser(user, streakDay) {
 }
 
 function getMinerIncome(user) {
+  const minerLevel = getPerkLevel(user, 'miner_plus');
+  const luckyLevel = getPerkLevel(user, 'lucky_miner');
   const baseIncome = Number(user.autoclickers || DEFAULT_MINER_INCOME);
-  const multiplier = hasPerk(user, 'miner_plus')
-    ? PERKS.miner_plus.minerIncomeMultiplier
-    : 1;
+  const multiplier = 1 + 0.05 * minerLevel + 0.03 * luckyLevel;
 
   return roundOnix(baseIncome * multiplier);
+}
+
+function getReferralRewardForUser(user) {
+  const level = getPerkLevel(user, 'referral_pro');
+  const economyConfig = getEconomyConfig();
+
+  return Math.round(economyConfig.referralReward * (1 + 0.05 * level));
+}
+
+function getUpgradeDiscountMultiplier(user) {
+  const level = getPerkLevel(user, 'engineer');
+
+  return Math.max(0.85, 1 - 0.05 * level);
+}
+
+function getBoostDurationMultiplier(user) {
+  const level = getPerkLevel(user, 'boost_master');
+
+  return 1 + 0.2 * level;
+}
+
+function getMaxEnergyWithPerks(user) {
+  const level = getPerkLevel(user, 'energy_max_pro');
+
+  return Number(user.maxEnergy || DEFAULT_MAX_ENERGY) + level * 500;
 }
 function getNumberEnv(name, fallback) {
   const value = Number(process.env[name]);
@@ -1548,6 +1632,11 @@ router.post('/create', async (req, res) => {
         completedTasks: [],
         completedAchievements: [],
         ownedPerks: [],
+        perkLevels: {},
+        chestStats: {
+          opened: 0,
+          lastReward: '',
+        },
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -1701,6 +1790,11 @@ router.post('/save', async (req, res) => {
         completedTasks: [],
         completedAchievements: [],
         ownedPerks: [],
+        perkLevels: {},
+        chestStats: {
+          opened: 0,
+          lastReward: '',
+        },
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -1832,6 +1926,8 @@ router.post('/buy-upgrade', async (req, res) => {
     if (type === 'energy') cost = getEnergyUpgradeCost(user.energyLevel);
     if (type === 'recharge') cost = getRechargeUpgradeCost(user.rechargeLevel);
     if (type === 'miner') cost = getMinerUpgradeCost(user.minerLevel);
+
+    cost = Math.round(cost * getUpgradeDiscountMultiplier(user));
 
     if (Number(user.balance || 0) < cost) {
       return res.status(400).json({
@@ -1981,16 +2077,18 @@ async function tryPayQualifiedReferralBonus(user) {
 
   refUser.dailyReferralBonusCount = Number(refUser.dailyReferralBonusCount || 0) + 1;
   refUser.hourlyReferralBonusCount = Number(refUser.hourlyReferralBonusCount || 0) + 1;
+  const referralReward = getReferralRewardForUser(refUser);
+
   refUser.balance = roundOnix(
-    Number(refUser.balance || 0) + economyConfig.referralReward
+    Number(refUser.balance || 0) + referralReward
   );
-  addEarnings(refUser, economyConfig.referralReward);
+  addEarnings(refUser, referralReward);
   refUser.lastReferralUsername = user.username || 'новый пользователь';
 
   addTransaction(
     refUser,
     'income_referral',
-    economyConfig.referralReward,
+    referralReward,
     `Реферальный бонус за активного друга: ${user.username || 'новый пользователь'}`
   );
 
@@ -2007,7 +2105,7 @@ async function tryPayQualifiedReferralBonus(user) {
   return {
     referrerTelegramId: refUser.telegramId,
     referrerUsername: refUser.username || 'Пользователь',
-    reward: economyConfig.referralReward,
+    reward: referralReward,
   };
 }
 
@@ -2257,28 +2355,43 @@ router.post('/buy-perk', async (req, res) => {
     const frozenResponse = ensureUserNotFrozen(user, res);
     if (frozenResponse) return frozenResponse;
 
-    if (user.ownedPerks.includes(perk.id)) {
+    const currentLevel = getPerkLevel(user, perk.id);
+    const nextLevel = currentLevel + 1;
+
+    if (currentLevel >= perk.maxLevel) {
       return res.status(400).json({
-        message: 'Перк уже куплен',
+        message: 'Перк уже максимального уровня',
       });
     }
 
-    if (Number(user.balance || 0) < perk.cost) {
+    const cost = getPerkCost(perk.id, nextLevel);
+
+    if (Number(user.balance || 0) < cost) {
       return res.status(400).json({
         message: 'Недостаточно ONIX',
       });
     }
 
-    user.balance = roundOnix(Number(user.balance || 0) - perk.cost);
-    user.ownedPerks.push(perk.id);
+    user.balance = roundOnix(Number(user.balance || 0) - cost);
+    setPerkLevel(user, perk.id, nextLevel);
+
+    if (!user.ownedPerks.includes(perk.id)) {
+      user.ownedPerks.push(perk.id);
+    }
+
+    if (perk.id === 'energy_max_pro') {
+      user.maxEnergy = getMaxEnergyWithPerks(user);
+      user.energy = Math.min(Number(user.energy || 0), Number(user.maxEnergy || DEFAULT_MAX_ENERGY));
+    }
 
     addTransaction(
       user,
       'expense_perk',
-      -perk.cost,
-      `Перк: ${perk.title}`
+      -cost,
+      `Перк: ${perk.title} ур. ${nextLevel}`
     );
 
+    const achievementBonuses = applyAchievements(user);
     user.updatedAt = new Date();
     user.lastSeenAt = Date.now();
 
@@ -2293,9 +2406,102 @@ router.post('/buy-perk', async (req, res) => {
       perk: {
         id: perk.id,
         title: perk.title,
-        cost: perk.cost,
+        cost,
+        level: nextLevel,
+        maxLevel: perk.maxLevel,
       },
-      referralBonusPaid: typeof referralBonus !== 'undefined' ? referralBonus : null,
+      achievementBonuses,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
+// OPEN CHEST — RANDOM SHOP REWARD
+router.post('/open-chest', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({
+        message: 'Telegram ID is required',
+      });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
+    const chestCost = 50000;
+
+    if (Number(user.balance || 0) < chestCost) {
+      return res.status(400).json({
+        message: 'Недостаточно ONIX',
+      });
+    }
+
+    const roll = Math.random();
+    let rewardAmount = 0;
+    let rewardTitle = '';
+
+    if (roll < 0.45) {
+      rewardAmount = 25000;
+      rewardTitle = 'Сундук: малый бонус';
+    } else if (roll < 0.75) {
+      rewardAmount = 60000;
+      rewardTitle = 'Сундук: хороший бонус';
+    } else if (roll < 0.93) {
+      rewardAmount = 125000;
+      rewardTitle = 'Сундук: редкий бонус';
+    } else {
+      rewardAmount = 300000;
+      rewardTitle = 'Сундук: джекпот';
+    }
+
+    user.balance = roundOnix(Number(user.balance || 0) - chestCost);
+    addTransaction(user, 'expense_chest', -chestCost, 'Открытие сундука');
+
+    user.balance = roundOnix(Number(user.balance || 0) + rewardAmount);
+    addEarnings(user, rewardAmount);
+    addTransaction(user, 'income_chest', rewardAmount, rewardTitle);
+
+    user.chestStats = {
+      opened: Number(user.chestStats?.opened || 0) + 1,
+      lastReward: `${rewardTitle}: +${rewardAmount} ONIX`,
+    };
+
+    const achievementBonuses = applyAchievements(user);
+    const rankBonuses = applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+    user.updatedAt = new Date();
+    user.lastSeenAt = Date.now();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+      },
+      chest: {
+        cost: chestCost,
+        rewardAmount,
+        rewardTitle,
+      },
+      achievementBonuses,
+      rankBonuses,
     });
   } catch (error) {
     return res.status(500).json({
@@ -2356,6 +2562,8 @@ router.post('/claim-task', async (req, res) => {
 
       if (previousClaimDay === yesterdayKey) {
         nextStreak = Number(user.dailyStreak || 0) + 1;
+      } else if (getPerkLevel(user, 'streak_shield') > 0 && Number(user.dailyStreak || 0) > 1) {
+        nextStreak = Number(user.dailyStreak || 0);
       }
 
       if (nextStreak > 7) {
@@ -2722,7 +2930,7 @@ router.post('/activate-boost', async (req, res) => {
       type === 'tap' ? 'Буст тапа ×2' : 'Буст майнинга ×2'
     );
     user.activeBoost = type;
-    user.boostEndTime = now + durationConfig[type];
+    user.boostEndTime = now + Math.round(durationConfig[type] * getBoostDurationMultiplier(user));
     user.totalBoostsUsed = Number(user.totalBoostsUsed || 0) + 1;
     const achievementBonuses = applyAchievements(user);
     const rankBonuses = applyRankBonuses(user);

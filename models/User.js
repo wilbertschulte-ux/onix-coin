@@ -149,6 +149,23 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    perkLevels: {
+      type: Map,
+      of: Number,
+      default: {},
+    },
+
+    chestStats: {
+      opened: {
+        type: Number,
+        default: 0,
+      },
+      lastReward: {
+        type: String,
+        default: '',
+      },
+    },
+
     totalTaps: {
       type: Number,
       default: 0,
