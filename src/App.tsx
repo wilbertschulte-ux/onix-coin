@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coins, Zap, Trophy, Home, Star, Wallet, UserCircle } from 'lucide-react';
+import { Coins, Zap, Trophy, Home, Star, Wallet, UserCircle, Rocket } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
 
@@ -10,7 +10,7 @@ if (tg) {
   tg.expand();
 }
 
-type Tab = 'home' | 'boosts' | 'tasks' | 'friends' | 'wallet';
+type Tab = 'home' | 'boosts' | 'tasks' | 'friends' | 'wallet' | 'launch';
 
 type BoostSubTab = 'upgrades' | 'perks' | 'boosts';
 
@@ -3080,6 +3080,7 @@ function App() {
           { id: 'tasks', label: 'Задания', icon: Trophy },
           { id: 'friends', label: 'Профиль', icon: UserCircle },
           { id: 'wallet', label: 'Кошелёк', icon: Wallet },
+          { id: 'launch', label: 'Запуск', icon: Rocket },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -3120,8 +3121,191 @@ function App() {
           <p className="mt-8 text-xl text-gray-400">
             {energy > 0 ? 'ТАПАЙ МОНЕТУ!' : 'Энергия восстанавливается...'}
           </p>
+
+          <div className="mt-8 w-full px-5">
+            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
+                  🚀
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-white">ONIX COIN launch</h2>
+                  <p className="text-sm text-gray-400">
+                    Tap-to-earn, команды, сезоны и выводы
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setActiveTab('launch')}
+                  className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-yellow-400 active:scale-95"
+                >
+                  FAQ / Roadmap
+                </button>
+
+                <button
+                  onClick={shareReferralLink}
+                  className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-sky-400 active:scale-95"
+                >
+                  Поделиться
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
+
+      {activeTab === 'launch' && (
+        <div className="px-5 mt-8 space-y-5">
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 text-left shadow-xl">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-400 text-3xl">
+                🚀
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-black text-white">ONIX COIN</h2>
+                <p className="text-sm text-gray-400">
+                  Tap. Mine. Invite. Compete.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm leading-6 text-gray-300">
+              ONIX COIN — это Telegram Mini App, где игроки зарабатывают ONIX за
+              тапы, майнинг, задания, команды, сезоны и приглашения друзей.
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Игроков</p>
+                <p className="mt-1 font-bold text-yellow-400">
+                  {backendHealth?.users ?? '—'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Версия</p>
+                <p className="mt-1 font-bold text-yellow-400">
+                  v{appVersionInfo?.version || '1.0.0'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={shareReferralLink}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+            >
+              📣 Пригласить в ONIX COIN
+            </button>
+          </div>
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-white">❓ FAQ</h3>
+
+            <div className="space-y-3">
+              {[
+                {
+                  q: 'Как заработать ONIX?',
+                  a: 'Тапайте монету, забирайте оффлайн-майнинг, выполняйте задания, приглашайте друзей и участвуйте в сезонах.',
+                },
+                {
+                  q: 'Как работает энергия?',
+                  a: 'Каждый тап тратит энергию. Энергия восстанавливается со временем и улучшается через апгрейды.',
+                },
+                {
+                  q: 'Как получить реферальный бонус?',
+                  a: 'Новый игрок получает стартовый бонус. Пригласивший получает бонус после активности приглашённого игрока.',
+                },
+                {
+                  q: 'Как работают сезоны?',
+                  a: 'Каждую неделю считается рейтинг по заработанным ONIX. Лучшие игроки и команды получают призы.',
+                },
+                {
+                  q: 'Можно ли вывести ONIX?',
+                  a: 'Заявки на вывод доступны после достижения минимальной суммы. Перед выводом действует антибот-проверка.',
+                },
+              ].map((item) => (
+                <div key={item.q} className="rounded-2xl bg-[#0a0f1c] p-4">
+                  <p className="font-bold text-white">{item.q}</p>
+                  <p className="mt-2 text-sm leading-6 text-gray-400">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-white">🗺 Roadmap</h3>
+
+            <div className="space-y-3">
+              {[
+                ['✅', 'Tap-to-earn core', 'Тапы, энергия, апгрейды и майнинг'],
+                ['✅', 'Seasons & teams', 'Сезонные призы, команды и рейтинги'],
+                ['✅', 'Growth tools', 'Промокоды, welcome bonus и share card'],
+                ['🟡', 'Public beta', 'Тест с реальными игроками и балансировка экономики'],
+                ['🔜', 'Listing preparation', 'Подготовка к будущему листингу и внешним интеграциям'],
+              ].map(([icon, title, text]) => (
+                <div key={title} className="flex gap-3 rounded-2xl bg-[#0a0f1c] p-4">
+                  <div className="text-2xl">{icon}</div>
+                  <div>
+                    <p className="font-bold text-white">{title}</p>
+                    <p className="mt-1 text-sm text-gray-400">{text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-white">📄 Privacy Policy / Terms</h3>
+
+            <div className="space-y-3 text-sm leading-6 text-gray-400">
+              <p>
+                ONIX COIN использует Telegram ID, username и игровые действия
+                только для работы приложения, рейтингов, прогресса, заданий,
+                антиабуза и заявок на вывод.
+              </p>
+
+              <p>
+                Запрещены боты, мультиаккаунты, накрутка рефералов, обход
+                лимитов и любые попытки нарушить экономику игры.
+              </p>
+
+              <p>
+                Администратор может заморозить подозрительный аккаунт, отклонить
+                вывод или скорректировать баланс при нарушениях.
+              </p>
+
+              <p>
+                ONIX внутри приложения является игровой единицей. Условия вывода
+                и будущие интеграции могут изменяться во время публичного теста.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-yellow-400/20 bg-gradient-to-br from-yellow-400/20 to-[#111827] p-6 text-center shadow-xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
+              💎
+            </div>
+
+            <h3 className="text-2xl font-black text-white">Coming soon: listing</h3>
+            <p className="mt-3 text-sm leading-6 text-gray-300">
+              Публичный тест поможет проверить экономику, антиабуз и активность
+              игроков перед следующими этапами развития ONIX COIN.
+            </p>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <p className="text-xs text-gray-400">Статус</p>
+              <p className="mt-1 font-bold text-yellow-400">
+                Public beta preparation
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {activeTab === 'boosts' && (
         <div className="px-5 mt-8 space-y-8">
