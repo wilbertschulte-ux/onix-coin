@@ -3,8 +3,6 @@ import { Coins, Zap, Trophy, Home, Star, Wallet, UserCircle } from 'lucide-react
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
 
-const APP_VERSION = '1.0.0';
-
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -638,9 +636,7 @@ function getRankInfo(totalEarned: number) {
 }
 
 function getTelegramId() {
-  const APP_VERSION = '1.0.0';
-
-const tg = window.Telegram?.WebApp;
+  const tg = window.Telegram?.WebApp;
   if (!tg) return '';
   return tg.initDataUnsafe?.user?.id?.toString() || '';
 }
@@ -729,7 +725,7 @@ class AppErrorBoundary extends React.Component<
           telegramId,
           message: error?.message || 'Unknown frontend error',
           stack: `${error?.stack || ''}\n${info?.componentStack || ''}`,
-          appVersion: APP_VERSION,
+          appVersion: '1.0.0',
         }),
       }).catch(() => {});
     } catch {}
@@ -918,7 +914,7 @@ function App() {
         const response = await axios.get(`${API_URL}/version`);
         setAppVersionInfo(response.data);
       } catch {
-        setAppVersionInfo({ version: APP_VERSION });
+        setAppVersionInfo({ version: '1.0.0' });
       }
     };
 
@@ -5402,7 +5398,7 @@ function App() {
                 <div className="rounded-2xl bg-[#111827] p-3">
                   <p className="text-xs text-gray-400">Frontend</p>
                   <p className="font-bold text-yellow-400">
-                    v{APP_VERSION}
+                    v{'1.0.0'}
                   </p>
                 </div>
 
