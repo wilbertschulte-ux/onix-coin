@@ -103,6 +103,40 @@ type SeasonHistoryItem = {
   }>;
 };
 
+type WithdrawalRequest = {
+  amount: number;
+  eurAmount: number;
+  status: string;
+  adminComment?: string;
+  createdAt: number;
+  reviewedAt?: number | null;
+};
+
+type AdminWithdrawalRequest = {
+  userTelegramId: string;
+  username: string;
+  requestIndex: number;
+  amount: number;
+  eurAmount: number;
+  status: string;
+  adminComment: string;
+  createdAt: number;
+  reviewedAt: number | null;
+  userStats: {
+    balance: number;
+    totalEarned: number;
+    weeklyEarned: number;
+    referralsCount: number;
+    totalTaps: number;
+    totalBoostsUsed: number;
+    totalUpgradesBought: number;
+    ownedPerksCount: number;
+    achievementsCompleted: number;
+    isSuspicious: boolean;
+    suspiciousReasons: string[];
+  };
+};
+
 const API_URL = 'https://onix-coin.onrender.com/api/coins';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_ONIX_EUR_PER_1000 = 0.68;
@@ -442,6 +476,10 @@ function App() {
   const [toastMessages, setToastMessages] = useState<ToastMessage[]>([]);
   const [seasonHistory, setSeasonHistory] = useState<SeasonHistoryItem[]>([]);
   const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [adminWithdrawals, setAdminWithdrawals] = useState<AdminWithdrawalRequest[]>([]);
+  const [adminWithdrawalsVisible, setAdminWithdrawalsVisible] = useState(false);
+  const [adminWithdrawalComment, setAdminWithdrawalComment] = useState('');
 
   const [totalTaps, setTotalTaps] = useState(0);
   const [totalBoostsUsed, setTotalBoostsUsed] = useState(0);
@@ -1172,6 +1210,7 @@ function App() {
     setTotalBoostsUsed(Number(user.totalBoostsUsed || 0));
     setTotalUpgradesBought(Number(user.totalUpgradesBought || 0));
     setOfflineClaimsCount(Number(user.offlineClaimsCount || 0));
+    setWithdrawalRequests(user.withdrawalRequests || []);
   };
 
   const showToast = (
@@ -1258,6 +1297,59 @@ function App() {
     }
   };
 
+  const loadAdminWithdrawals = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-withdrawals`, {
+        params: {
+          telegramId,
+          status: 'pending',
+        },
+      });
+
+      setAdminWithdrawals(response.data.requests || []);
+      setAdminWithdrawalsVisible(true);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось загрузить заявки', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const reviewWithdrawal = async (
+    request: AdminWithdrawalRequest,
+    action: 'approved' | 'rejected'
+  ) => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      await axios.post(`${API_URL}/admin-review-withdrawal`, {
+        telegramId,
+        userTelegramId: request.userTelegramId,
+        requestIndex: request.requestIndex,
+        action,
+        adminComment: adminWithdrawalComment,
+      });
+
+      showToast(
+        action === 'approved' ? '✅ Вывод одобрен' : '↩️ Вывод отклонён',
+        'success'
+      );
+
+      setAdminWithdrawalComment('');
+      await loadAdminWithdrawals();
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось обработать заявку', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
   const requestWithdrawal = async () => {
     const telegramId = getTelegramId();
 
@@ -1281,6 +1373,7 @@ function App() {
 
       setBalance(user.balance || 0);
       setTransactions(user.transactions || []);
+      setWithdrawalRequests(user.withdrawalRequests || []);
       showToast('✅ Заявка на вывод создана', 'success');
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось создать заявку', 'error');
@@ -2487,6 +2580,16 @@ function App() {
               </button>
             )}
 
+            {isAdmin() && (
+              <button
+                onClick={loadAdminWithdrawals}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-emerald-400 active:scale-95 disabled:opacity-50"
+              >
+                💸 Админ: заявки на вывод
+              </button>
+            )}
+
           </div>
 
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
@@ -2691,7 +2794,55 @@ function App() {
 
 
             <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
-              <div className="mb-3 flex items-center justify-between">
+    
+          {withdrawalRequests.length > 0 && (
+            <div className="mt-6 rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+              <h3 className="text-xl font-bold text-white">💸 Заявки на вывод</h3>
+
+              <div className="mt-4 space-y-3">
+                {withdrawalRequests.slice(0, 5).map((request, index) => (
+                  <div
+                    key={`${request.createdAt}-${index}`}
+                    className="rounded-2xl bg-[#0a0f1c] p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-white">
+                          {formatOnix(request.amount)} ONIX
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          ≈ {formatOnix(request.eurAmount)} €
+                        </p>
+                        {request.adminComment && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            {request.adminComment}
+                          </p>
+                        )}
+                      </div>
+
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          request.status === 'approved'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : request.status === 'rejected'
+                            ? 'bg-red-500/10 text-red-400'
+                            : 'bg-yellow-400/10 text-yellow-400'
+                        }`}
+                      >
+                        {request.status === 'approved'
+                          ? 'Одобрено'
+                          : request.status === 'rejected'
+                          ? 'Отклонено'
+                          : 'В обработке'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-white">История операций</h3>
                 <span className="text-xs text-gray-500">последние 20</span>
               </div>
@@ -2765,6 +2916,118 @@ function App() {
 
 
 
+
+
+      {adminWithdrawalsVisible && (
+        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">💸 Админ: выводы</h2>
+                <p className="mt-1 text-sm text-gray-400">Pending-заявки игроков</p>
+              </div>
+
+              <button
+                onClick={() => setAdminWithdrawalsVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <textarea
+              value={adminWithdrawalComment}
+              onChange={(event) => setAdminWithdrawalComment(event.target.value)}
+              placeholder="Комментарий админа"
+              className="mb-4 h-24 w-full rounded-2xl bg-[#0a0f1c] p-4 text-sm text-white outline-none"
+            />
+
+            <div className="space-y-4">
+              {adminWithdrawals.length > 0 ? (
+                adminWithdrawals.map((request) => (
+                  <div
+                    key={`${request.userTelegramId}-${request.requestIndex}`}
+                    className="rounded-2xl bg-[#0a0f1c] p-4"
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-white">{request.username}</p>
+                        <p className="text-xs text-gray-500">ID: {request.userTelegramId}</p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-bold text-yellow-400">
+                          {formatOnix(request.amount)} ONIX
+                        </p>
+                        <p className="text-xs text-emerald-400">
+                          ≈ {formatOnix(request.eurAmount)} €
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Balance: {formatOnix(request.userStats.balance)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Earned: {formatOnix(request.userStats.totalEarned)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Week: {formatOnix(request.userStats.weeklyEarned)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Refs: {request.userStats.referralsCount}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Taps: {formatOnix(request.userStats.totalTaps)}
+                      </p>
+                      <p className="rounded-xl bg-[#111827] p-2">
+                        Ach: {request.userStats.achievementsCompleted}
+                      </p>
+                    </div>
+
+                    {request.userStats.isSuspicious && (
+                      <p className="mt-3 rounded-xl bg-red-500/10 p-2 text-xs text-red-400">
+                        ⚠️ Suspicious: {request.userStats.suspiciousReasons.join(', ')}
+                      </p>
+                    )}
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => reviewWithdrawal(request, 'rejected')}
+                        disabled={isAdminLoading}
+                        className="rounded-2xl bg-red-500/20 py-3 font-bold text-red-400 active:scale-95 disabled:opacity-50"
+                      >
+                        Отклонить
+                      </button>
+
+                      <button
+                        onClick={() => reviewWithdrawal(request, 'approved')}
+                        disabled={isAdminLoading}
+                        className="rounded-2xl bg-emerald-500/20 py-3 font-bold text-emerald-400 active:scale-95 disabled:opacity-50"
+                      >
+                        Одобрить
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-[#0a0f1c] p-4 text-center text-gray-400">
+                  Pending-заявок нет
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={loadAdminWithdrawals}
+              disabled={isAdminLoading}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95 disabled:opacity-50"
+            >
+              Обновить список
+            </button>
+          </div>
+        </div>
+      )}
 
       {adminPanelVisible && adminPrizePreview && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-4">
