@@ -151,22 +151,177 @@ const PERKS = {
 };
 
 
-function getPerkLevelsPayload(user) {
-  const levels = {};
+function getMissionDifficulty(user) {
+  const earned = Number(user.totalEarned || 0);
 
-  if (!user.perkLevels) return levels;
+  if (earned >= 5000000) return 4;
+  if (earned >= 1500000) return 3;
+  if (earned >= 500000) return 2;
 
-  if (typeof user.perkLevels.forEach === 'function') {
-    user.perkLevels.forEach((value, key) => {
-      levels[key] = Number(value || 0);
-    });
-  } else {
-    Object.entries(user.perkLevels || {}).forEach(([key, value]) => {
-      levels[key] = Number(value || 0);
-    });
+  return 1;
+}
+
+function ensureMissionStats(user, now = Date.now()) {
+  const dailyKey = getUtcDayKey(now);
+  const weeklyKey = getWeekKey(now);
+
+  if (!user.missionStats) {
+    user.missionStats = {};
   }
 
-  return levels;
+  if (user.missionStats.dailyKey !== dailyKey) {
+    user.missionStats.dailyKey = dailyKey;
+    user.missionStats.dailyTaps = 0;
+    user.missionStats.dailyUpgrades = 0;
+    user.missionStats.dailyOfflineClaims = 0;
+    user.missionStats.dailyChests = 0;
+    user.claimedDailyMissions = [];
+  }
+
+  if (user.missionStats.weeklyKey !== weeklyKey) {
+    user.missionStats.weeklyKey = weeklyKey;
+    user.missionStats.weeklyTaps = 0;
+    user.missionStats.weeklyUpgrades = 0;
+    user.missionStats.weeklyOfflineClaims = 0;
+    user.missionStats.weeklyChests = 0;
+    user.missionStats.weeklyReferrals = 0;
+    user.claimedWeeklyMissions = [];
+  }
+
+  if (!user.claimedDailyMissions) user.claimedDailyMissions = [];
+  if (!user.claimedWeeklyMissions) user.claimedWeeklyMissions = [];
+
+  return user.missionStats;
+}
+
+function getDailyMissions(user) {
+  const stats = ensureMissionStats(user);
+  const difficulty = getMissionDifficulty(user);
+
+  const missions = [
+    {
+      id: 'daily_taps',
+      title: 'Тапер дня',
+      description: `Сделайте ${100 * difficulty} тапов сегодня`,
+      goal: 100 * difficulty,
+      progress: Number(stats.dailyTaps || 0),
+      reward: 10000 * difficulty,
+      category: 'daily',
+      secret: false,
+    },
+    {
+      id: 'daily_upgrade',
+      title: 'Прокачка дня',
+      description: 'Купите 1 улучшение сегодня',
+      goal: 1,
+      progress: Number(stats.dailyUpgrades || 0),
+      reward: 15000 * difficulty,
+      category: 'daily',
+      secret: false,
+    },
+    {
+      id: 'daily_offline',
+      title: 'Забрать майнер',
+      description: 'Заберите оффлайн-доход сегодня',
+      goal: 1,
+      progress: Number(stats.dailyOfflineClaims || 0),
+      reward: 12000 * difficulty,
+      category: 'daily',
+      secret: false,
+    },
+    {
+      id: 'secret_daily_chest',
+      title: 'Секрет: удача ONIX',
+      description: 'Откройте 1 сундук сегодня',
+      goal: 1,
+      progress: Number(stats.dailyChests || 0),
+      reward: 25000 * difficulty,
+      category: 'secret',
+      secret: true,
+      unlocked: Number(user.totalEarned || 0) >= 100000 || Number(stats.dailyChests || 0) > 0,
+    },
+  ];
+
+  return missions.map((mission) => ({
+    ...mission,
+    progress: Math.min(Number(mission.progress || 0), Number(mission.goal || 1)),
+    isCompleted: Number(mission.progress || 0) >= Number(mission.goal || 1),
+    isClaimed: user.claimedDailyMissions.includes(mission.id),
+  }));
+}
+
+function getWeeklyMissions(user) {
+  const stats = ensureMissionStats(user);
+  const difficulty = getMissionDifficulty(user);
+
+  const missions = [
+    {
+      id: 'weekly_taps',
+      title: 'Тапер недели',
+      description: `Сделайте ${1000 * difficulty} тапов за неделю`,
+      goal: 1000 * difficulty,
+      progress: Number(stats.weeklyTaps || 0),
+      reward: 50000 * difficulty,
+      category: 'weekly',
+      secret: false,
+    },
+    {
+      id: 'weekly_earn',
+      title: 'Заработок недели',
+      description: `Заработайте ${100000 * difficulty} ONIX за неделю`,
+      goal: 100000 * difficulty,
+      progress: Number(user.weeklyEarned || 0),
+      reward: 75000 * difficulty,
+      category: 'weekly',
+      secret: false,
+    },
+    {
+      id: 'weekly_upgrades',
+      title: 'Инженер недели',
+      description: `Купите ${3 * difficulty} улучшений за неделю`,
+      goal: 3 * difficulty,
+      progress: Number(stats.weeklyUpgrades || 0),
+      reward: 60000 * difficulty,
+      category: 'weekly',
+      secret: false,
+    },
+    {
+      id: 'secret_weekly_referral',
+      title: 'Секрет: рекрутер',
+      description: 'Пригласите 1 активного друга за неделю',
+      goal: 1,
+      progress: Number(stats.weeklyReferrals || 0),
+      reward: 100000 * difficulty,
+      category: 'secret',
+      secret: true,
+      unlocked: Number(user.referralsCount || 0) >= 1 || Number(stats.weeklyReferrals || 0) > 0,
+    },
+  ];
+
+  return missions.map((mission) => ({
+    ...mission,
+    progress: Math.min(Number(mission.progress || 0), Number(mission.goal || 1)),
+    isCompleted: Number(mission.progress || 0) >= Number(mission.goal || 1),
+    isClaimed: user.claimedWeeklyMissions.includes(mission.id),
+  }));
+}
+
+function getMissionsPayload(user) {
+  ensureMissionStats(user);
+
+  return {
+    daily: getDailyMissions(user).filter((mission) => !mission.secret || mission.unlocked),
+    weekly: getWeeklyMissions(user).filter((mission) => !mission.secret || mission.unlocked),
+    difficulty: getMissionDifficulty(user),
+    dailyKey: user.missionStats.dailyKey,
+    weeklyKey: user.missionStats.weeklyKey,
+  };
+}
+
+function incrementMissionStat(user, field, amount = 1) {
+  const stats = ensureMissionStats(user);
+
+  stats[field] = Number(stats[field] || 0) + amount;
 }
 
 function getPerkLevel(user, perkId) {
@@ -1619,9 +1774,10 @@ router.get('/:telegramId', async (req, res) => {
     await user.save();
 
     return res.json({
-      ...user.toObject({ flattenMaps: true }),
+      ...user.toObject(),
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
     });
   } catch (error) {
     return res.status(500).json({
@@ -1656,6 +1812,9 @@ router.post('/create', async (req, res) => {
           opened: 0,
           lastReward: '',
         },
+        missionStats: {},
+        claimedDailyMissions: [],
+        claimedWeeklyMissions: [],
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -1721,6 +1880,7 @@ router.post('/create', async (req, res) => {
           const economyConfig = getEconomyConfig();
 
           refUser.referralsCount += 1;
+          incrementMissionStat(refUser, 'weeklyReferrals');
           refUser.lastReferralUsername = username || 'новый пользователь';
           refUser.updatedAt = new Date();
 
@@ -1770,9 +1930,10 @@ router.post('/create', async (req, res) => {
     }
 
     return res.json({
-      ...user.toObject({ flattenMaps: true }),
+      ...user.toObject(),
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
     });
   } catch (error) {
     return res.status(500).json({
@@ -1814,6 +1975,9 @@ router.post('/save', async (req, res) => {
           opened: 0,
           lastReward: '',
         },
+        missionStats: {},
+        claimedDailyMissions: [],
+        claimedWeeklyMissions: [],
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -1992,6 +2156,8 @@ router.post('/buy-upgrade', async (req, res) => {
     }
 
     user.totalUpgradesBought = Number(user.totalUpgradesBought || 0) + 1;
+    incrementMissionStat(user, 'dailyUpgrades');
+    incrementMissionStat(user, 'weeklyUpgrades');
     const achievementBonuses = applyAchievements(user);
     const rankBonuses = applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
@@ -2006,13 +2172,14 @@ router.post('/buy-upgrade', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       achievementBonuses,
       rankBonuses,
       upgrade: {
@@ -2192,10 +2359,10 @@ router.post('/set-team', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
     });
   } catch (error) {
@@ -2242,10 +2409,10 @@ router.post('/select-title', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
     });
   } catch (error) {
@@ -2334,10 +2501,10 @@ router.post('/request-withdrawal', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
       withdrawal: user.withdrawalRequests[0],
     });
@@ -2422,10 +2589,10 @@ router.post('/buy-perk', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
       perk: {
         id: perk.id,
@@ -2504,6 +2671,114 @@ router.post('/open-chest', async (req, res) => {
       opened: Number(user.chestStats?.opened || 0) + 1,
       lastReward: `${rewardTitle}: +${rewardAmount} ONIX`,
     };
+    incrementMissionStat(user, 'dailyChests');
+    incrementMissionStat(user, 'weeklyChests');
+
+    const achievementBonuses = applyAchievements(user);
+    const rankBonuses = applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+    user.updatedAt = new Date();
+    user.lastSeenAt = Date.now();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject(),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
+      },
+      chest: {
+        cost: chestCost,
+        rewardAmount,
+        rewardTitle,
+      },
+      achievementBonuses,
+      rankBonuses,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
+
+// MISSIONS PAYLOAD
+router.get('/missions/:telegramId', async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+    await user.save();
+
+    return res.json(getMissionsPayload(user));
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// CLAIM DAILY / WEEKLY MISSION
+router.post('/claim-mission', async (req, res) => {
+  try {
+    const { telegramId, missionId, missionType } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    if (!missionId || !['daily', 'weekly'].includes(missionType)) {
+      return res.status(400).json({ message: 'Mission data is required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
+    const missions = missionType === 'daily' ? getDailyMissions(user) : getWeeklyMissions(user);
+    const visibleMissions = missions.filter((mission) => !mission.secret || mission.unlocked);
+    const mission = visibleMissions.find((item) => item.id === missionId);
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Миссия не найдена' });
+    }
+
+    if (!mission.isCompleted) {
+      return res.status(400).json({ message: 'Миссия ещё не выполнена' });
+    }
+
+    const claimedList =
+      missionType === 'daily' ? user.claimedDailyMissions : user.claimedWeeklyMissions;
+
+    if (claimedList.includes(mission.id)) {
+      return res.status(400).json({ message: 'Награда уже получена' });
+    }
+
+    claimedList.push(mission.id);
+
+    user.balance = roundOnix(Number(user.balance || 0) + mission.reward);
+    addEarnings(user, mission.reward);
+
+    addTransaction(
+      user,
+      missionType === 'daily' ? 'income_daily_mission' : 'income_weekly_mission',
+      mission.reward,
+      `${missionType === 'daily' ? 'Daily' : 'Weekly'} миссия: ${mission.title}`
+    );
 
     const achievementBonuses = applyAchievements(user);
     const rankBonuses = applyRankBonuses(user);
@@ -2519,19 +2794,19 @@ router.post('/open-chest', async (req, res) => {
         perkLevels: getPerkLevelsPayload(user),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
-      chest: {
-        cost: chestCost,
-        rewardAmount,
-        rewardTitle,
+      missions: getMissionsPayload(user),
+      missionReward: {
+        id: mission.id,
+        title: mission.title,
+        reward: mission.reward,
       },
       achievementBonuses,
       rankBonuses,
     });
   } catch (error) {
-    return res.status(500).json({
-      error: error.message,
-    });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -2613,8 +2888,7 @@ router.post('/claim-task', async (req, res) => {
       await user.save();
 
       return res.json({
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         claimedDailyReward: reward,
         rankBonuses,
@@ -2672,10 +2946,10 @@ router.post('/claim-task', async (req, res) => {
       await user.save();
 
       return res.json({
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
         rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
         achievementBonuses: typeof achievementBonuses !== 'undefined' ? achievementBonuses : [],
       });
@@ -2715,10 +2989,10 @@ router.post('/claim-task', async (req, res) => {
       await user.save();
 
       return res.json({
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
         rankBonuses: typeof rankBonuses !== 'undefined' ? rankBonuses : [],
         achievementBonuses: typeof achievementBonuses !== 'undefined' ? achievementBonuses : [],
       });
@@ -2768,6 +3042,8 @@ router.post('/claim-offline-income', async (req, res) => {
     addEarnings(user, claimedAmount);
     addTransaction(user, 'income_offline', claimedAmount, 'Оффлайн-майнинг');
     user.offlineClaimsCount = Number(user.offlineClaimsCount || 0) + 1;
+    incrementMissionStat(user, 'dailyOfflineClaims');
+    incrementMissionStat(user, 'weeklyOfflineClaims');
     const achievementBonuses = applyAchievements(user);
     const rankBonuses = applyRankBonuses(user);
     user.level = calculateLevel(user.totalEarned);
@@ -2785,13 +3061,14 @@ router.post('/claim-offline-income', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       achievementBonuses,
       rankBonuses,
       claimedAmount,
@@ -2880,10 +3157,10 @@ router.post('/mine-tick', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
       achievements: getAchievementsPayload(user),
       income,
@@ -2972,13 +3249,14 @@ router.post('/activate-boost', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       achievementBonuses,
       rankBonuses,
       boost: {
@@ -3060,6 +3338,8 @@ router.post('/tap', async (req, res) => {
     addEarnings(user, points);
     user.energy = Math.max(0, roundOnix(Number(user.energy || 0) - energyCost));
     user.totalTaps = Number(user.totalTaps || 0) + 1;
+    incrementMissionStat(user, 'dailyTaps');
+    incrementMissionStat(user, 'weeklyTaps');
 
     const achievementBonuses = applyAchievements(user);
     const rankBonuses = applyRankBonuses(user);
@@ -3071,13 +3351,14 @@ router.post('/tap', async (req, res) => {
 
     return res.json({
       user: {
-        ...user.toObject({ flattenMaps: true }),
-        perkLevels: getPerkLevelsPayload(user),
+        ...user.toObject(),
         achievements: getAchievementsPayload(user),
         referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       },
       achievements: getAchievementsPayload(user),
       referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
       achievementBonuses,
       rankBonuses,
       points,

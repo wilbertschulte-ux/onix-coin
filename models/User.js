@@ -166,6 +166,63 @@ const userSchema = new mongoose.Schema(
       },
     },
 
+    missionStats: {
+      dailyKey: {
+        type: String,
+        default: '',
+      },
+      weeklyKey: {
+        type: String,
+        default: '',
+      },
+      dailyTaps: {
+        type: Number,
+        default: 0,
+      },
+      dailyUpgrades: {
+        type: Number,
+        default: 0,
+      },
+      dailyOfflineClaims: {
+        type: Number,
+        default: 0,
+      },
+      dailyChests: {
+        type: Number,
+        default: 0,
+      },
+      weeklyTaps: {
+        type: Number,
+        default: 0,
+      },
+      weeklyUpgrades: {
+        type: Number,
+        default: 0,
+      },
+      weeklyOfflineClaims: {
+        type: Number,
+        default: 0,
+      },
+      weeklyChests: {
+        type: Number,
+        default: 0,
+      },
+      weeklyReferrals: {
+        type: Number,
+        default: 0,
+      },
+    },
+
+    claimedDailyMissions: {
+      type: [String],
+      default: [],
+    },
+
+    claimedWeeklyMissions: {
+      type: [String],
+      default: [],
+    },
+
     totalTaps: {
       type: Number,
       default: 0,
