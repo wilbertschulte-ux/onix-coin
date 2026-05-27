@@ -51,6 +51,17 @@ type AdminUserSearchResult = {
   frozenReason: string;
 };
 
+type AdminOperationsPayload = {
+  withdrawals: Array<AdminWithdrawalRequest & {
+    telegramId: string;
+    username: string;
+  }>;
+  transactions: Array<Transaction & {
+    telegramId: string;
+    username: string;
+  }>;
+};
+
 type AdminUserProfile = AdminUserSearchResult & {
   totalBoostsUsed: number;
   totalUpgradesBought: number;
@@ -65,6 +76,11 @@ type AdminUserProfile = AdminUserSearchResult & {
     type: string;
     title: string;
     details: string;
+    createdAt: number;
+  }>;
+  adminNotes: Array<{
+    text: string;
+    adminTelegramId: string;
     createdAt: number;
   }>;
 };
@@ -741,6 +757,12 @@ function App() {
   const [adminActionReason, setAdminActionReason] = useState('');
   const [adminSecurityLogs, setAdminSecurityLogs] = useState<AdminSecurityLog[]>([]);
   const [adminSecurityLogsVisible, setAdminSecurityLogsVisible] = useState(false);
+  const [admin2Visible, setAdmin2Visible] = useState(false);
+  const [adminEconomyConfigDraft, setAdminEconomyConfigDraft] = useState<Record<string, string>>({});
+  const [adminBroadcastMessage, setAdminBroadcastMessage] = useState('');
+  const [adminBroadcastResult, setAdminBroadcastResult] = useState<any>(null);
+  const [adminOperations, setAdminOperations] = useState<AdminOperationsPayload | null>(null);
+  const [adminNoteText, setAdminNoteText] = useState('');
   const [launchChecklistVisible, setLaunchChecklistVisible] = useState(false);
   const [backendHealth, setBackendHealth] = useState<any>(null);
   const [promoModalVisible, setPromoModalVisible] = useState(false);
@@ -2062,6 +2084,155 @@ function App() {
       setAdminSecurityLogsVisible(true);
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось загрузить логи', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+
+  const openAdmin2Panel = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const [configResponse, operationsResponse] = await Promise.all([
+        axios.get(`${API_URL}/admin-economy-config`, {
+          params: { telegramId },
+        }),
+        axios.get(`${API_URL}/admin-operations`, {
+          params: { telegramId },
+        }),
+      ]);
+
+      const config = configResponse.data.config || {};
+
+      setAdminEconomyConfigDraft({
+        ONIX_EUR_PER_1000: String(config.onixEurPer1000 || ''),
+        MIN_WITHDRAW_ONIX: String(config.minWithdrawOnix || ''),
+        REFERRAL_REWARD: String(config.referralReward || ''),
+        REFERRED_USER_REWARD: String(config.referredUserReward || ''),
+        WELCOME_BONUS: String(config.welcomeBonus || ''),
+        CHEST_COST: String(config.chestCost || ''),
+        MAX_PAID_REFERRALS_PER_DAY: String(config.maxPaidReferralsPerDay || ''),
+        MAX_PAID_REFERRALS_PER_HOUR: String(config.maxPaidReferralsPerHour || ''),
+      });
+
+      setAdminOperations(operationsResponse.data);
+      setAdmin2Visible(true);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось открыть админку 2.0', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const saveAdminEconomyConfig = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.post(`${API_URL}/admin-economy-config`, {
+        telegramId,
+        updates: adminEconomyConfigDraft,
+      });
+
+      showToast('✅ Economy config обновлён', 'success');
+      setAdminEconomyConfigDraft((current) => ({
+        ...current,
+        ONIX_EUR_PER_1000: String(response.data.config.onixEurPer1000 || current.ONIX_EUR_PER_1000),
+        MIN_WITHDRAW_ONIX: String(response.data.config.minWithdrawOnix || current.MIN_WITHDRAW_ONIX),
+        REFERRAL_REWARD: String(response.data.config.referralReward || current.REFERRAL_REWARD),
+        REFERRED_USER_REWARD: String(response.data.config.referredUserReward || current.REFERRED_USER_REWARD),
+        WELCOME_BONUS: String(response.data.config.welcomeBonus || current.WELCOME_BONUS),
+        CHEST_COST: String(response.data.config.chestCost || current.CHEST_COST),
+      }));
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось сохранить config', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const sendAdminBroadcast = async (dryRun = false) => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.post(`${API_URL}/admin-broadcast`, {
+        telegramId,
+        message: adminBroadcastMessage,
+        dryRun,
+      });
+
+      setAdminBroadcastResult(response.data);
+      showToast(
+        dryRun
+          ? `👀 Получателей: ${response.data.recipients}`
+          : `✅ Отправлено: ${response.data.sent}, ошибок: ${response.data.failed}`,
+        'success'
+      );
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось выполнить рассылку', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const downloadUsersCsv = () => {
+    const telegramId = getTelegramId();
+    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}`;
+
+    window.open(url, '_blank');
+  };
+
+  const loadAdminOperations = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-operations`, {
+        params: { telegramId },
+      });
+
+      setAdminOperations(response.data);
+      showToast('✅ Операции обновлены', 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось загрузить операции', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const addAdminNote = async () => {
+    const telegramId = getTelegramId();
+
+    if (!adminSelectedUser) {
+      showToast('Сначала выберите игрока в поиске', 'error');
+      return;
+    }
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.post(`${API_URL}/admin-user-note`, {
+        telegramId,
+        targetTelegramId: adminSelectedUser.telegramId,
+        text: adminNoteText,
+      });
+
+      setAdminSelectedUser({
+        ...adminSelectedUser,
+        adminNotes: response.data.notes || [],
+        securityLogs: response.data.securityLogs || adminSelectedUser.securityLogs,
+      });
+      setAdminNoteText('');
+      showToast('✅ Заметка добавлена', 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось добавить заметку', 'error');
     } finally {
       setIsAdminLoading(false);
     }
@@ -4354,6 +4525,16 @@ function App() {
               </button>
             )}
 
+            {isAdmin() && (
+              <button
+                onClick={openAdmin2Panel}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-fuchsia-400 active:scale-95 disabled:opacity-50"
+              >
+                🧰 Админ: 2.0
+              </button>
+            )}
+
 
 
           </div>
@@ -5063,6 +5244,183 @@ function App() {
         </div>
       )}
 
+
+      {admin2Visible && (
+        <div className="fixed inset-0 z-[88] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-fuchsia-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">🧰 Админка 2.0</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Economy config, рассылки, CSV и операции
+                </p>
+              </div>
+
+              <button
+                onClick={() => setAdmin2Visible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="rounded-2xl bg-[#0a0f1c] p-4">
+              <h3 className="mb-3 font-bold text-white">⚙️ Economy config</h3>
+
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  ['ONIX_EUR_PER_1000', 'Курс /1000'],
+                  ['MIN_WITHDRAW_ONIX', 'Мин. вывод'],
+                  ['REFERRAL_REWARD', 'Реферал'],
+                  ['REFERRED_USER_REWARD', 'Новый игрок'],
+                  ['WELCOME_BONUS', 'Welcome'],
+                  ['CHEST_COST', 'Сундук'],
+                  ['MAX_PAID_REFERRALS_PER_DAY', 'Реф/день'],
+                  ['MAX_PAID_REFERRALS_PER_HOUR', 'Реф/час'],
+                ].map(([key, label]) => (
+                  <label key={key} className="text-xs text-gray-400">
+                    {label}
+                    <input
+                      value={adminEconomyConfigDraft[key] || ''}
+                      onChange={(event) =>
+                        setAdminEconomyConfigDraft((current) => ({
+                          ...current,
+                          [key]: event.target.value,
+                        }))
+                      }
+                      className="mt-1 w-full rounded-xl bg-[#111827] px-3 py-2 text-sm font-bold text-white outline-none"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <button
+                onClick={saveAdminEconomyConfig}
+                disabled={isAdminLoading}
+                className="mt-4 w-full rounded-2xl bg-yellow-400 py-3 font-bold text-black active:scale-95 disabled:opacity-50"
+              >
+                Сохранить runtime config
+              </button>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Runtime config работает до перезапуска backend. Для постоянных значений используй Render Environment.
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <h3 className="mb-3 font-bold text-white">📣 Массовая рассылка</h3>
+
+              <textarea
+                value={adminBroadcastMessage}
+                onChange={(event) => setAdminBroadcastMessage(event.target.value)}
+                placeholder="Текст сообщения игрокам"
+                className="h-28 w-full resize-none rounded-2xl bg-[#111827] px-4 py-3 text-sm text-white outline-none"
+              />
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => sendAdminBroadcast(true)}
+                  disabled={isAdminLoading}
+                  className="rounded-2xl bg-[#111827] py-3 font-bold text-sky-400 active:scale-95 disabled:opacity-50"
+                >
+                  Dry run
+                </button>
+
+                <button
+                  onClick={() => sendAdminBroadcast(false)}
+                  disabled={isAdminLoading}
+                  className="rounded-2xl bg-yellow-400 py-3 font-bold text-black active:scale-95 disabled:opacity-50"
+                >
+                  Отправить
+                </button>
+              </div>
+
+              {adminBroadcastResult && (
+                <p className="mt-3 rounded-xl bg-[#111827] p-3 text-xs text-gray-300">
+                  Получателей: {adminBroadcastResult.recipients || 0} ·
+                  отправлено: {adminBroadcastResult.sent || 0} ·
+                  ошибок: {adminBroadcastResult.failed || 0}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <h3 className="mb-3 font-bold text-white">📦 Экспорт и операции</h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={downloadUsersCsv}
+                  className="rounded-2xl bg-[#111827] py-3 font-bold text-emerald-400 active:scale-95"
+                >
+                  CSV users
+                </button>
+
+                <button
+                  onClick={loadAdminOperations}
+                  disabled={isAdminLoading}
+                  className="rounded-2xl bg-[#111827] py-3 font-bold text-yellow-400 active:scale-95 disabled:opacity-50"
+                >
+                  Обновить
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Выводы</p>
+                  <p className="font-bold text-yellow-400">
+                    {adminOperations?.withdrawals?.length || 0}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Транзакции</p>
+                  <p className="font-bold text-yellow-400">
+                    {adminOperations?.transactions?.length || 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
+                {(adminOperations?.withdrawals || []).slice(0, 8).map((item, index) => (
+                  <div
+                    key={`${item.telegramId}-${item.createdAt}-${index}`}
+                    className="rounded-xl bg-[#111827] p-3 text-xs"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-bold text-white">{item.username}</p>
+                      <p className="font-bold text-yellow-400">
+                        {formatOnix(item.amount)} ONIX
+                      </p>
+                    </div>
+                    <p className="mt-1 text-gray-500">
+                      {item.status} · {formatTransactionTime(item.createdAt)}
+                    </p>
+                  </div>
+                ))}
+
+                {(adminOperations?.transactions || []).slice(0, 8).map((item, index) => (
+                  <div
+                    key={`${item.telegramId}-${item.createdAt}-${index}`}
+                    className="rounded-xl bg-[#111827] p-3 text-xs"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-bold text-white">{item.username}</p>
+                      <p className={Number(item.amount || 0) >= 0 ? 'font-bold text-emerald-400' : 'font-bold text-red-400'}>
+                        {Number(item.amount || 0) >= 0 ? '+' : ''}
+                        {formatOnix(item.amount)}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-gray-500">
+                      {item.title || item.type} · {formatTransactionTime(item.createdAt)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {adminSearchVisible && (
         <div className="fixed inset-0 z-[88] flex items-center justify-center bg-black/70 px-4">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-purple-400/30 bg-[#111827] p-6 shadow-2xl">
@@ -5229,6 +5587,47 @@ function App() {
                   >
                     {adminSelectedUser.isFrozen ? 'Разбан' : 'Бан'}
                   </button>
+                </div>
+
+                <div className="mt-5">
+                  <h4 className="mb-3 font-bold text-white">📝 Админские заметки</h4>
+
+                  <div className="flex gap-2">
+                    <input
+                      value={adminNoteText}
+                      onChange={(event) => setAdminNoteText(event.target.value)}
+                      placeholder="Заметка по игроку"
+                      className="min-w-0 flex-1 rounded-2xl bg-[#111827] px-4 py-3 text-sm text-white outline-none"
+                    />
+
+                    <button
+                      onClick={addAdminNote}
+                      disabled={isAdminLoading}
+                      className="rounded-2xl bg-yellow-400 px-4 py-3 text-sm font-bold text-black active:scale-95 disabled:opacity-50"
+                    >
+                      OK
+                    </button>
+                  </div>
+
+                  <div className="mt-3 max-h-40 space-y-2 overflow-y-auto">
+                    {adminSelectedUser.adminNotes?.length > 0 ? (
+                      adminSelectedUser.adminNotes.slice(0, 5).map((note, index) => (
+                        <div
+                          key={`${note.createdAt}-${index}`}
+                          className="rounded-xl bg-[#111827] p-3 text-xs"
+                        >
+                          <p className="text-gray-300">{note.text}</p>
+                          <p className="mt-1 text-gray-600">
+                            {formatTransactionTime(note.createdAt)}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-xl bg-[#111827] p-3 text-center text-xs text-gray-500">
+                        Заметок пока нет
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-5">
