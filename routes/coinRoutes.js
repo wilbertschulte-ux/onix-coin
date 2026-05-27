@@ -542,6 +542,10 @@ function getWeekEndTimestamp(timestamp = Date.now()) {
   );
 }
 
+function getPreviousWeekKey(timestamp = Date.now()) {
+  return getWeekKey(Number(timestamp) - 7 * 24 * 60 * 60 * 1000);
+}
+
 function addEarnings(user, amount) {
   const value = roundOnix(amount);
   const currentWeek = getWeekKey();
@@ -681,6 +685,8 @@ function isAdminRequest(secret, telegramId) {
 
 
 // CRON: AUTO AWARD WEEKLY PRIZES
+// By default awards the previous completed UTC week.
+
 router.get('/cron-award-weekly-prizes', async (req, res) => {
   try {
     const secret = req.query.secret ? String(req.query.secret) : '';
@@ -689,7 +695,7 @@ router.get('/cron-award-weekly-prizes', async (req, res) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
-    const targetWeek = req.query.week ? String(req.query.week) : getWeekKey();
+    const targetWeek = req.query.week ? String(req.query.week) : getPreviousWeekKey();
     const alreadyAwarded = await WeeklyPrize.findOne({ week: targetWeek });
 
     if (alreadyAwarded) {
@@ -926,6 +932,146 @@ router.get('/season-history', async (req, res) => {
         awardedAt: season.awardedAt,
         winners: season.winners || [],
       })),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
+// ADMIN: LIST WITHDRAWAL REQUESTS
+router.get('/admin-withdrawals', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+    const status = req.query.status ? String(req.query.status) : 'pending';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const users = await User.find({
+      'withdrawalRequests.0': { $exists: true },
+    }).select(
+      'telegramId username balance totalEarned weeklyEarned referralsCount totalTaps totalBoostsUsed totalUpgradesBought ownedPerks completedAchievements withdrawalRequests isSuspicious suspiciousReasons'
+    );
+
+    const requests = [];
+
+    users.forEach((user) => {
+      user.withdrawalRequests.forEach((request, index) => {
+        if (status !== 'all' && request.status !== status) return;
+
+        requests.push({
+          userTelegramId: user.telegramId,
+          username: user.username || 'Пользователь',
+          requestIndex: index,
+          amount: roundOnix(request.amount || 0),
+          eurAmount: roundOnix(request.eurAmount || 0),
+          status: request.status || 'pending',
+          adminComment: request.adminComment || '',
+          createdAt: request.createdAt || 0,
+          reviewedAt: request.reviewedAt || null,
+          reviewedBy: request.reviewedBy || '',
+          userStats: {
+            balance: roundOnix(user.balance || 0),
+            totalEarned: roundOnix(user.totalEarned || 0),
+            weeklyEarned: roundOnix(user.weeklyEarned || 0),
+            referralsCount: Number(user.referralsCount || 0),
+            totalTaps: Number(user.totalTaps || 0),
+            totalBoostsUsed: Number(user.totalBoostsUsed || 0),
+            totalUpgradesBought: Number(user.totalUpgradesBought || 0),
+            ownedPerksCount: Array.isArray(user.ownedPerks) ? user.ownedPerks.length : 0,
+            achievementsCompleted: Array.isArray(user.completedAchievements) ? user.completedAchievements.length : 0,
+            isSuspicious: Boolean(user.isSuspicious),
+            suspiciousReasons: user.suspiciousReasons || [],
+          },
+        });
+      });
+    });
+
+    requests.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+    return res.json({ status, requests });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN: REVIEW WITHDRAWAL REQUEST
+router.post('/admin-review-withdrawal', async (req, res) => {
+  try {
+    const { secret, telegramId, userTelegramId, requestIndex, action, adminComment } = req.body;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (!['approved', 'rejected'].includes(action)) {
+      return res.status(400).json({ message: 'Action must be approved or rejected' });
+    }
+
+    const user = await User.findOne({ telegramId: userTelegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const index = Number(requestIndex);
+    const request = user.withdrawalRequests[index];
+
+    if (!request) {
+      return res.status(404).json({ message: 'Withdrawal request not found' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ message: 'Withdrawal request already reviewed' });
+    }
+
+    request.status = action;
+    request.adminComment = String(adminComment || '');
+    request.reviewedAt = Date.now();
+    request.reviewedBy = String(telegramId || 'admin');
+
+    if (action === 'rejected') {
+      user.balance = roundOnix(Number(user.balance || 0) + Number(request.amount || 0));
+
+      addTransaction(
+        user,
+        'withdrawal_rejected',
+        Number(request.amount || 0),
+        request.adminComment
+          ? `Вывод отклонён: ${request.adminComment}`
+          : 'Вывод отклонён, ONIX возвращены',
+        'rejected'
+      );
+    } else {
+      addTransaction(
+        user,
+        'withdrawal_approved',
+        0,
+        request.adminComment
+          ? `Вывод одобрен: ${request.adminComment}`
+          : 'Вывод одобрен',
+        'approved'
+      );
+    }
+
+    user.markModified('withdrawalRequests');
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      message: `Withdrawal ${action}`,
+      user: {
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        balance: roundOnix(user.balance || 0),
+      },
+      request,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -1502,6 +1648,28 @@ router.post('/request-withdrawal', async (req, res) => {
     }
 
     normalizeUserFields(user);
+
+    const hasPendingWithdrawal = user.withdrawalRequests.some(
+      (request) => request.status === 'pending'
+    );
+
+    if (hasPendingWithdrawal) {
+      return res.status(400).json({
+        message: 'У вас уже есть заявка на вывод в обработке',
+      });
+    }
+
+    const lastWithdrawal = user.withdrawalRequests[0];
+    const withdrawalCooldownMs = 24 * 60 * 60 * 1000;
+
+    if (
+      lastWithdrawal &&
+      Date.now() - Number(lastWithdrawal.createdAt || 0) < withdrawalCooldownMs
+    ) {
+      return res.status(400).json({
+        message: 'Создавать заявку на вывод можно не чаще 1 раза в 24 часа',
+      });
+    }
 
     if (Number(user.balance || 0) < withdrawAmount) {
       return res.status(400).json({ message: 'Недостаточно ONIX для вывода' });

@@ -207,6 +207,18 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: 'pending',
           },
+          adminComment: {
+            type: String,
+            default: '',
+          },
+          reviewedAt: {
+            type: Number,
+            default: null,
+          },
+          reviewedBy: {
+            type: String,
+            default: '',
+          },
           createdAt: {
             type: Number,
             default: Date.now,
