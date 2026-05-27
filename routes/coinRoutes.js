@@ -190,6 +190,13 @@ function ensureMissionStats(user, now = Date.now()) {
 
   if (!user.claimedDailyMissions) user.claimedDailyMissions = [];
   if (!user.claimedWeeklyMissions) user.claimedWeeklyMissions = [];
+  if (!user.usedPromoCodes) user.usedPromoCodes = [];
+  if (user.welcomeBonusClaimed === undefined || user.welcomeBonusClaimed === null) {
+    user.welcomeBonusClaimed = false;
+  }
+  if (user.lastWithdrawalCheckAt === undefined || user.lastWithdrawalCheckAt === null) {
+    user.lastWithdrawalCheckAt = 0;
+  }
 
   return user.missionStats;
 }
@@ -443,12 +450,26 @@ function getNumberEnv(name, fallback) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+
+function getPromoCodesConfig() {
+  return {
+    START: getNumberEnv('PROMO_START_REWARD', 25000),
+    ONIX2026: getNumberEnv('PROMO_ONIX2026_REWARD', 50000),
+    LAUNCH: getNumberEnv('PROMO_LAUNCH_REWARD', 75000),
+  };
+}
+
+function getWelcomeBonusAmount() {
+  return getNumberEnv('WELCOME_BONUS', 10000);
+}
+
 function getEconomyConfig() {
   return {
     onixEurPer1000: getNumberEnv('ONIX_EUR_PER_1000', 0.68),
     minWithdrawOnix: getNumberEnv('MIN_WITHDRAW_ONIX', 750000),
     referralReward: getNumberEnv('REFERRAL_REWARD', 75000),
     referredUserReward: getNumberEnv('REFERRED_USER_REWARD', 15000),
+    welcomeBonus: getWelcomeBonusAmount(),
     maxPaidReferralsPerDay: getNumberEnv('MAX_PAID_REFERRALS_PER_DAY', 10),
     maxPaidReferralsPerHour: getNumberEnv('MAX_PAID_REFERRALS_PER_HOUR', 5),
     chestCost: getNumberEnv('CHEST_COST', 50000),
@@ -1979,6 +2000,137 @@ router.get('/admin-economy-dashboard', async (req, res) => {
 });
 
 
+
+// CLAIM WELCOME BONUS
+router.post('/claim-welcome-bonus', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
+    if (user.welcomeBonusClaimed) {
+      return res.status(400).json({ message: 'Welcome bonus уже получен' });
+    }
+
+    const reward = getWelcomeBonusAmount();
+
+    user.welcomeBonusClaimed = true;
+    user.balance = roundOnix(Number(user.balance || 0) + reward);
+    addEarnings(user, reward);
+
+    addTransaction(user, 'income_welcome_bonus', reward, 'Welcome bonus');
+
+    addSecurityLog(user, 'welcome_bonus', 'Welcome bonus claimed', `+${reward} ONIX`);
+
+    const achievementBonuses = applyAchievements(user);
+    const rankBonuses = applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
+      },
+      reward,
+      achievementBonuses,
+      rankBonuses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// APPLY PROMO CODE
+router.post('/apply-promo', async (req, res) => {
+  try {
+    const { telegramId, code } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: 'Telegram ID is required' });
+    }
+
+    const cleanCode = String(code || '').trim().toUpperCase();
+
+    if (!cleanCode) {
+      return res.status(400).json({ message: 'Введите промокод' });
+    }
+
+    const promoCodes = getPromoCodesConfig();
+    const reward = promoCodes[cleanCode];
+
+    if (!reward) {
+      return res.status(400).json({ message: 'Промокод не найден' });
+    }
+
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
+    if (user.usedPromoCodes.includes(cleanCode)) {
+      return res.status(400).json({ message: 'Вы уже использовали этот промокод' });
+    }
+
+    user.usedPromoCodes.push(cleanCode);
+    user.balance = roundOnix(Number(user.balance || 0) + reward);
+    addEarnings(user, reward);
+
+    addTransaction(user, 'income_promo', reward, `Промокод ${cleanCode}`);
+
+    addSecurityLog(user, 'promo', 'Promo code used', `${cleanCode}: +${reward} ONIX`);
+
+    const achievementBonuses = applyAchievements(user);
+    const rankBonuses = applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        ...user.toObject({ flattenMaps: true }),
+        perkLevels: getPerkLevelsPayload(user),
+        achievements: getAchievementsPayload(user),
+        referralLimit: getReferralLimitPayload(user),
+        missions: getMissionsPayload(user),
+      },
+      promo: {
+        code: cleanCode,
+        reward,
+      },
+      achievementBonuses,
+      rankBonuses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // PUBLIC HEALTH CHECK
 router.get('/health', async (req, res) => {
   try {
@@ -2237,6 +2389,9 @@ router.post('/create', async (req, res) => {
         missionStats: {},
         claimedDailyMissions: [],
         claimedWeeklyMissions: [],
+        usedPromoCodes: [],
+        welcomeBonusClaimed: false,
+        lastWithdrawalCheckAt: 0,
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -2301,6 +2456,17 @@ router.post('/create', async (req, res) => {
           normalizeUserFields(refUser);
 
           const economyConfig = getEconomyConfig();
+
+    if (String(withdrawalCheck || '').trim().toUpperCase() !== 'ONIX') {
+      addSuspiciousReason(user, 'Не прошёл антибот-проверку перед выводом');
+      await user.save();
+
+      return res.status(400).json({
+        message: 'Введите ONIX в поле антибот-проверки',
+      });
+    }
+
+    user.lastWithdrawalCheckAt = Date.now();
 
           refUser.referralsCount += 1;
           incrementMissionStat(refUser, 'weeklyReferrals');
@@ -2401,6 +2567,9 @@ router.post('/save', async (req, res) => {
         missionStats: {},
         claimedDailyMissions: [],
         claimedWeeklyMissions: [],
+        usedPromoCodes: [],
+        welcomeBonusClaimed: false,
+        lastWithdrawalCheckAt: 0,
         claimedRankBonuses: [],
         transactions: [],
         totalTaps: 0,
@@ -2865,7 +3034,7 @@ router.post('/select-title', async (req, res) => {
 // REQUEST WITHDRAWAL — creates a pending withdrawal request
 router.post('/request-withdrawal', async (req, res) => {
   try {
-    const { telegramId, amount } = req.body;
+    const { telegramId, amount, withdrawalCheck } = req.body;
 
     if (!telegramId) {
       return res.status(400).json({ message: 'Telegram ID is required' });

@@ -223,6 +223,21 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    usedPromoCodes: {
+      type: [String],
+      default: [],
+    },
+
+    welcomeBonusClaimed: {
+      type: Boolean,
+      default: false,
+    },
+
+    lastWithdrawalCheckAt: {
+      type: Number,
+      default: 0,
+    },
+
     totalTaps: {
       type: Number,
       default: 0,
