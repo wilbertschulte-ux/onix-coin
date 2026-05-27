@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coins, Zap, Trophy, Home, Star, Wallet, UserCircle, Rocket } from 'lucide-react';
+import { Zap, Trophy, Home, Star, Wallet, UserCircle, Rocket } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
 
