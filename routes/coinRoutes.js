@@ -1405,6 +1405,256 @@ router.get('/season-history', async (req, res) => {
 
 
 
+
+// ADMIN: SEARCH USERS
+router.get('/admin-search-users', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+    const query = req.query.query ? String(req.query.query).trim() : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (!query) {
+      return res.json({ users: [] });
+    }
+
+    const users = await User.find({
+      $or: [
+        { telegramId: { $regex: query, $options: 'i' } },
+        { username: { $regex: query, $options: 'i' } },
+      ],
+    })
+      .limit(20)
+      .select('telegramId username balance totalEarned weeklyEarned referralsCount totalTaps isSuspicious isFrozen frozenReason');
+
+    return res.json({
+      users: users.map((user) => ({
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        balance: roundOnix(user.balance || 0),
+        totalEarned: roundOnix(user.totalEarned || 0),
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        referralsCount: Number(user.referralsCount || 0),
+        totalTaps: Number(user.totalTaps || 0),
+        isSuspicious: Boolean(user.isSuspicious),
+        isFrozen: Boolean(user.isFrozen),
+        frozenReason: user.frozenReason || '',
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN: USER PROFILE
+router.get('/admin-user-profile/:targetTelegramId', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+    const { targetTelegramId } = req.params;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const user = await User.findOne({ telegramId: targetTelegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    return res.json({
+      user: {
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        balance: roundOnix(user.balance || 0),
+        totalEarned: roundOnix(user.totalEarned || 0),
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        referralsCount: Number(user.referralsCount || 0),
+        totalTaps: Number(user.totalTaps || 0),
+        totalBoostsUsed: Number(user.totalBoostsUsed || 0),
+        totalUpgradesBought: Number(user.totalUpgradesBought || 0),
+        offlineClaimsCount: Number(user.offlineClaimsCount || 0),
+        level: Number(user.level || 1),
+        selectedTitle: user.selectedTitle || 'ONIX Player',
+        league: user.league || getLeagueByTotalEarned(user.totalEarned),
+        isSuspicious: Boolean(user.isSuspicious),
+        suspiciousReasons: user.suspiciousReasons || [],
+        isFrozen: Boolean(user.isFrozen),
+        frozenReason: user.frozenReason || '',
+        transactions: (user.transactions || []).slice(0, 20),
+        withdrawalRequests: (user.withdrawalRequests || []).slice(0, 10),
+        securityLogs: (user.securityLogs || []).slice(0, 50),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN: ADJUST USER BALANCE
+router.post('/admin-adjust-balance', async (req, res) => {
+  try {
+    const { secret, telegramId, targetTelegramId, amount, reason } = req.body;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const delta = Number(amount);
+
+    if (!Number.isFinite(delta) || delta === 0) {
+      return res.status(400).json({ message: 'Введите корректную сумму' });
+    }
+
+    const user = await User.findOne({ telegramId: targetTelegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    user.balance = roundOnix(Number(user.balance || 0) + delta);
+
+    if (delta > 0) {
+      addEarnings(user, delta);
+    }
+
+    addTransaction(
+      user,
+      'admin_balance_adjustment',
+      delta,
+      reason ? `Админ корректировка: ${reason}` : 'Админ корректировка баланса',
+      'confirmed'
+    );
+
+    addSecurityLog(
+      user,
+      'admin_balance',
+      delta > 0 ? 'Баланс увеличен админом' : 'Баланс уменьшен админом',
+      `${delta > 0 ? '+' : ''}${delta} ONIX. ${reason || ''}`.trim()
+    );
+
+    const achievementBonuses = applyAchievements(user);
+    const rankBonuses = applyRankBonuses(user);
+    user.level = calculateLevel(user.totalEarned);
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        balance: roundOnix(user.balance || 0),
+        totalEarned: roundOnix(user.totalEarned || 0),
+        securityLogs: user.securityLogs || [],
+      },
+      achievementBonuses,
+      rankBonuses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN: BAN / UNBAN USER
+router.post('/admin-ban-user', async (req, res) => {
+  try {
+    const { secret, telegramId, targetTelegramId, ban, reason } = req.body;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const user = await User.findOne({ telegramId: targetTelegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    user.isFrozen = Boolean(ban);
+    user.frozenReason = ban ? String(reason || 'Аккаунт заблокирован администратором') : '';
+
+    addSecurityLog(
+      user,
+      ban ? 'ban' : 'unban',
+      ban ? 'Аккаунт заблокирован' : 'Аккаунт разблокирован',
+      ban ? user.frozenReason : 'Разблокирован администратором'
+    );
+
+    if (ban) {
+      addSuspiciousReason(user, user.frozenReason);
+    }
+
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.json({
+      user: {
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        isFrozen: Boolean(user.isFrozen),
+        frozenReason: user.frozenReason || '',
+        securityLogs: user.securityLogs || [],
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN: SECURITY LOGS
+router.get('/admin-security-logs', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const users = await User.find({
+      'securityLogs.0': { $exists: true },
+    })
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .select('telegramId username securityLogs isFrozen isSuspicious');
+
+    const logs = [];
+
+    users.forEach((user) => {
+      (user.securityLogs || []).slice(0, 20).forEach((log) => {
+        logs.push({
+          telegramId: user.telegramId,
+          username: user.username || 'Пользователь',
+          isFrozen: Boolean(user.isFrozen),
+          isSuspicious: Boolean(user.isSuspicious),
+          type: log.type || 'info',
+          title: log.title || '',
+          details: log.details || '',
+          createdAt: log.createdAt || 0,
+        });
+      });
+    });
+
+    logs.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+    return res.json({ logs: logs.slice(0, 100) });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // ADMIN: LIST SUSPICIOUS USERS
 router.get('/admin-suspicious-users', async (req, res) => {
   try {
@@ -2002,6 +2252,7 @@ router.post('/create', async (req, res) => {
         isFrozen: false,
         frozenReason: '',
         suspiciousReasons: [],
+        securityLogs: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -2165,6 +2416,7 @@ router.post('/save', async (req, res) => {
         isFrozen: false,
         frozenReason: '',
         suspiciousReasons: [],
+        securityLogs: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -2349,6 +2601,20 @@ router.post('/buy-upgrade', async (req, res) => {
 
 
 
+
+function addSecurityLog(user, type, title, details = '') {
+  if (!user.securityLogs) user.securityLogs = [];
+
+  user.securityLogs.unshift({
+    type,
+    title,
+    details,
+    createdAt: Date.now(),
+  });
+
+  user.securityLogs = user.securityLogs.slice(0, 100);
+}
+
 function addSuspiciousReason(user, reason) {
   if (!user.suspiciousReasons) user.suspiciousReasons = [];
   if (user.referredByBonusPaid === undefined || user.referredByBonusPaid === null) {
@@ -2369,6 +2635,7 @@ function addSuspiciousReason(user, reason) {
   }
 
   user.isSuspicious = true;
+  addSecurityLog(user, 'suspicious', reason, 'Автоматический флаг подозрительности');
 }
 
 function ensureUserNotFrozen(user, res) {

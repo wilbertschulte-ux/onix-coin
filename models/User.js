@@ -357,6 +357,30 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    securityLogs: {
+      type: [
+        {
+          type: {
+            type: String,
+            default: 'info',
+          },
+          title: {
+            type: String,
+            default: '',
+          },
+          details: {
+            type: String,
+            default: '',
+          },
+          createdAt: {
+            type: Number,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+
     dailyRewardLastClaim: {
       type: Number,
       default: null,
