@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Coins, Zap, Trophy, Home, Star, Wallet, UserCircle } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
+
+const APP_VERSION = '1.0.0';
 
 const tg = window.Telegram?.WebApp;
 
@@ -636,7 +638,9 @@ function getRankInfo(totalEarned: number) {
 }
 
 function getTelegramId() {
-  const tg = window.Telegram?.WebApp;
+  const APP_VERSION = '1.0.0';
+
+const tg = window.Telegram?.WebApp;
   if (!tg) return '';
   return tg.initDataUnsafe?.user?.id?.toString() || '';
 }
@@ -680,6 +684,93 @@ function normalizeBoost(value: unknown): 'none' | 'tap' | 'mining' {
 
   return 'none';
 }
+
+
+type AppErrorBoundaryProps = {
+  children: React.ReactNode;
+};
+
+type AppErrorBoundaryState = {
+  hasError: boolean;
+  message: string;
+};
+
+class AppErrorBoundary extends React.Component<
+  AppErrorBoundaryProps,
+  AppErrorBoundaryState
+> {
+  constructor(props: AppErrorBoundaryProps) {
+    super(props);
+
+    this.state = {
+      hasError: false,
+      message: '',
+    };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return {
+      hasError: true,
+      message: error?.message || 'Unknown frontend error',
+    };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    try {
+      const telegramId =
+        window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+
+      fetch(`${API_URL}/frontend-error`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telegramId,
+          message: error?.message || 'Unknown frontend error',
+          stack: `${error?.stack || ''}\n${info?.componentStack || ''}`,
+          appVersion: APP_VERSION,
+        }),
+      }).catch(() => {});
+    } catch {}
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-white">
+          <div className="w-full max-w-sm rounded-3xl border border-red-400/30 bg-[#111827] p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 text-3xl">
+              ⚠️
+            </div>
+
+            <h1 className="text-2xl font-bold text-white">
+              Что-то пошло не так
+            </h1>
+
+            <p className="mt-3 text-sm text-gray-400">
+              Ошибка уже сохранена в логах. Обновите приложение.
+            </p>
+
+            <p className="mt-2 break-words text-xs text-gray-600">
+              {this.state.message}
+            </p>
+
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 font-bold text-black"
+            >
+              Обновить
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 
 function App() {
   const [balance, setBalance] = useState(0);
@@ -763,6 +854,8 @@ function App() {
   const [adminBroadcastResult, setAdminBroadcastResult] = useState<any>(null);
   const [adminOperations, setAdminOperations] = useState<AdminOperationsPayload | null>(null);
   const [adminNoteText, setAdminNoteText] = useState('');
+  const [appVersionInfo, setAppVersionInfo] = useState<any>(null);
+  const [adminFrontendErrors, setAdminFrontendErrors] = useState<any[]>([]);
   const [launchChecklistVisible, setLaunchChecklistVisible] = useState(false);
   const [backendHealth, setBackendHealth] = useState<any>(null);
   const [promoModalVisible, setPromoModalVisible] = useState(false);
@@ -820,10 +913,21 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const loadAppVersion = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/version`);
+        setAppVersionInfo(response.data);
+      } catch {
+        setAppVersionInfo({ version: APP_VERSION });
+      }
+    };
+
     try {
       WebApp.ready();
       WebApp.expand();
     } catch {}
+
+    loadAppVersion();
   }, []);
 
   useEffect(() => {
@@ -2089,6 +2193,33 @@ function App() {
     }
   };
 
+
+
+  const downloadMongoBackup = () => {
+    const telegramId = getTelegramId();
+    const url = `${API_URL}/admin-backup?telegramId=${encodeURIComponent(telegramId)}`;
+
+    window.open(url, '_blank');
+  };
+
+  const loadAdminFrontendErrors = async () => {
+    const telegramId = getTelegramId();
+
+    try {
+      setIsAdminLoading(true);
+
+      const response = await axios.get(`${API_URL}/admin-frontend-errors`, {
+        params: { telegramId },
+      });
+
+      setAdminFrontendErrors(response.data.logs || []);
+      showToast('✅ Frontend errors обновлены', 'success');
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Не удалось загрузить frontend errors', 'error');
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
 
   const openAdmin2Panel = async () => {
     const telegramId = getTelegramId();
@@ -5264,6 +5395,59 @@ function App() {
               </button>
             </div>
 
+            <div className="mb-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <h3 className="mb-3 font-bold text-white">🛡 Production stability</h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Frontend</p>
+                  <p className="font-bold text-yellow-400">
+                    v{APP_VERSION}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111827] p-3">
+                  <p className="text-xs text-gray-400">Backend</p>
+                  <p className="font-bold text-yellow-400">
+                    v{appVersionInfo?.version || '—'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <button
+                  onClick={downloadMongoBackup}
+                  className="rounded-2xl bg-[#111827] py-3 font-bold text-emerald-400 active:scale-95"
+                >
+                  Backup JSON
+                </button>
+
+                <button
+                  onClick={loadAdminFrontendErrors}
+                  disabled={isAdminLoading}
+                  className="rounded-2xl bg-[#111827] py-3 font-bold text-red-400 active:scale-95 disabled:opacity-50"
+                >
+                  Error logs
+                </button>
+              </div>
+
+              {adminFrontendErrors.length > 0 && (
+                <div className="mt-4 max-h-48 space-y-2 overflow-y-auto">
+                  {adminFrontendErrors.slice(0, 6).map((error, index) => (
+                    <div
+                      key={`${error.telegramId}-${error.createdAt}-${index}`}
+                      className="rounded-xl bg-[#111827] p-3 text-xs"
+                    >
+                      <p className="font-bold text-red-400">{error.message}</p>
+                      <p className="mt-1 text-gray-500">
+                        {error.username} · v{error.appVersion || '—'} · {formatTransactionTime(error.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="rounded-2xl bg-[#0a0f1c] p-4">
               <h3 className="mb-3 font-bold text-white">⚙️ Economy config</h3>
 
@@ -6369,4 +6553,12 @@ function App() {
   );
 }
 
-export default App;
+function AppWithBoundary() {
+  return (
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
+  );
+}
+
+export default AppWithBoundary;
