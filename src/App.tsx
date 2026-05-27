@@ -634,9 +634,12 @@ function App() {
 
         if (newRefs > oldRefs) {
           showToast(
-            `🎉 По вашей ссылке перешёл ${
+            `👥 По вашей ссылке перешёл ${
               user.lastReferralUsername || 'новый пользователь'
-            }! Вы получили +${formatOnix(economyConfig.referralReward)} ONIX`
+            }. Бонус +${formatOnix(
+              economyConfig.referralReward
+            )} ONIX придёт, когда друг сделает 100 тапов.`,
+            'info'
           );
         }
 
@@ -889,6 +892,7 @@ function App() {
       setRechargeLevel(user.rechargeLevel || 1);
       applyUserStats(user);
       showRewardPopupFromResponse(response.data);
+      showReferralBonusPaidToast(response.data);
 
       const newNum: FloatingNumber = {
         id: Date.now(),
@@ -966,6 +970,7 @@ function App() {
       setRechargeLevel(user.rechargeLevel || 1);
       applyUserStats(user);
       showRewardPopupFromResponse(response.data);
+      showReferralBonusPaidToast(response.data);
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
@@ -1072,6 +1077,7 @@ function App() {
       setRechargeLevel(user.rechargeLevel || 1);
       applyUserStats(user);
       showRewardPopupFromResponse(response.data);
+      showReferralBonusPaidToast(response.data);
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
@@ -1205,6 +1211,7 @@ function App() {
       setRechargeLevel(user.rechargeLevel || 1);
       applyUserStats(user);
       showRewardPopupFromResponse(response.data);
+      showReferralBonusPaidToast(response.data);
 
       setOfflineRewardVisible(false);
       setOfflineRewardAmount(0);
@@ -1240,6 +1247,19 @@ function App() {
     setTimeout(() => {
       setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
     }, 2800);
+  };
+
+  const showReferralBonusPaidToast = (data: any) => {
+    const referralBonus = data?.referralBonusPaid;
+
+    if (!referralBonus || !Number(referralBonus.reward || 0)) return;
+
+    showToast(
+      `👥 Реферальный бонус начислен пригласившему: +${formatOnix(
+        referralBonus.reward
+      )} ONIX`,
+      'success'
+    );
   };
 
   const showRewardPopupFromResponse = (data: any) => {
@@ -2253,6 +2273,7 @@ function App() {
                 );
 
                 showRewardPopupFromResponse(response.data);
+      showReferralBonusPaidToast(response.data);
 
                 const rankBonusText =
                   Array.isArray(response.data.rankBonuses) && response.data.rankBonuses.length
@@ -2324,6 +2345,7 @@ function App() {
                 setTransactions(user.transactions || []);
                 setAchievements(user.achievements || response.data.achievements || ACHIEVEMENTS);
                 showRewardPopupFromResponse(response.data);
+      showReferralBonusPaidToast(response.data);
 
                 showToast('🎉 Подписка подтверждена! +25000 ONIX');
               } catch (error: any) {
