@@ -12,6 +12,8 @@ if (tg) {
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends' | 'wallet';
 
+type BoostSubTab = 'upgrades' | 'perks' | 'boosts';
+
 type FloatingNumber = {
   id: number;
   x: number;
@@ -596,6 +598,10 @@ function App() {
   const [level, setLevel] = useState(1);
   const [totalEarned, setTotalEarned] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [boostSubTab, setBoostSubTab] = useState<BoostSubTab>('upgrades');
+  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [tutorialVisible, setTutorialVisible] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
   const [isTapped, setIsTapped] = useState(false);
   const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>([]);
 
@@ -836,6 +842,12 @@ function App() {
         applyUserStats(user);
       } catch (error) {
         console.log('Ошибка загрузки пользователя:', error);
+      } finally {
+        setIsAppLoading(false);
+
+        if (!localStorage.getItem('onixTutorialDone')) {
+          setTutorialVisible(true);
+        }
       }
     };
 
@@ -927,7 +939,26 @@ function App() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    if (isAppLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-white">
+        <div className="w-full max-w-sm rounded-3xl border border-yellow-400/20 bg-[#111827] p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-5 flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-4xl">
+            🔗
+          </div>
+
+          <h1 className="text-3xl font-black text-white">ONIX COIN</h1>
+          <p className="mt-3 text-sm text-gray-400">Загрузка майнера...</p>
+
+          <div className="mt-6 h-3 overflow-hidden rounded-full bg-gray-800">
+            <div className="h-full w-2/3 animate-pulse rounded-full bg-yellow-400" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return () => clearInterval(timer);
   }, [seasonSecondsLeft]);
 
   useEffect(() => {
@@ -2150,6 +2181,34 @@ function App() {
     ...earningChartDays.map((item) => item.amount),
     1
   );
+  const tutorialSteps = [
+    {
+      icon: '🪙',
+      title: 'Тапай и зарабатывай',
+      text: 'Нажимай на монету, получай ONIX и следи за энергией.',
+    },
+    {
+      icon: '⚡',
+      title: 'Прокачивайся',
+      text: 'Покупай улучшения, перки и бусты, чтобы зарабатывать быстрее.',
+    },
+    {
+      icon: '📋',
+      title: 'Выполняй задания',
+      text: 'Daily, weekly и секретные миссии дают дополнительные ONIX.',
+    },
+    {
+      icon: '🏆',
+      title: 'Соревнуйся',
+      text: 'Попадай в топ недели, команды и сезоны, чтобы получать призы.',
+    },
+  ];
+
+  const closeTutorial = () => {
+    localStorage.setItem('onixTutorialDone', 'true');
+    setTutorialVisible(false);
+  };
+
   const achievementCategories: Array<{
     id: AchievementCategory;
     label: string;
@@ -2283,7 +2342,7 @@ function App() {
         )}
       </div>
 
-      <div className="mx-4 bg-[#111827] p-1 rounded-2xl flex sticky top-16 z-50">
+      <div className="mx-2 sm:mx-4 bg-[#111827] p-1 rounded-2xl flex sticky top-16 z-50 overflow-x-auto">
         {[
           { id: 'home', label: 'Главная', icon: Home },
           { id: 'boosts', label: 'Улучшения', icon: Zap },
@@ -2294,13 +2353,13 @@ function App() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as Tab)}
-            className={`flex-1 py-3 rounded-xl flex flex-col items-center gap-1 text-sm transition-all ${
+            className={`min-w-[64px] flex-1 py-3 rounded-xl flex flex-col items-center gap-1 text-[11px] sm:text-sm transition-all ${
               activeTab === tab.id
                 ? 'bg-[#1e2937] text-yellow-400'
                 : 'text-gray-400'
             }`}
           >
-            <tab.icon className="w-5 h-5" />
+            <tab.icon className="w-5 h-5 shrink-0" />
             {tab.label}
           </button>
         ))}
@@ -2310,7 +2369,7 @@ function App() {
         <div className="flex flex-col items-center mt-8 relative">
           <div
             onClick={handleTap}
-            className={`w-80 h-80 rounded-full bg-gradient-to-br from-yellow-300 to-amber-600 flex items-center justify-center text-[170px] cursor-pointer border-8 border-yellow-400 shadow-2xl transition-transform relative ${
+            className={`h-64 w-64 sm:w-80 sm:h-80 rounded-full bg-gradient-to-br from-yellow-300 to-amber-600 flex items-center justify-center text-[170px] cursor-pointer border-8 border-yellow-400 shadow-2xl transition-transform relative ${
               isTapped ? 'scale-90' : ''
             }`}
           >
@@ -2427,6 +2486,29 @@ function App() {
 
 
 
+          <div className="sticky top-32 z-40 rounded-2xl bg-[#111827] p-1 shadow-xl">
+            <div className="grid grid-cols-3 gap-1">
+              {[
+                { id: 'upgrades', label: 'Апгрейды' },
+                { id: 'perks', label: 'Перки' },
+                { id: 'boosts', label: 'Бусты' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setBoostSubTab(tab.id as BoostSubTab)}
+                  className={`rounded-xl px-2 py-3 text-xs font-bold transition ${
+                    boostSubTab === tab.id
+                      ? 'bg-yellow-400 text-black'
+                      : 'text-gray-400'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {boostSubTab === 'perks' && (
           <div>
             <h2 className="text-2xl font-bold mb-4">🧩 Перки и магазин</h2>
 
@@ -2661,8 +2743,12 @@ function App() {
             </div>
           </div>
 
+          </div>
+          )}
+
+          {boostSubTab === 'upgrades' && (
           <div>
-            <h2 className="text-2xl font-bold mb-4">Постоянные улучшения</h2>
+            <h2 className="text-2xl font-bold mb-4">⬆️ Апгрейды</h2>
 
             <div className="space-y-4">
               {upgradeCards.map((upgrade) => {
@@ -2764,6 +2850,10 @@ function App() {
             </div>
           </div>
 
+          </div>
+          )}
+
+          {boostSubTab === 'boosts' && (
           <div>
             <h2 className="text-2xl font-bold mb-4">⚡ Временные бусты</h2>
 
@@ -2891,6 +2981,9 @@ function App() {
           </div>
         </div>
       )}
+
+          </div>
+          )}
 
       {activeTab === 'tasks' && (
         <div className="px-5 mt-8 space-y-4">
@@ -4123,6 +4216,60 @@ function App() {
 
 
 
+
+
+      {tutorialVisible && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/75 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 text-4xl">
+              {tutorialSteps[tutorialStep].icon}
+            </div>
+
+            <h2 className="text-2xl font-bold text-white">
+              {tutorialSteps[tutorialStep].title}
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-gray-400">
+              {tutorialSteps[tutorialStep].text}
+            </p>
+
+            <div className="mt-5 flex justify-center gap-2">
+              {tutorialSteps.map((_, index) => (
+                <span
+                  key={index}
+                  className={`h-2 rounded-full transition-all ${
+                    index === tutorialStep
+                      ? 'w-8 bg-yellow-400'
+                      : 'w-2 bg-gray-700'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                onClick={closeTutorial}
+                className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-gray-300 active:scale-95"
+              >
+                Пропустить
+              </button>
+
+              <button
+                onClick={() => {
+                  if (tutorialStep >= tutorialSteps.length - 1) {
+                    closeTutorial();
+                  } else {
+                    setTutorialStep((step) => step + 1);
+                  }
+                }}
+                className="rounded-2xl bg-yellow-400 py-4 font-bold text-black active:scale-95"
+              >
+                {tutorialStep >= tutorialSteps.length - 1 ? 'Начать' : 'Дальше'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {adminEconomyVisible && adminEconomyDashboard && (
         <div className="fixed inset-0 z-[87] flex items-center justify-center bg-black/70 px-4">
