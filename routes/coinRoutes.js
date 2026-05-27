@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 
 const API_RATE_LIMITS = new Map();
+const ECONOMY_OVERRIDES = {};
 
 router.use((req, res, next) => {
   try {
@@ -594,6 +595,12 @@ function getMaxEnergyWithPerks(user) {
   return Number(user.maxEnergy || DEFAULT_MAX_ENERGY) + level * 500;
 }
 function getNumberEnv(name, fallback) {
+  if (Object.prototype.hasOwnProperty.call(ECONOMY_OVERRIDES, name)) {
+    const overrideValue = Number(ECONOMY_OVERRIDES[name]);
+
+    if (Number.isFinite(overrideValue)) return overrideValue;
+  }
+
   const value = Number(process.env[name]);
 
   return Number.isFinite(value) ? value : fallback;
@@ -1660,6 +1667,7 @@ router.get('/admin-user-profile/:targetTelegramId', async (req, res) => {
         transactions: (user.transactions || []).slice(0, 20),
         withdrawalRequests: (user.withdrawalRequests || []).slice(0, 10),
         securityLogs: (user.securityLogs || []).slice(0, 50),
+        adminNotes: (user.adminNotes || []).slice(0, 20),
       },
     });
   } catch (error) {
@@ -2040,6 +2048,279 @@ router.post('/admin-review-withdrawal', async (req, res) => {
         balance: roundOnix(user.balance || 0),
       },
       request,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+// ADMIN 2.0: GET ECONOMY CONFIG
+router.get('/admin-economy-config', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    return res.json({
+      config: getEconomyConfig(),
+      overrides: ECONOMY_OVERRIDES,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN 2.0: UPDATE ECONOMY CONFIG OVERRIDES
+router.post('/admin-economy-config', async (req, res) => {
+  try {
+    const { secret, telegramId, updates } = req.body;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const allowed = [
+      'ONIX_EUR_PER_1000',
+      'MIN_WITHDRAW_ONIX',
+      'REFERRAL_REWARD',
+      'REFERRED_USER_REWARD',
+      'WELCOME_BONUS',
+      'CHEST_COST',
+      'MAX_PAID_REFERRALS_PER_DAY',
+      'MAX_PAID_REFERRALS_PER_HOUR',
+      'DAILY_MISSION_BASE_REWARD',
+      'WEEKLY_MISSION_BASE_REWARD',
+    ];
+
+    Object.entries(updates || {}).forEach(([key, value]) => {
+      if (!allowed.includes(key)) return;
+
+      const numberValue = Number(value);
+
+      if (Number.isFinite(numberValue) && numberValue >= 0) {
+        ECONOMY_OVERRIDES[key] = numberValue;
+      }
+    });
+
+    return res.json({
+      config: getEconomyConfig(),
+      overrides: ECONOMY_OVERRIDES,
+      message: 'Runtime config updated',
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN 2.0: BROADCAST MESSAGE
+router.post('/admin-broadcast', async (req, res) => {
+  try {
+    const { secret, telegramId, message, dryRun } = req.body;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const text = String(message || '').trim();
+
+    if (!text) {
+      return res.status(400).json({ message: 'Введите текст рассылки' });
+    }
+
+    const users = await User.find({ telegramId: { $nin: ['', null] } })
+      .limit(5000)
+      .select('telegramId');
+
+    if (dryRun) {
+      return res.json({
+        dryRun: true,
+        recipients: users.length,
+        sent: 0,
+        failed: 0,
+      });
+    }
+
+    const botToken = process.env.BOT_TOKEN;
+
+    if (!botToken) {
+      return res.status(400).json({ message: 'BOT_TOKEN не настроен на backend' });
+    }
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const user of users) {
+      try {
+        await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          chat_id: user.telegramId,
+          text,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true,
+        });
+
+        sent += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+
+    return res.json({
+      dryRun: false,
+      recipients: users.length,
+      sent,
+      failed,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN 2.0: EXPORT USERS CSV
+router.get('/admin-export-users.csv', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).send('Forbidden');
+    }
+
+    const users = await User.find({}).select(
+      'telegramId username balance totalEarned weeklyEarned referralsCount totalTaps teamName isFrozen isSuspicious createdAt'
+    );
+
+    const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+    const rows = [
+      [
+        'telegramId',
+        'username',
+        'balance',
+        'totalEarned',
+        'weeklyEarned',
+        'referralsCount',
+        'totalTaps',
+        'teamName',
+        'isFrozen',
+        'isSuspicious',
+        'createdAt',
+      ],
+      ...users.map((user) => [
+        user.telegramId,
+        user.username || '',
+        roundOnix(user.balance || 0),
+        roundOnix(user.totalEarned || 0),
+        roundOnix(user.weeklyEarned || 0),
+        Number(user.referralsCount || 0),
+        Number(user.totalTaps || 0),
+        user.teamName || '',
+        Boolean(user.isFrozen),
+        Boolean(user.isSuspicious),
+        user.createdAt ? new Date(user.createdAt).toISOString() : '',
+      ]),
+    ];
+
+    const csv = rows.map((row) => row.map(escapeCsv).join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="onix-users.csv"');
+
+    return res.send(csv);
+  } catch (error) {
+    return res.status(500).send(error.message);
+  }
+});
+
+// ADMIN 2.0: ALL WITHDRAWALS AND TRANSACTIONS
+router.get('/admin-operations', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const users = await User.find({}).select(
+      'telegramId username transactions withdrawalRequests'
+    );
+
+    const withdrawals = [];
+    const transactions = [];
+
+    users.forEach((user) => {
+      (user.withdrawalRequests || []).forEach((request) => {
+        withdrawals.push({
+          telegramId: user.telegramId,
+          username: user.username || 'Пользователь',
+          ...(typeof request.toObject === 'function' ? request.toObject() : request),
+        });
+      });
+
+      (user.transactions || []).slice(0, 30).forEach((transaction) => {
+        transactions.push({
+          telegramId: user.telegramId,
+          username: user.username || 'Пользователь',
+          ...(typeof transaction.toObject === 'function' ? transaction.toObject() : transaction),
+        });
+      });
+    });
+
+    withdrawals.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    transactions.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+    return res.json({
+      withdrawals: withdrawals.slice(0, 200),
+      transactions: transactions.slice(0, 300),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN 2.0: ADD ADMIN NOTE
+router.post('/admin-user-note', async (req, res) => {
+  try {
+    const { secret, telegramId, targetTelegramId, text } = req.body;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const noteText = String(text || '').trim().slice(0, 500);
+
+    if (!noteText) {
+      return res.status(400).json({ message: 'Введите заметку' });
+    }
+
+    const user = await User.findOne({ telegramId: targetTelegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    normalizeUserFields(user);
+
+    user.adminNotes.unshift({
+      text: noteText,
+      adminTelegramId: telegramId,
+      createdAt: Date.now(),
+    });
+
+    user.adminNotes = user.adminNotes.slice(0, 50);
+
+    addSecurityLog(user, 'admin_note', 'Админская заметка', noteText);
+
+    await user.save();
+
+    return res.json({
+      notes: user.adminNotes,
+      securityLogs: user.securityLogs || [],
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -2582,6 +2863,7 @@ router.post('/create', async (req, res) => {
         frozenReason: '',
         suspiciousReasons: [],
         securityLogs: [],
+        adminNotes: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -2763,6 +3045,7 @@ router.post('/save', async (req, res) => {
         frozenReason: '',
         suspiciousReasons: [],
         securityLogs: [],
+        adminNotes: [],
 
         tapLevel: 1,
         minerLevel: 1,
@@ -2950,6 +3233,7 @@ router.post('/buy-upgrade', async (req, res) => {
 
 function addSecurityLog(user, type, title, details = '') {
   if (!user.securityLogs) user.securityLogs = [];
+  if (!user.adminNotes) user.adminNotes = [];
 
   user.securityLogs.unshift({
     type,
