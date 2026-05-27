@@ -119,6 +119,16 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    referredByBonusPaid: {
+      type: Boolean,
+      default: false,
+    },
+
+    referredByQualifiedAt: {
+      type: Number,
+      default: null,
+    },
+
     lastReferralUsername: {
       type: String,
       default: null,
@@ -236,6 +246,16 @@ const userSchema = new mongoose.Schema(
     isSuspicious: {
       type: Boolean,
       default: false,
+    },
+
+    isFrozen: {
+      type: Boolean,
+      default: false,
+    },
+
+    frozenReason: {
+      type: String,
+      default: '',
     },
 
     suspiciousReasons: {

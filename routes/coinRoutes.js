@@ -4,6 +4,47 @@ const mongoose = require('mongoose');
 
 const router = express.Router();
 
+const API_RATE_LIMITS = new Map();
+
+router.use((req, res, next) => {
+  try {
+    if (req.path.startsWith('/admin') || req.path.startsWith('/cron')) {
+      return next();
+    }
+
+    const key =
+      String(req.body?.telegramId || req.query?.telegramId || req.ip || 'unknown') +
+      ':' +
+      req.path;
+
+    const now = Date.now();
+    const windowMs = 60 * 1000;
+    const maxRequests = req.path.includes('/tap') ? 900 : 180;
+    const item = API_RATE_LIMITS.get(key) || {
+      count: 0,
+      startedAt: now,
+    };
+
+    if (now - item.startedAt > windowMs) {
+      item.count = 0;
+      item.startedAt = now;
+    }
+
+    item.count += 1;
+    API_RATE_LIMITS.set(key, item);
+
+    if (item.count > maxRequests) {
+      return res.status(429).json({
+        message: 'Слишком много запросов. Попробуйте позже.',
+      });
+    }
+
+    return next();
+  } catch {
+    return next();
+  }
+});
+
 const User = require('../models/User');
 
 const WeeklyPrizeSchema = new mongoose.Schema({
@@ -737,7 +778,9 @@ router.get('/cron-award-weekly-prizes', async (req, res) => {
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
 
-      await user.save();
+      const referralBonus = await tryPayQualifiedReferralBonus(user);
+
+    await user.save();
 
       winners.push({
         place: i + 1,
@@ -882,7 +925,9 @@ router.post('/admin-award-weekly-prizes', async (req, res) => {
       user.level = calculateLevel(user.totalEarned);
       user.updatedAt = new Date();
 
-      await user.save();
+      const referralBonus = await tryPayQualifiedReferralBonus(user);
+
+    await user.save();
 
       winners.push({
         place: i + 1,
@@ -938,6 +983,86 @@ router.get('/season-history', async (req, res) => {
   }
 });
 
+
+
+// ADMIN: LIST SUSPICIOUS USERS
+router.get('/admin-suspicious-users', async (req, res) => {
+  try {
+    const secret = req.query.secret ? String(req.query.secret) : '';
+    const telegramId = req.query.telegramId ? String(req.query.telegramId) : '';
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const users = await User.find({
+      $or: [
+        { isSuspicious: true },
+        { isFrozen: true },
+      ],
+    })
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .select('telegramId username balance totalEarned weeklyEarned referralsCount totalTaps isSuspicious suspiciousReasons isFrozen frozenReason');
+
+    return res.json({
+      users: users.map((user) => ({
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        balance: roundOnix(user.balance || 0),
+        totalEarned: roundOnix(user.totalEarned || 0),
+        weeklyEarned: roundOnix(user.weeklyEarned || 0),
+        referralsCount: Number(user.referralsCount || 0),
+        totalTaps: Number(user.totalTaps || 0),
+        isSuspicious: Boolean(user.isSuspicious),
+        suspiciousReasons: user.suspiciousReasons || [],
+        isFrozen: Boolean(user.isFrozen),
+        frozenReason: user.frozenReason || '',
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ADMIN: FREEZE / UNFREEZE USER
+router.post('/admin-freeze-user', async (req, res) => {
+  try {
+    const { secret, telegramId, targetTelegramId, freeze, reason } = req.body;
+
+    if (!isAdminRequest(secret, telegramId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const user = await User.findOne({ telegramId: targetTelegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.isFrozen = Boolean(freeze);
+    user.frozenReason = freeze ? String(reason || 'Аккаунт заморожен администратором') : '';
+    user.updatedAt = new Date();
+
+    if (freeze) {
+      addSuspiciousReason(user, user.frozenReason);
+    }
+
+    await user.save();
+
+    return res.json({
+      message: freeze ? 'User frozen' : 'User unfrozen',
+      user: {
+        telegramId: user.telegramId,
+        username: user.username || 'Пользователь',
+        isFrozen: user.isFrozen,
+        frozenReason: user.frozenReason,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 // ADMIN: LIST WITHDRAWAL REQUESTS
 router.get('/admin-withdrawals', async (req, res) => {
@@ -1062,6 +1187,8 @@ router.post('/admin-review-withdrawal', async (req, res) => {
     user.markModified('withdrawalRequests');
     user.updatedAt = new Date();
 
+    const referralBonus = await tryPayQualifiedReferralBonus(user);
+
     await user.save();
 
     return res.json({
@@ -1177,6 +1304,9 @@ router.get('/:telegramId', async (req, res) => {
 
     normalizeUserFields(user);
 
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
     const now = Date.now();
 
     if (
@@ -1226,6 +1356,8 @@ router.get('/:telegramId', async (req, res) => {
     user.lastOfflineSeconds = user.pendingOfflineSeconds;
     user.lastSeenAt = now;
     user.updatedAt = new Date();
+
+    const referralBonus = await tryPayQualifiedReferralBonus(user);
 
     await user.save();
 
@@ -1292,6 +1424,8 @@ router.post('/create', async (req, res) => {
         withdrawalRequests: [],
         seasonBadges: [],
         isSuspicious: false,
+        isFrozen: false,
+        frozenReason: '',
         suspiciousReasons: [],
 
         tapLevel: 1,
@@ -1318,56 +1452,39 @@ router.post('/create', async (req, res) => {
         if (refUser) {
           normalizeUserFields(refUser);
 
-          const now = Date.now();
           const economyConfig = getEconomyConfig();
-          const isPaidReferralAllowed = canReceivePaidReferralBonus(refUser, now);
 
           refUser.referralsCount += 1;
           refUser.lastReferralUsername = username || 'новый пользователь';
           refUser.updatedAt = new Date();
 
-          if (isPaidReferralAllowed) {
-            refUser.dailyReferralBonusCount =
-              Number(refUser.dailyReferralBonusCount || 0) + 1;
-            refUser.hourlyReferralBonusCount =
-              Number(refUser.hourlyReferralBonusCount || 0) + 1;
-
-            refUser.balance = roundOnix(Number(refUser.balance || 0) + economyConfig.referralReward);
-            refUser.totalEarned = roundOnix(Number(refUser.totalEarned || 0) + 75000);
-
-            addTransaction(
-              refUser,
-              'income_referral',
-              economyConfig.referralReward,
-              `Реферальный бонус ${refUser.dailyReferralBonusCount}/${economyConfig.maxPaidReferralsPerDay}`
-            );
-
-            const refAchievementBonuses = applyAchievements(refUser);
-            const refRankBonuses = applyRankBonuses(refUser);
-            refUser.level = calculateLevel(refUser.totalEarned);
-
-            user.balance = roundOnix(Number(user.balance || 0) + economyConfig.referredUserReward);
-            addEarnings(user, economyConfig.referredUserReward);
-
-            addTransaction(
-              user,
-              'income_referral',
-              economyConfig.referredUserReward,
-              'Бонус за вход по ссылке'
-            );
-
-            const achievementBonuses = applyAchievements(user);
-            const rankBonuses = applyRankBonuses(user);
-            user.level = calculateLevel(user.totalEarned);
-          }
-
           user.referredByUsername = refUser.username || 'пользователя';
+
+          // Реферальный бонус пригласившему теперь начисляется не сразу,
+          // а после активности нового игрока: 100 тапов или 10 000 totalEarned.
+          user.referredByBonusPaid = false;
+
+          user.balance = roundOnix(Number(user.balance || 0) + economyConfig.referredUserReward);
+          addEarnings(user, economyConfig.referredUserReward);
+
+          addTransaction(
+            user,
+            'income_referral',
+            economyConfig.referredUserReward,
+            'Бонус за вход по ссылке'
+          );
+
+          applyAchievements(user);
+          applyRankBonuses(user);
+          user.level = calculateLevel(user.totalEarned);
 
           await refUser.save();
         }
       }
 
-      await user.save();
+      const referralBonus = await tryPayQualifiedReferralBonus(user);
+
+    await user.save();
     } else {
       normalizeUserFields(user);
 
@@ -1381,7 +1498,9 @@ router.post('/create', async (req, res) => {
       // lastSeenAt здесь НЕ обновляем.
       // Иначе offline income не успеет посчитаться в GET /:telegramId.
 
-      await user.save();
+      const referralBonus = await tryPayQualifiedReferralBonus(user);
+
+    await user.save();
     }
 
     return res.json({
@@ -1454,6 +1573,8 @@ router.post('/save', async (req, res) => {
         withdrawalRequests: [],
         seasonBadges: [],
         isSuspicious: false,
+        isFrozen: false,
+        frozenReason: '',
         suspiciousReasons: [],
 
         tapLevel: 1,
@@ -1486,6 +1607,8 @@ router.post('/save', async (req, res) => {
 
     user.updatedAt = new Date();
     user.lastSeenAt = Date.now();
+
+    const referralBonus = await tryPayQualifiedReferralBonus(user);
 
     await user.save();
 
@@ -1526,6 +1649,9 @@ router.post('/buy-upgrade', async (req, res) => {
     }
 
     normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
 
     const now = Date.now();
     const lastUpgradeBuyAt = Number(user.lastUpgradeBuyAt || 0);
@@ -1597,6 +1723,8 @@ router.post('/buy-upgrade', async (req, res) => {
     user.updatedAt = new Date();
     user.lastSeenAt = now;
 
+    const referralBonus = await tryPayQualifiedReferralBonus(user);
+
     await user.save();
 
     return res.json({
@@ -1623,6 +1751,98 @@ router.post('/buy-upgrade', async (req, res) => {
 
 
 
+
+function addSuspiciousReason(user, reason) {
+  if (!user.suspiciousReasons) user.suspiciousReasons = [];
+  if (user.referredByBonusPaid === undefined || user.referredByBonusPaid === null) {
+    user.referredByBonusPaid = false;
+  }
+  if (user.referredByQualifiedAt === undefined || user.referredByQualifiedAt === null) {
+    user.referredByQualifiedAt = null;
+  }
+  if (user.isFrozen === undefined || user.isFrozen === null) {
+    user.isFrozen = false;
+  }
+  if (user.frozenReason === undefined || user.frozenReason === null) {
+    user.frozenReason = '';
+  }
+
+  if (!user.suspiciousReasons.includes(reason)) {
+    user.suspiciousReasons.push(reason);
+  }
+
+  user.isSuspicious = true;
+}
+
+function ensureUserNotFrozen(user, res) {
+  if (user.isFrozen) {
+    return res.status(403).json({
+      message: user.frozenReason || 'Аккаунт заморожен',
+    });
+  }
+
+  return null;
+}
+
+function isReferralQualified(user) {
+  return Number(user.totalTaps || 0) >= 100 || Number(user.totalEarned || 0) >= 10000;
+}
+
+async function tryPayQualifiedReferralBonus(user) {
+  if (!user.referredBy || user.referredByBonusPaid) return null;
+  if (!isReferralQualified(user)) return null;
+
+  const refUser = await User.findOne({
+    telegramId: user.referredBy,
+  });
+
+  if (!refUser) {
+    user.referredByBonusPaid = true;
+    return null;
+  }
+
+  normalizeUserFields(refUser);
+
+  const now = Date.now();
+  const economyConfig = getEconomyConfig();
+
+  if (!canReceivePaidReferralBonus(refUser, now)) {
+    addSuspiciousReason(refUser, 'referral_bonus_limit_reached');
+    refUser.updatedAt = new Date();
+    await refUser.save();
+    return null;
+  }
+
+  refUser.dailyReferralBonusCount = Number(refUser.dailyReferralBonusCount || 0) + 1;
+  refUser.hourlyReferralBonusCount = Number(refUser.hourlyReferralBonusCount || 0) + 1;
+  refUser.balance = roundOnix(Number(refUser.balance || 0) + economyConfig.referralReward);
+  addEarnings(refUser, economyConfig.referralReward);
+  refUser.lastReferralUsername = user.username || 'новый пользователь';
+
+  addTransaction(
+    refUser,
+    'income_referral',
+    economyConfig.referralReward,
+    `Реферальный бонус за активного друга ${refUser.dailyReferralBonusCount}/${economyConfig.maxPaidReferralsPerDay}`
+  );
+
+  applyAchievements(refUser);
+  applyRankBonuses(refUser);
+  refUser.level = calculateLevel(refUser.totalEarned);
+  refUser.updatedAt = new Date();
+
+  user.referredByBonusPaid = true;
+  user.referredByQualifiedAt = now;
+
+  await refUser.save();
+
+  return {
+    referrerTelegramId: refUser.telegramId,
+    referrerUsername: refUser.username || 'Пользователь',
+    reward: economyConfig.referralReward,
+  };
+}
+
 // REQUEST WITHDRAWAL — creates a pending withdrawal request
 router.post('/request-withdrawal', async (req, res) => {
   try {
@@ -1648,6 +1868,9 @@ router.post('/request-withdrawal', async (req, res) => {
     }
 
     normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
 
     const hasPendingWithdrawal = user.withdrawalRequests.some(
       (request) => request.status === 'pending'
@@ -1740,6 +1963,9 @@ router.post('/buy-perk', async (req, res) => {
     }
 
     normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
 
     if (user.ownedPerks.includes(perk.id)) {
       return res.status(400).json({
@@ -2073,6 +2299,9 @@ router.post('/mine-tick', async (req, res) => {
 
     normalizeUserFields(user);
 
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
+
     const now = Date.now();
     const lastMineTickAt = Number(user.lastMineTickAt || 0);
     const elapsedMs = now - lastMineTickAt;
@@ -2256,6 +2485,9 @@ router.post('/tap', async (req, res) => {
     }
 
     normalizeUserFields(user);
+
+    const frozenResponse = ensureUserNotFrozen(user, res);
+    if (frozenResponse) return frozenResponse;
 
     const energyCost = getEnergyCost(user);
 
