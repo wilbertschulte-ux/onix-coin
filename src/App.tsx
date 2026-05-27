@@ -694,6 +694,8 @@ function App() {
   const [adminActionReason, setAdminActionReason] = useState('');
   const [adminSecurityLogs, setAdminSecurityLogs] = useState<AdminSecurityLog[]>([]);
   const [adminSecurityLogsVisible, setAdminSecurityLogsVisible] = useState(false);
+  const [launchChecklistVisible, setLaunchChecklistVisible] = useState(false);
+  const [backendHealth, setBackendHealth] = useState<any>(null);
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
   const [channelJoined, setChannelJoined] = useState(false);
 
@@ -1200,6 +1202,44 @@ function App() {
     }
   };
 
+  const syncUserFromResponse = (user: any, fallbackData: any = {}) => {
+    if (!user) return;
+
+    setBalance(user.balance || 0);
+    setUsername(user.username || username || 'Пользователь');
+    setWeeklyEarned(Number(user.weeklyEarned || 0));
+    setEnergy(user.energy ?? energy);
+    setMaxEnergy(user.maxEnergy ?? maxEnergy);
+    setTapPower(user.tapPower ?? tapPower);
+    setEnergyRecharge(user.energyRecharge ?? energyRecharge);
+    setAutoclickers(user.autoclickers ?? autoclickers);
+    setTotalEarned(user.totalEarned || totalEarned);
+    setLevel(user.level || level);
+    setReferralsCount(user.referralsCount || referralsCount);
+    setReferralLimit(user.referralLimit || fallbackData.referralLimit || referralLimit);
+    setCompletedTasks(user.completedTasks || completedTasks);
+    setOwnedPerks(user.ownedPerks || ownedPerks);
+    setPerkLevels(normalizePerkLevels(user.perkLevels));
+    setDailyStreak(Number(user.dailyStreak || dailyStreak));
+    setTransactions(user.transactions || transactions);
+    setAchievements(user.achievements || fallbackData.achievements || achievements);
+    setActiveBoost(normalizeBoost(user.activeBoost));
+    setBoostEndTime(Number(user.boostEndTime || 0));
+    setTapLevel(user.tapLevel || tapLevel);
+    setMinerLevel(user.minerLevel || minerLevel);
+    setEnergyLevel(user.energyLevel || energyLevel);
+    setRechargeLevel(user.rechargeLevel || rechargeLevel);
+    setWithdrawalRequests(user.withdrawalRequests || withdrawalRequests);
+    setLastChestReward(user.chestStats?.lastReward || lastChestReward);
+    applyUserStats(user);
+  };
+
+  const refreshAfterAction = async () => {
+    try {
+      await loadMissions();
+    } catch {}
+  };
+
   const buyUpgrade = async (type: 'tap' | 'energy' | 'recharge' | 'miner') => {
     const telegramId = getTelegramId();
 
@@ -1244,6 +1284,7 @@ function App() {
       applyUserStats(user);
       showRewardPopupFromResponse(response.data);
       showReferralBonusPaidToast(response.data);
+      refreshAfterAction();
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
@@ -1287,6 +1328,8 @@ function App() {
       );
 
       showRewardPopupFromResponse(response.data);
+      refreshAfterAction();
+      refreshAfterAction();
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось открыть сундук', 'error');
     }
@@ -1391,6 +1434,7 @@ function App() {
       applyUserStats(user);
       showRewardPopupFromResponse(response.data);
       showReferralBonusPaidToast(response.data);
+      refreshAfterAction();
 
       try {
         WebApp.HapticFeedback?.notificationOccurred('success');
@@ -1961,6 +2005,7 @@ function App() {
       setTransactions(user.transactions || []);
       setWithdrawalRequests(user.withdrawalRequests || []);
       showToast('✅ Заявка на вывод создана', 'success');
+      refreshAfterAction();
     } catch (error: any) {
       showToast(error?.response?.data?.message || 'Не удалось создать заявку', 'error');
     } finally {
@@ -3927,6 +3972,25 @@ function App() {
               </button>
             )}
 
+            {isAdmin() && (
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await axios.get(`${API_URL}/health`);
+                    setBackendHealth(response.data);
+                  } catch {
+                    setBackendHealth({ ok: false });
+                  }
+
+                  setLaunchChecklistVisible(true);
+                }}
+                disabled={isAdminLoading}
+                className="mt-3 w-full rounded-2xl bg-[#0a0f1c] py-4 text-lg font-bold text-emerald-400 active:scale-95 disabled:opacity-50"
+              >
+                🚀 Админ: launch checklist
+              </button>
+            )}
+
 
 
           </div>
@@ -4404,6 +4468,93 @@ function App() {
 
 
 
+
+
+      {launchChecklistVisible && (
+        <div className="fixed inset-0 z-[89] flex items-center justify-center bg-black/70 px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-emerald-400/30 bg-[#111827] p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-white">🚀 Публичный запуск</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Быстрая проверка перед релизом
+                </p>
+              </div>
+
+              <button
+                onClick={() => setLaunchChecklistVisible(false)}
+                className="text-2xl text-gray-400"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                {
+                  title: 'Backend health',
+                  ok: Boolean(backendHealth?.ok),
+                  text: backendHealth?.ok
+                    ? `OK · users: ${backendHealth.users || 0}`
+                    : 'Проверь Render logs',
+                },
+                {
+                  title: 'Telegram Mini App',
+                  ok: true,
+                  text: 'Проверить кнопку запуска и /start',
+                },
+                {
+                  title: 'Кошелёк и вывод',
+                  ok: true,
+                  text: 'Проверить создание заявки и админку вывода',
+                },
+                {
+                  title: 'Рефералка',
+                  ok: true,
+                  text: 'Проверить: +15 000 новому, +75 000 после 100 тапов',
+                },
+                {
+                  title: 'Cron сезона',
+                  ok: true,
+                  text: 'GitHub Actions / cron должен вызывать weekly prizes',
+                },
+                {
+                  title: 'Антиабуз',
+                  ok: true,
+                  text: 'Проверить suspicious, ban/unban и security logs',
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl bg-[#0a0f1c] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-bold text-white">{item.title}</p>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        item.ok
+                          ? 'bg-emerald-500/10 text-emerald-400'
+                          : 'bg-red-500/10 text-red-400'
+                      }`}
+                    >
+                      {item.ok ? 'OK' : 'CHECK'}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-sm text-gray-400">{item.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setLaunchChecklistVisible(false)}
+              className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+            >
+              Готово
+            </button>
+          </div>
+        </div>
+      )}
 
       {adminSearchVisible && (
         <div className="fixed inset-0 z-[88] flex items-center justify-center bg-black/70 px-4">
