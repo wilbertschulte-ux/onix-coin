@@ -5151,7 +5151,7 @@ function App() {
       )}
 
       {activeTab === 'tasks' && (
-        <div className="px-5 mt-8 space-y-4">
+        <div className="onix-tasks-screen px-5 mt-8 space-y-4">
           <h2 className="text-2xl font-bold mb-6">📋 Задания</h2>
 
           <div
