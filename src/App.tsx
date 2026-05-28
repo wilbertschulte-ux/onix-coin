@@ -1300,6 +1300,102 @@ body,
   }
 }
 
+
+/* Step 9: launch / roadmap screen polish */
+.onix-launch-screen {
+  padding-top: 6px;
+  padding-bottom: 24px;
+}
+
+.onix-launch-screen > .rounded-3xl {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 78% 8%, rgba(168, 85, 247, 0.22), transparent 32%),
+    radial-gradient(circle at 8% 12%, rgba(6, 182, 212, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.86), rgba(8, 15, 23, 0.96)) !important;
+  border-color: rgba(136, 92, 246, 0.3) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.45),
+    0 0 42px rgba(136, 92, 246, 0.14),
+    inset 0 0 34px rgba(255, 255, 255, 0.025) !important;
+}
+
+.onix-launch-screen > .rounded-3xl::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.12), transparent),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.1), transparent 34%);
+  opacity: 0.7;
+}
+
+.onix-launch-screen > .rounded-3xl > * {
+  position: relative;
+  z-index: 1;
+}
+
+.onix-launch-screen h2,
+.onix-launch-screen h3 {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.38);
+}
+
+.onix-launch-screen > .rounded-3xl:first-child {
+  min-height: 235px;
+  background:
+    radial-gradient(circle at 86% 20%, rgba(250, 204, 21, 0.14), transparent 24%),
+    radial-gradient(circle at 18% 4%, rgba(168, 85, 247, 0.28), transparent 34%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.92), rgba(8, 15, 23, 0.98)) !important;
+}
+
+.onix-launch-screen > .rounded-3xl:first-child .h-14,
+.onix-launch-screen > .rounded-3xl:last-child .h-16 {
+  background:
+    radial-gradient(circle, rgba(250, 204, 21, 0.9), rgba(168, 85, 247, 0.55) 62%, rgba(6, 182, 212, 0.14)) !important;
+  color: #080F17 !important;
+  box-shadow:
+    0 0 28px rgba(250, 204, 21, 0.22),
+    0 0 36px rgba(168, 85, 247, 0.28),
+    inset 0 0 18px rgba(255, 255, 255, 0.18);
+}
+
+.onix-launch-screen .grid .rounded-2xl,
+.onix-launch-screen .space-y-3 > .rounded-2xl,
+.onix-launch-screen .space-y-3 > .flex {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(8, 15, 23, 0.94)) !important;
+  border: 1px solid rgba(6, 182, 212, 0.12);
+  box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.025);
+}
+
+.onix-launch-screen .space-y-3 > .rounded-2xl:hover,
+.onix-launch-screen .space-y-3 > .flex:hover {
+  border-color: rgba(168, 85, 247, 0.28);
+  box-shadow:
+    inset 0 0 24px rgba(255, 255, 255, 0.035),
+    0 0 24px rgba(136, 92, 246, 0.12);
+}
+
+.onix-launch-screen button.bg-yellow-400 {
+  background: linear-gradient(135deg, #7c3aed, #a855f7 55%, #06b6d4) !important;
+  color: #fff !important;
+  border: 1px solid rgba(216, 180, 254, 0.55);
+  box-shadow:
+    0 0 22px rgba(168, 85, 247, 0.42),
+    inset 0 0 16px rgba(255, 255, 255, 0.12);
+}
+
+.onix-launch-screen > .rounded-3xl:last-child {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.16), transparent 34%),
+    radial-gradient(circle at 82% 24%, rgba(6, 182, 212, 0.14), transparent 28%),
+    linear-gradient(180deg, rgba(88, 28, 135, 0.32), rgba(8, 15, 23, 0.96)) !important;
+}
+
 `;
 
 
@@ -4527,7 +4623,7 @@ function App() {
       )}
 
       {activeTab === 'launch' && (
-        <div className="px-5 mt-8 space-y-5">
+        <div className="onix-launch-screen px-5 mt-8 space-y-5">
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 text-left shadow-xl">
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-400 text-3xl">
