@@ -438,6 +438,41 @@ body {
   display: none !important;
 }
 
+
+
+/* Step 1: fixed Telegram bottom navigation + safer mobile viewport */
+.onix-app-bg {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+}
+
+.onix-nav {
+  position: fixed !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  top: auto !important;
+  z-index: 90 !important;
+  max-width: 430px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 6px !important;
+  border-radius: 22px !important;
+}
+
+.onix-nav button {
+  min-width: 58px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  border-radius: 17px !important;
+}
+
+.onix-nav button svg {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.55));
+}
+
+.onix-header {
+  border-bottom-color: rgba(136, 92, 246, 0.16) !important;
+}
 `;
 
 
