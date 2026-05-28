@@ -632,6 +632,103 @@ body,
     font-size: 13px;
   }
 }
+
+/* Step 3: upgrades / boosts screen polish */
+.onix-boosts-screen {
+  margin-top: 16px !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  padding-bottom: 24px;
+}
+
+.onix-boosts-screen > .rounded-3xl,
+.onix-boosts-screen .space-y-4 > .rounded-3xl,
+.onix-boosts-screen .mb-5.rounded-3xl,
+.onix-boosts-screen .mb-4.rounded-3xl {
+  border-color: rgba(136, 92, 246, 0.26) !important;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(136, 92, 246, 0.22), transparent 34%),
+    radial-gradient(circle at 88% 20%, rgba(6, 182, 212, 0.10), transparent 36%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.82), rgba(8, 15, 23, 0.96)) !important;
+  box-shadow:
+    0 18px 52px rgba(0,0,0,0.38),
+    0 0 28px rgba(136, 92, 246, 0.09),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+
+.onix-boosts-screen h2 {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 18px rgba(136, 92, 246, 0.28);
+}
+
+.onix-boosts-screen h3 {
+  letter-spacing: -0.01em;
+}
+
+.onix-boosts-screen .grid.grid-cols-2 > .rounded-2xl,
+.onix-boosts-screen .rounded-2xl.bg-\[\#0a0f1c\] {
+  border: 1px solid rgba(136, 92, 246, 0.16);
+  background: rgba(8, 15, 23, 0.74) !important;
+  box-shadow: inset 0 0 18px rgba(136, 92, 246, 0.05);
+}
+
+.onix-boost-tabs {
+  top: 10px !important;
+  border: 1px solid rgba(136, 92, 246, 0.28);
+  background: rgba(8, 15, 23, 0.82) !important;
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 14px 36px rgba(0,0,0,0.32),
+    inset 0 0 20px rgba(136, 92, 246, 0.08) !important;
+}
+
+.onix-boost-tabs button {
+  border-radius: 14px !important;
+  letter-spacing: 0.04em;
+}
+
+.onix-boosts-screen button.bg-yellow-400,
+.onix-boost-tabs button.bg-yellow-400 {
+  background: linear-gradient(135deg, #06B6D4 0%, #885CF6 48%, #A855F7 100%) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 22px rgba(136, 92, 246, 0.34),
+    inset 0 1px 0 rgba(255,255,255,0.22) !important;
+}
+
+.onix-boosts-screen button:disabled {
+  border: 1px solid rgba(148, 163, 184, 0.10);
+  background: rgba(31, 41, 55, 0.78) !important;
+}
+
+.onix-boosts-screen .h-3.overflow-hidden.rounded-full {
+  height: 8px !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid rgba(136, 92, 246, 0.12);
+}
+
+.onix-boosts-screen .h-full.rounded-full.bg-yellow-400 {
+  background: linear-gradient(90deg, #06B6D4, #885CF6, #A855F7) !important;
+  box-shadow: 0 0 16px rgba(136, 92, 246, 0.52);
+}
+
+@media (max-width: 380px) {
+  .onix-boosts-screen {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .onix-boosts-screen > .rounded-3xl,
+  .onix-boosts-screen .space-y-4 > .rounded-3xl {
+    padding: 16px !important;
+  }
+
+  .onix-boosts-screen h2 {
+    font-size: 1.25rem !important;
+  }
+}
+
 `;
 
 
@@ -3943,7 +4040,7 @@ function App() {
 
 
       {activeTab === 'boosts' && (
-        <div className="px-5 mt-8 space-y-8">
+        <div className="onix-boosts-screen px-5 mt-8 space-y-8">
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
@@ -4036,7 +4133,7 @@ function App() {
 
 
 
-          <div className="sticky top-32 z-40 rounded-2xl bg-[#111827] p-1 shadow-xl">
+          <div className="onix-boost-tabs sticky top-32 z-40 rounded-2xl bg-[#111827] p-1 shadow-xl">
             <div className="grid grid-cols-3 gap-1">
               {[
                 { id: 'upgrades', label: 'Апгрейды' },
