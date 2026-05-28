@@ -5840,9 +5840,25 @@ function App() {
           </div>
 
           <div className={boostSubTab === 'upgrades' ? '' : 'hidden'}>
-            <h2 className="text-2xl font-bold mb-4">⬆️ Апгрейды</h2>
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-purple-200/70">
+                  ONIX Lab
+                </p>
+                <h2 className="mt-1 text-2xl font-black text-white drop-shadow-[0_0_16px_rgba(168,85,247,0.45)]">
+                  Улучшения
+                </h2>
+              </div>
 
-            <div className="space-y-4">
+              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-right shadow-[0_0_24px_rgba(34,211,238,0.12)]">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-100/70">Баланс</p>
+                <p className="text-sm font-black text-cyan-100">
+                  {formatOnix(balance)}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
               {upgradeCards.map((upgrade) => {
                 const canBuy = balance >= upgrade.cost;
                 const progressToBuy = Math.min((balance / upgrade.cost) * 100, 100);
@@ -5850,88 +5866,93 @@ function App() {
                 return (
                   <div
                     key={upgrade.type}
-                    className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl"
+                    className="group relative overflow-hidden rounded-[28px] border border-violet-300/18 bg-[linear-gradient(145deg,rgba(23,18,46,0.96),rgba(8,13,31,0.98))] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.06)]"
                   >
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
-                          {upgrade.icon}
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-purple-500/20 blur-2xl" />
+                    <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl" />
+
+                    <div className="relative flex items-start gap-3">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px] border border-yellow-200/35 bg-[radial-gradient(circle_at_30%_20%,#fff7ad,#f6b72d_48%,#7c3aed_100%)] text-2xl shadow-[0_0_28px_rgba(250,204,21,0.22)]">
+                        {upgrade.icon}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-lg font-black text-white">
+                              {upgrade.title}
+                            </h3>
+                            <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-300/78">
+                              {upgrade.description}
+                            </p>
+                          </div>
+
+                          <div className="shrink-0 rounded-2xl border border-purple-300/20 bg-black/24 px-3 py-2 text-right">
+                            <p className="text-[10px] uppercase tracking-[0.16em] text-purple-100/60">LVL</p>
+                            <p className="text-base font-black text-yellow-300">
+                              {upgrade.level}
+                            </p>
+                          </div>
                         </div>
 
-                        <div>
-                          <h3 className="text-xl font-bold text-white">
-                            {upgrade.title}
-                          </h3>
-                          <p className="text-sm text-gray-400">
-                            {upgrade.description}
-                          </p>
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <div className="rounded-2xl border border-white/7 bg-white/[0.045] p-3">
+                            <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">
+                              {upgrade.currentLabel}
+                            </p>
+                            <p className="mt-1 text-sm font-black text-white">
+                              {upgrade.currentValue}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.055] p-3">
+                            <p className="text-[10px] uppercase tracking-[0.14em] text-emerald-100/65">
+                              {upgrade.nextLabel}
+                            </p>
+                            <p className="mt-1 text-sm font-black text-emerald-300">
+                              {upgrade.nextValue}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
-                        <p className="text-xs text-gray-400">Уровень</p>
-                        <p className="font-bold text-yellow-400">
-                          {upgrade.level}
-                        </p>
-                      </div>
-                    </div>
+                        <div className="mt-3 rounded-2xl border border-cyan-300/12 bg-black/26 p-3">
+                          <div className="mb-2 flex items-center justify-between gap-2 text-xs">
+                            <span className="font-bold text-slate-300">
+                              {upgrade.cost.toLocaleString('ru-RU')} ONIX
+                            </span>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
-                        <p className="text-xs text-gray-400">
-                          {upgrade.currentLabel}
-                        </p>
-                        <p className="mt-1 text-sm font-bold text-white">
-                          {upgrade.currentValue}
-                        </p>
-                      </div>
+                            <span
+                              className={
+                                canBuy
+                                  ? 'font-black text-emerald-300'
+                                  : 'font-bold text-slate-500'
+                              }
+                            >
+                              {canBuy
+                                ? 'Готово к покупке'
+                                : `Нужно ещё ${(upgrade.cost - balance).toLocaleString(
+                                    'ru-RU'
+                                  )}`}
+                            </span>
+                          </div>
 
-                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
-                        <p className="text-xs text-gray-400">
-                          {upgrade.nextLabel}
-                        </p>
-                        <p className="mt-1 text-sm font-bold text-emerald-400">
-                          {upgrade.nextValue}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-2xl bg-[#0a0f1c] p-4">
-                      <div className="mb-2 flex items-center justify-between text-sm">
-                        <span className="text-gray-400">
-                          Цена: {upgrade.cost.toLocaleString('ru-RU')} ONIX
-                        </span>
-
-                        <span
-                          className={
-                            canBuy
-                              ? 'font-bold text-emerald-400'
-                              : 'font-bold text-gray-400'
-                          }
-                        >
-                          {canBuy
-                            ? 'Можно купить'
-                            : `Не хватает ${(upgrade.cost - balance).toLocaleString(
-                                'ru-RU'
-                              )}`}
-                        </span>
-                      </div>
-
-                      <div className="h-3 overflow-hidden rounded-full bg-gray-800">
-                        <div
-                          className="h-full rounded-full bg-yellow-400 transition-all"
-                          style={{ width: `${progressToBuy}%` }}
-                        />
+                          <div className="h-2.5 overflow-hidden rounded-full bg-slate-950/80 ring-1 ring-white/5">
+                            <div
+                              className="h-full rounded-full bg-[linear-gradient(90deg,#7c3aed,#22d3ee,#facc15)] shadow-[0_0_16px_rgba(34,211,238,0.35)] transition-all"
+                              style={{ width: `${progressToBuy}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     <button
                       onClick={() => buyUpgrade(upgrade.type)}
                       disabled={!canBuy}
-                      className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
+                      className={`relative mt-4 w-full overflow-hidden rounded-2xl py-3.5 text-base font-black transition active:scale-[0.98] ${
                         canBuy
-                          ? 'bg-yellow-400 text-black active:scale-95'
-                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                          ? 'border border-yellow-200/40 bg-[linear-gradient(135deg,#facc15,#f97316)] text-slate-950 shadow-[0_0_26px_rgba(250,204,21,0.26)]'
+                          : 'border border-white/8 bg-white/[0.055] text-slate-500 cursor-not-allowed'
                       }`}
                     >
                       {canBuy ? 'Купить улучшение' : 'Недостаточно ONIX'}
