@@ -2029,6 +2029,123 @@ body,
   }
 }
 
+
+/* Step 26: restore home body after compact island */
+.onix-home-locked {
+  min-height: 100vh !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.onix-home-locked .onix-header {
+  min-height: 62px !important;
+  margin-top: 0 !important;
+}
+
+.onix-home-locked .onix-island-header {
+  width: min(76vw, 292px) !important;
+  min-height: 62px !important;
+  padding: 12px 18px 11px !important;
+}
+
+.onix-home-locked .onix-home-screen {
+  margin-top: 18px !important;
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  padding-bottom: calc(158px + env(safe-area-inset-bottom)) !important;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  min-height: 218px !important;
+  padding: 18px 16px 16px !important;
+  border-radius: 28px !important;
+  overflow: hidden !important;
+}
+
+.onix-home-locked .onix-home-user-row {
+  align-items: flex-start !important;
+}
+
+.onix-home-locked .onix-home-balance-row {
+  margin-top: 12px !important;
+  display: block !important;
+}
+
+.onix-home-locked .onix-home-balance-label-pill {
+  min-height: 34px !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+.onix-home-locked .onix-home-balance-value {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 12px !important;
+  font-size: clamp(2.55rem, 12.4vw, 4rem) !important;
+  line-height: 1 !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  margin-top: 24px !important;
+  width: min(66vw, 268px) !important;
+  height: min(66vw, 268px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  margin-top: 12px !important;
+  padding: 0 2px 18px !important;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin-top: 7px !important;
+  height: 9px !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 14px !important;
+  min-height: 52px !important;
+}
+
+.onix-home-locked .onix-nav {
+  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  z-index: 110 !important;
+}
+
+.onix-home-locked .onix-floating-number {
+  z-index: 180 !important;
+}
+
+@media (max-height: 760px) {
+  .onix-home-locked .onix-home-screen {
+    margin-top: 14px !important;
+    padding-bottom: calc(148px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .onix-home-locked .onix-home-hero-card {
+    min-height: 206px !important;
+    padding: 16px 15px 14px !important;
+  }
+
+  .onix-home-locked .onix-home-balance-value {
+    font-size: clamp(2.35rem, 11.5vw, 3.7rem) !important;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    margin-top: 18px !important;
+    width: min(63vw, 254px) !important;
+    height: min(63vw, 254px) !important;
+  }
+
+  .onix-home-locked .onix-home-energy-block {
+    margin-top: 8px !important;
+  }
+}
 `;
 
 
@@ -4332,118 +4449,7 @@ function App() {
 
   const downloadUsersCsv = () => {
     const telegramId = getTelegramId();
-    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}
-/* Step 25: keep island, restore home proportions */
-.onix-home-locked {
-  min-height: 100vh;
-  height: auto;
-  max-height: none;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.onix-home-locked .onix-header {
-  min-height: 58px;
-}
-
-.onix-home-locked .onix-island-header {
-  width: min(76vw, 292px);
-  min-height: 62px;
-  padding: 12px 18px 11px;
-}
-
-.onix-home-locked .onix-home-screen {
-  margin-top: 18px !important;
-  height: auto !important;
-  min-height: auto !important;
-  padding-left: 14px;
-  padding-right: 14px;
-  padding-bottom: calc(142px + env(safe-area-inset-bottom));
-  overflow: visible !important;
-}
-
-.onix-home-locked .onix-home-hero-card {
-  min-height: 218px;
-  padding: 18px 16px 16px !important;
-  border-radius: 28px;
-  margin-top: 0 !important;
-}
-
-.onix-home-locked .onix-home-balance-row {
-  margin-top: 12px;
-}
-
-.onix-home-locked .onix-home-balance-label-pill {
-  min-height: 34px;
-}
-
-.onix-home-locked .onix-home-balance-value {
-  display: block !important;
-  margin-top: 12px !important;
-  font-size: clamp(2.55rem, 12.4vw, 4rem) !important;
-  line-height: 1 !important;
-  visibility: visible !important;
-}
-
-.onix-home-locked .onix-home-screen .onix-tap-orb {
-  margin-top: 24px !important;
-  width: min(66vw, 268px) !important;
-  height: min(66vw, 268px) !important;
-}
-
-.onix-home-locked .onix-home-energy-block {
-  margin-top: 12px !important;
-  padding: 0 2px 14px;
-}
-
-.onix-home-locked .onix-home-energy-track {
-  margin-top: 7px !important;
-  height: 9px;
-}
-
-.onix-home-locked .onix-home-tap-button {
-  margin-top: 14px !important;
-  min-height: 52px;
-}
-
-.onix-home-locked .onix-nav {
-  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
-}
-
-.onix-home-locked .onix-floating-number {
-  z-index: 120 !important;
-}
-
-.onix-home-locked .fixed.left-0.right-0.top-4 {
-  z-index: 140 !important;
-}
-
-@media (max-height: 760px) {
-  .onix-home-locked .onix-home-screen {
-    margin-top: 14px !important;
-    padding-bottom: calc(136px + env(safe-area-inset-bottom));
-  }
-
-  .onix-home-locked .onix-home-hero-card {
-    min-height: 206px;
-    padding: 16px 15px 14px !important;
-  }
-
-  .onix-home-locked .onix-home-balance-value {
-    font-size: clamp(2.35rem, 11.5vw, 3.7rem) !important;
-  }
-
-  .onix-home-locked .onix-home-screen .onix-tap-orb {
-    margin-top: 18px !important;
-    width: min(63vw, 254px) !important;
-    height: min(63vw, 254px) !important;
-  }
-
-  .onix-home-locked .onix-home-energy-block {
-    margin-top: 8px !important;
-  }
-}
-`;
+    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}`;
 
     window.open(url, '_blank');
   };
@@ -5143,7 +5149,7 @@ function App() {
   return (
     <div className={`onix-app-bg min-h-screen text-white ${activeTab === 'home' ? 'onix-home-locked' : ''}`}> 
       <style>{ONIX_THEME_STYLE}</style>
-      <div className="fixed left-0 right-0 top-4 z-[100] flex flex-col items-center gap-2 px-4">
+      <div className="fixed left-0 right-0 top-4 z-[240] flex flex-col items-center gap-2 px-4">
         {toastMessages.map((toast) => (
           <div
             key={toast.id}
