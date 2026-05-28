@@ -1722,6 +1722,146 @@ body,
   opacity: 0.45;
 }
 
+
+.onix-header {
+  margin-top: -8px;
+  padding-top: 14px !important;
+  padding-bottom: 8px !important;
+}
+
+.onix-brand-mark {
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+}
+
+.onix-brand-img {
+  width: 54px;
+  height: 54px;
+}
+
+.onix-brand-title {
+  font-size: clamp(2.15rem, 8vw, 2.8rem) !important;
+  line-height: 0.84;
+  letter-spacing: 0.035em;
+}
+
+.onix-home-screen {
+  margin-top: 10px !important;
+}
+
+.onix-home-hero-card {
+  padding: 14px 14px 12px;
+  border-radius: 26px;
+}
+
+.onix-home-user-row {
+  gap: 12px;
+}
+
+.onix-home-avatar {
+  width: 50px;
+  height: 50px;
+}
+
+.onix-home-name-badge-row {
+  gap: 7px;
+}
+
+.onix-home-inline-badge {
+  padding: 3px 10px;
+  font-size: 10px;
+}
+
+.onix-home-rank-simple-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.onix-home-rank-inline-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.55));
+}
+
+.onix-home-rank-simple-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: #DDEAFE;
+  letter-spacing: 0.02em;
+}
+
+.onix-home-mini-rank-row,
+.onix-home-level-row,
+.onix-home-balance-symbol {
+  display: none !important;
+}
+
+.onix-home-balance-row {
+  margin-top: 8px;
+}
+
+.onix-home-balance-pill-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.onix-home-balance-label,
+.onix-home-balance-label-pill {
+  margin: 0;
+}
+
+.onix-home-balance-label-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(250, 204, 21, 0.32);
+  background: rgba(250, 204, 21, 0.08);
+  color: #FACC15;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 14px rgba(250, 204, 21, 0.08), 0 0 20px rgba(250, 204, 21, 0.08);
+}
+
+.onix-home-balance-value {
+  margin-top: 10px;
+  font-size: clamp(2.2rem, 11vw, 3.55rem);
+  letter-spacing: -0.09em;
+}
+
+.onix-home-screen .onix-tap-orb {
+  margin-top: 12px !important;
+  width: min(63vw, 258px) !important;
+  height: min(63vw, 258px) !important;
+}
+
+.onix-home-energy-block {
+  margin-top: -2px;
+  padding: 0 2px 12px;
+}
+
+.onix-home-energy-text {
+  font-size: 11px;
+}
+
+.onix-home-energy-track {
+  margin-top: 5px;
+  height: 8px;
+}
+
+.onix-home-tap-button {
+  margin-top: 8px;
+  min-height: 48px;
+}
+
 @media (max-width: 380px) {
   .onix-nav {
     width: min(calc(100vw - 14px), 410px) !important;
@@ -4849,29 +4989,18 @@ function App() {
                   <p className="onix-home-username truncate">{username}</p>
                   <span className="onix-home-inline-badge">{selectedTitle || rankInfo.currentRank.name}</span>
                 </div>
-                <div className="onix-home-mini-rank-row">
-                  <div className="onix-home-mini-rank-head">
-                    <span className="onix-home-mini-rank-name">{rankInfo.currentRank.name}</span>
-                    <span className="onix-home-mini-rank-meta">
-                      {rankInfo.nextRank
-                        ? `${rankProgressText} до ${rankInfo.nextRank.name}`
-                        : 'Максимальный ранг'}
-                    </span>
-                  </div>
-                  <div className="onix-home-mini-track">
-                    <div
-                      className="onix-home-mini-fill"
-                      style={{ width: `${Math.min(rankProgress, 100)}%` }}
-                    />
-                  </div>
+                <div className="onix-home-rank-simple-row">
+                  <img src={onixLogoCrystal} alt="$ONIX rank emblem" className="onix-home-rank-inline-icon" draggable={false} />
+                  <span className="onix-home-rank-simple-text">{rankInfo.currentRank.name}</span>
                 </div>
               </div>
             </div>
 
             <div className="onix-home-balance-row">
-              <p className="onix-home-balance-label">Баланс $ONIX</p>
+              <div className="onix-home-balance-pill-wrap">
+                <p className="onix-home-balance-label-pill">БАЛАНС $ONIX</p>
+              </div>
               <p className="onix-home-balance-value">{balance.toLocaleString('ru-RU')}</p>
-              <p className="onix-home-balance-symbol">$ONIX</p>
             </div>
           </div>
           <div
