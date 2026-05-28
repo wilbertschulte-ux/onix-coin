@@ -440,27 +440,47 @@ body {
 
 
 
-/* Step 1: fixed Telegram bottom navigation + safer mobile viewport */
+/* Step 1B: mobile shell + real fixed Telegram bottom navigation */
+html,
+body,
+#root {
+  min-height: 100%;
+  background: #050914;
+}
+
 .onix-app-bg {
-  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+  max-width: 430px;
+  width: 100%;
+  min-height: 100dvh;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+  box-shadow: 0 0 0 1px rgba(136, 92, 246, 0.22), 0 0 80px rgba(91, 33, 246, 0.28);
 }
 
 .onix-nav {
   position: fixed !important;
-  left: 10px !important;
-  right: 10px !important;
+  left: 50% !important;
+  right: auto !important;
   bottom: calc(10px + env(safe-area-inset-bottom)) !important;
   top: auto !important;
-  z-index: 90 !important;
-  max-width: 430px;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  transform: translateX(-50%);
+  z-index: 999 !important;
+  width: min(calc(100vw - 20px), 410px) !important;
+  max-width: 410px !important;
+  margin: 0 !important;
   padding: 6px !important;
   border-radius: 22px !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.onix-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .onix-nav button {
-  min-width: 58px !important;
+  min-width: 62px !important;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
   border-radius: 17px !important;
@@ -470,8 +490,147 @@ body {
   filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.55));
 }
 
+@media (min-width: 520px) {
+  body {
+    display: flex;
+    justify-content: center;
+  }
+}
+
 .onix-header {
   border-bottom-color: rgba(136, 92, 246, 0.16) !important;
+}
+
+
+/* Step 2: ONIX home screen polish */
+.onix-header {
+  margin: 10px 12px 0;
+  border: 1px solid rgba(136, 92, 246, 0.18);
+  border-radius: 26px;
+  position: sticky;
+  top: 8px;
+}
+
+.onix-header .onix-brand-title {
+  font-size: 1.35rem !important;
+  line-height: 1;
+}
+
+.onix-energy-pill {
+  min-height: 38px;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  color: #e0fbff;
+}
+
+.onix-rank-panel {
+  margin: 14px 14px 0;
+  padding: 14px !important;
+  border: 1px solid rgba(136, 92, 246, 0.22);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(136, 92, 246, 0.22), transparent 36%),
+    linear-gradient(135deg, rgba(17, 24, 39, 0.78), rgba(8, 15, 23, 0.92));
+  box-shadow:
+    0 16px 44px rgba(0,0,0,0.30),
+    inset 0 0 24px rgba(136, 92, 246, 0.06);
+}
+
+.onix-rank-panel > .flex {
+  margin-bottom: 10px !important;
+}
+
+.onix-rank-panel .text-sm {
+  font-size: 11px !important;
+}
+
+.onix-balance-panel {
+  margin: 12px 14px 0;
+  padding: 18px 14px 16px !important;
+  border: 1px solid rgba(136, 92, 246, 0.26);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(168, 85, 247, 0.24), transparent 36%),
+    radial-gradient(circle at 16% 68%, rgba(6, 182, 212, 0.14), transparent 42%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.72), rgba(8, 15, 23, 0.94));
+  box-shadow:
+    0 18px 56px rgba(0,0,0,0.36),
+    0 0 36px rgba(136, 92, 246, 0.10),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.onix-balance-panel > p:first-child {
+  color: #98f7ff !important;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 10px !important;
+}
+
+.onix-balance-number {
+  margin-top: 4px;
+  font-size: clamp(2.8rem, 14vw, 4rem) !important;
+  line-height: 0.95;
+}
+
+.onix-home-screen {
+  margin-top: 18px !important;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.onix-home-screen .onix-tap-orb {
+  width: min(78vw, 315px) !important;
+  height: min(78vw, 315px) !important;
+}
+
+.onix-clean-home-note {
+  margin-top: 18px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(6, 182, 212, 0.24);
+  background: rgba(8, 15, 23, 0.66);
+  box-shadow: 0 0 22px rgba(6, 182, 212, 0.12), inset 0 0 18px rgba(136, 92, 246, 0.08);
+}
+
+.onix-launch-card {
+  margin-top: 4px;
+  border-color: rgba(136, 92, 246, 0.28) !important;
+  background:
+    linear-gradient(145deg, rgba(17,24,39,0.82), rgba(8,15,23,0.96)) !important;
+  box-shadow:
+    0 20px 54px rgba(0,0,0,0.38),
+    0 0 32px rgba(136, 92, 246, 0.10) !important;
+}
+
+.onix-launch-card button {
+  border: 1px solid rgba(136, 92, 246, 0.16);
+}
+
+@media (max-width: 380px) {
+  .onix-header {
+    margin-left: 8px;
+    margin-right: 8px;
+    padding: 12px !important;
+  }
+
+  .onix-brand-mark {
+    width: 48px;
+    height: 48px;
+  }
+
+  .onix-header .onix-brand-title {
+    font-size: 1.1rem !important;
+  }
+
+  .onix-energy-pill {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    font-size: 13px;
+  }
 }
 `;
 
@@ -3474,7 +3633,7 @@ function App() {
   }
 
   return (
-    <div className="onix-app-bg min-h-screen text-white pb-20">
+    <div className="onix-app-bg min-h-screen text-white">
       <style>{ONIX_THEME_STYLE}</style>
       <div className="fixed left-0 right-0 top-4 z-[100] flex flex-col items-center gap-2 px-4">
         {toastMessages.map((toast) => (
@@ -3513,7 +3672,7 @@ function App() {
         </div>
       </div>
 
-      <div className="px-5 pt-4">
+      <div className="onix-rank-panel px-5 pt-4">
         <div className="flex justify-between mb-2">
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-yellow-400" />
@@ -3535,7 +3694,7 @@ function App() {
         </div>
       </div>
 
-      <div className="text-center pt-6 pb-4">
+      <div className="onix-balance-panel text-center pt-6 pb-4">
         <p className="text-gray-400 text-sm">Баланс $ONIX</p>
 
         <p className="onix-balance-number text-6xl font-black tracking-tighter">
@@ -3547,7 +3706,7 @@ function App() {
         )}
       </div>
 
-      <div className="onix-nav mx-2 sm:mx-4 p-1 rounded-2xl flex sticky top-16 z-50 overflow-x-auto">
+      <div className="onix-nav flex">
         {[
           { id: 'home', label: 'Главная', icon: Home },
           { id: 'boosts', label: 'Улучшения', icon: Zap },
@@ -3572,7 +3731,7 @@ function App() {
       </div>
 
       {activeTab === 'home' && (
-        <div className="flex flex-col items-center mt-8 relative">
+        <div className="onix-home-screen flex flex-col items-center mt-8 relative">
           <div
             onClick={handleTap}
             className={`onix-tap-orb h-64 w-64 sm:w-80 sm:h-80 rounded-full flex items-center justify-center cursor-pointer shadow-2xl transition-transform relative ${
@@ -3599,7 +3758,7 @@ function App() {
           </p>
 
           <div className="mt-8 w-full px-5">
-            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+            <div className="onix-launch-card rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
                   🚀
