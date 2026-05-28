@@ -5378,6 +5378,32 @@ body.oc-lock-home-scroll {
     min-height: 46px !important;
   }
 }
+
+/* Step 31: inline header guard */
+.onix-home-locked .oc-home-header-wrap,
+.onix-home-locked .oc-home-island,
+.onix-home-locked .oc-home-island-title,
+.onix-home-locked .oc-home-island-gem {
+  all: unset !important;
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+.onix-home-locked .onix-home-screen {
+  margin-top: 8px !important;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  margin-top: 0 !important;
+}
+
+.onix-home-locked .fixed.left-0.right-0.top-4,
+.onix-home-locked [class*="toast"] {
+  z-index: 9999 !important;
+}
 `;
 
     window.open(url, '_blank');
@@ -6095,15 +6121,72 @@ body.oc-lock-home-scroll {
         ))}
       </div>
       {activeTab === 'home' ? (
-        <div className="oc-home-header-wrap">
-          <div className="oc-home-island">
-            <span className="oc-home-island-gem" aria-hidden="true" />
-            <span className="oc-home-island-title">$ONIX COIN</span>
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 500,
+            width: '100%',
+            height: 64,
+            minHeight: 64,
+            marginTop: -10,
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            overflow: 'visible',
+          }}
+        >
+          <div
+            style={{
+              width: 'min(72vw, 292px)',
+              height: 58,
+              minHeight: 58,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              padding: '12px 18px 8px',
+              borderRadius: '0 0 26px 26px',
+              borderLeft: '1px solid rgba(136, 92, 246, 0.34)',
+              borderRight: '1px solid rgba(136, 92, 246, 0.34)',
+              borderBottom: '1px solid rgba(136, 92, 246, 0.34)',
+              background: 'linear-gradient(180deg, rgba(8, 15, 23, 0.99), rgba(17, 18, 40, 0.96))',
+              boxShadow: '0 14px 28px rgba(0,0,0,0.28), inset 0 0 22px rgba(136,92,246,0.08)',
+              overflow: 'hidden',
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 20,
+                height: 20,
+                flex: '0 0 20px',
+                display: 'block',
+                transform: 'rotate(45deg)',
+                border: '1px solid rgba(181,122,255,0.95)',
+                background: 'radial-gradient(circle at 62% 62%, #06B6D4 0 24%, #885CF6 25% 58%, rgba(8,15,23,0.96) 59% 100%)',
+                boxShadow: '0 0 10px rgba(136,92,246,0.7)',
+              }}
+            />
+            <span
+              style={{
+                display: 'inline-block',
+                fontFamily: "'Orbitron', 'Exo 2', system-ui, sans-serif",
+                fontSize: 'clamp(1.45rem, 5.4vw, 1.8rem)',
+                lineHeight: 1,
+                fontWeight: 900,
+                letterSpacing: '0.045em',
+                color: '#fff',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+                textShadow: '0 0 18px rgba(136,92,246,0.42)',
+              }}
+            >
+              $ONIX COIN
+            </span>
           </div>
         </div>
-      ) : (
-        <div className="oc-home-header-wrap oc-home-header-wrap--spacer" />
-      )}
+      ) : null}
 
       {activeTab !== 'home' && (
         <>
