@@ -2930,6 +2930,49 @@ function App() {
   const [level, setLevel] = useState(1);
   const [totalEarned, setTotalEarned] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('home');
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyTouchAction = body.style.touchAction;
+    const previousBodyPosition = body.style.position;
+    const previousBodyWidth = body.style.width;
+
+    if (activeTab !== 'home') {
+      html.classList.remove('onix-html-home-lock');
+      body.classList.remove('onix-body-home-lock');
+      return;
+    }
+
+    html.classList.add('onix-html-home-lock');
+    body.classList.add('onix-body-home-lock');
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+    body.style.position = 'fixed';
+    body.style.width = '100%';
+
+    const preventHomeScroll = (event: TouchEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('button, a, input, textarea, select, .onix-nav')) return;
+      event.preventDefault();
+    };
+
+    document.addEventListener('touchmove', preventHomeScroll, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchmove', preventHomeScroll);
+      html.classList.remove('onix-html-home-lock');
+      body.classList.remove('onix-body-home-lock');
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+      body.style.touchAction = previousBodyTouchAction;
+      body.style.position = previousBodyPosition;
+      body.style.width = previousBodyWidth;
+    };
+  }, [activeTab]);
   const [boostSubTab, setBoostSubTab] = useState<BoostSubTab>('upgrades');
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [tutorialVisible, setTutorialVisible] = useState(false);
@@ -4641,6 +4684,240 @@ body {
     min-height: 48px !important;
   }
 }
+
+/* Step 28: hard clean home header, scroll and overlay behavior */
+html.onix-html-home-lock,
+body.onix-body-home-lock {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+body.onix-body-home-lock {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100dvh !important;
+}
+
+.onix-home-locked {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  padding-bottom: 0 !important;
+}
+
+.onix-home-locked .onix-header,
+.onix-home-locked .onix-header::before,
+.onix-home-locked .onix-header::after,
+.onix-home-locked .onix-island-header,
+.onix-home-locked .onix-island-header::before,
+.onix-home-locked .onix-island-header::after {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  content: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.onix-clean-header-wrap {
+  position: relative !important;
+  z-index: 80 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  margin: -8px 0 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.onix-clean-header-wrap::before,
+.onix-clean-header-wrap::after {
+  display: none !important;
+  content: none !important;
+}
+
+.onix-clean-island {
+  width: min(72vw, 286px) !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin: 0 auto !important;
+  padding: 13px 18px 10px !important;
+  border-radius: 0 0 28px 28px !important;
+  border-left: 1px solid rgba(136, 92, 246, 0.32) !important;
+  border-right: 1px solid rgba(136, 92, 246, 0.32) !important;
+  border-bottom: 1px solid rgba(136, 92, 246, 0.32) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(6, 182, 212, 0.18), transparent 36%),
+    radial-gradient(circle at 78% 0%, rgba(168, 85, 247, 0.20), transparent 38%),
+    linear-gradient(180deg, rgba(8, 15, 23, 0.98), rgba(16, 18, 40, 0.95)) !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.30),
+    inset 0 0 22px rgba(136, 92, 246, 0.08) !important;
+  overflow: hidden !important;
+}
+
+.onix-clean-island::before,
+.onix-clean-island::after {
+  display: none !important;
+  content: none !important;
+}
+
+.onix-clean-island-logo {
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 0 9px rgba(0, 229, 255, 0.55)) drop-shadow(0 0 14px rgba(136, 92, 246, 0.48));
+}
+
+.onix-clean-island-title {
+  margin: 0 !important;
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif !important;
+  font-size: clamp(1.42rem, 5.4vw, 1.86rem) !important;
+  line-height: 0.9 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.045em !important;
+  color: #fff !important;
+  white-space: nowrap !important;
+  text-shadow: 0 0 18px rgba(136, 92, 246, 0.36) !important;
+}
+
+.onix-home-locked .onix-home-screen {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  height: calc(100dvh - 70px) !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 70px) !important;
+  margin: 10px 0 0 !important;
+  padding: 0 14px calc(118px + env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 214px !important;
+  max-height: 222px !important;
+  padding: 16px 15px 14px !important;
+  margin: 0 !important;
+}
+
+.onix-home-locked .onix-home-balance-row {
+  margin-top: 12px !important;
+}
+
+.onix-home-locked .onix-home-balance-value {
+  margin-top: 12px !important;
+  font-size: clamp(2.35rem, 11.2vw, 3.7rem) !important;
+  line-height: 0.96 !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  flex: 0 0 auto !important;
+  margin-top: 16px !important;
+  width: min(60vw, 242px) !important;
+  height: min(60vw, 242px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  margin-top: 7px !important;
+  padding: 0 2px 0 !important;
+}
+
+.onix-home-locked .onix-home-energy-text {
+  font-size: 11px !important;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin-top: 6px !important;
+  height: 8px !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 10px !important;
+  min-height: 50px !important;
+}
+
+.onix-home-locked .onix-nav {
+  bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  z-index: 500 !important;
+}
+
+.onix-toast-layer {
+  top: calc(78px + env(safe-area-inset-top)) !important;
+  bottom: auto !important;
+  z-index: 10000 !important;
+  pointer-events: none !important;
+}
+
+.onix-toast-layer > * {
+  pointer-events: auto !important;
+}
+
+.onix-modal-layer {
+  z-index: 10001 !important;
+  align-items: center !important;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-height: 760px) {
+  .onix-clean-header-wrap {
+    height: 64px !important;
+    min-height: 64px !important;
+  }
+
+  .onix-clean-island {
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+    padding-top: 11px !important;
+  }
+
+  .onix-clean-island-title {
+    font-size: 1.34rem !important;
+  }
+
+  .onix-home-locked .onix-home-screen {
+    height: calc(100dvh - 64px) !important;
+    max-height: calc(100dvh - 64px) !important;
+    margin-top: 8px !important;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .onix-home-locked .onix-home-hero-card {
+    min-height: 202px !important;
+    max-height: 210px !important;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    margin-top: 12px !important;
+    width: min(57vw, 232px) !important;
+    height: min(57vw, 232px) !important;
+  }
+}
 `;
 
     window.open(url, '_blank');
@@ -5339,9 +5616,9 @@ body {
   }
 
   return (
-    <div className={`onix-app-bg min-h-screen text-white ${activeTab === 'home' ? 'onix-home-locked' : ''}`}> 
+    <div className={`onix-app-bg min-h-screen text-white ${activeTab === 'home' ? 'onix-home-locked' : ''}`}>
       <style>{ONIX_THEME_STYLE}</style>
-      <div className="onix-toast-layer fixed left-0 right-0 top-4 z-[240] flex flex-col items-center gap-2 px-4">
+      <div className="onix-toast-layer fixed left-0 right-0 top-[78px] z-[10000] flex flex-col items-center gap-2 px-4">
         {toastMessages.map((toast) => (
           <div
             key={toast.id}
@@ -5357,12 +5634,10 @@ body {
           </div>
         ))}
       </div>
-      <div className="onix-header sticky top-0 z-50">
-        <div className="onix-island-header">
-          <div className="onix-island-content">
-            <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-island-logo" />
-            <h1 className="onix-brand-title onix-island-title font-black leading-none">$ONIX COIN</h1>
-          </div>
+      <div className="onix-clean-header-wrap">
+        <div className="onix-clean-island">
+          <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-clean-island-logo" />
+          <h1 className="onix-clean-island-title">$ONIX COIN</h1>
         </div>
       </div>
 
@@ -9028,7 +9303,7 @@ body {
       )}
 
       {rewardPopupVisible && (
-        <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/70 px-4">
+        <div className="onix-modal-layer fixed inset-0 z-[10001] flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-sm rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 text-center shadow-2xl">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
               🎉
@@ -9074,7 +9349,7 @@ body {
       )}
 
       {offlineRewardVisible && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 px-4">
+        <div className="onix-modal-layer fixed inset-0 z-[10001] flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-sm rounded-3xl bg-[#111827] border border-yellow-400/30 p-6 text-center shadow-2xl">
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 text-4xl shadow-lg">
               ⛏️
