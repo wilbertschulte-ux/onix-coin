@@ -3,7 +3,7 @@ import { Zap, Trophy, Home, Star, Wallet, UserCircle, Rocket } from 'lucide-reac
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
 import onixLogoCrystal from './assets/onix-logo-crystal.webp';
-import onixTapCrystal from './assets/onix-tap-crystal.webp';
+import onixTapCrystal from './assets/onix-tap-coin-exact.webp';
 
 const tg = window.Telegram?.WebApp;
 
@@ -402,6 +402,40 @@ body {
 .onix-tap-orb::after {
   inset: 24px !important;
   border: 1px solid rgba(0, 229, 255, 0.38) !important;
+}
+
+
+/* onix-tap-coin-exact-style */
+
+.onix-tap-img {
+  width: 96%;
+  height: 96%;
+  object-fit: contain;
+  display: block;
+  position: relative;
+  z-index: 3;
+  user-select: none;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 0 12px rgba(0, 229, 255, 0.72))
+    drop-shadow(0 0 26px rgba(136, 92, 246, 0.68));
+  animation: onixCrystalFloat 3.2s ease-in-out infinite;
+}
+
+.onix-tap-orb {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.onix-tap-orb::before,
+.onix-tap-orb::after {
+  display: none !important;
+}
+
+.onix-crystal-shards {
+  display: none !important;
 }
 
 `;
