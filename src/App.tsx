@@ -3038,6 +3038,17 @@ function App() {
   const [backendHealth, setBackendHealth] = useState<any>(null);
   const [promoModalVisible, setPromoModalVisible] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
+
+
+  useEffect(() => {
+    const lock = activeTab === 'home';
+    document.documentElement.classList.toggle('oc-lock-home-scroll', lock);
+    document.body.classList.toggle('oc-lock-home-scroll', lock);
+    return () => {
+      document.documentElement.classList.remove('oc-lock-home-scroll');
+      document.body.classList.remove('oc-lock-home-scroll');
+    };
+  }, [activeTab]);
   const [withdrawalCheck, setWithdrawalCheck] = useState('');
   const [shareCardVisible, setShareCardVisible] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
@@ -5110,6 +5121,263 @@ body.onix-body-home-lock {
     height: min(57vw, 230px) !important;
   }
 }
+
+
+/* Step 30: final clean home layout reset */
+html.oc-lock-home-scroll,
+body.oc-lock-home-scroll {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.onix-home-locked {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.onix-home-locked::before,
+.onix-home-locked::after {
+  pointer-events: none !important;
+}
+
+.oc-home-header-wrap {
+  position: relative !important;
+  z-index: 500 !important;
+  width: 100% !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  max-height: 58px !important;
+  margin: -8px 0 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.oc-home-header-wrap::before,
+.oc-home-header-wrap::after {
+  display: none !important;
+  content: none !important;
+}
+
+.oc-home-header-wrap--spacer {
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.oc-home-island {
+  position: relative !important;
+  width: min(72vw, 292px) !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  max-height: 58px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin: 0 auto !important;
+  padding: 12px 18px 8px !important;
+  border-radius: 0 0 26px 26px !important;
+  border-left: 1px solid rgba(136, 92, 246, 0.34) !important;
+  border-right: 1px solid rgba(136, 92, 246, 0.34) !important;
+  border-bottom: 1px solid rgba(136, 92, 246, 0.34) !important;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(6, 182, 212, 0.18), transparent 38%),
+    radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(8, 15, 23, 0.99), rgba(17, 18, 40, 0.96)) !important;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.28),
+    inset 0 0 22px rgba(136, 92, 246, 0.08) !important;
+  overflow: hidden !important;
+}
+
+.oc-home-island::before,
+.oc-home-island::after {
+  display: none !important;
+  content: none !important;
+}
+
+.oc-home-island-gem {
+  width: 20px !important;
+  height: 20px !important;
+  flex: 0 0 20px !important;
+  display: block !important;
+  transform: rotate(45deg) !important;
+  border: 1px solid rgba(181, 122, 255, 0.95) !important;
+  background:
+    radial-gradient(circle at 62% 62%, #06B6D4 0 24%, #885CF6 25% 58%, rgba(8, 15, 23, 0.96) 59% 100%) !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 16px rgba(136, 92, 246, 0.55) !important;
+}
+
+.oc-home-island-title {
+  position: static !important;
+  display: inline-block !important;
+  transform: none !important;
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif !important;
+  font-size: clamp(1.45rem, 5.4vw, 1.8rem) !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.045em !important;
+  color: #fff !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  text-shadow: 0 0 18px rgba(136, 92, 246, 0.42) !important;
+}
+
+.onix-home-locked .onix-header,
+.onix-home-locked .onix-island-header,
+.onix-home-locked .onix-mini-top,
+.onix-home-locked .onix-mini-island,
+.onix-home-locked .onix-clean-header-wrap,
+.onix-home-locked .onix-clean-island {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.onix-home-locked .onix-home-screen {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  height: calc(100dvh - 58px) !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 58px) !important;
+  margin-top: 12px !important;
+  padding: 0 14px calc(116px + env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+  gap: 0 !important;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 214px !important;
+  max-height: 224px !important;
+  padding: 18px 16px 16px !important;
+  margin: 0 !important;
+  border-radius: 28px !important;
+  overflow: hidden !important;
+}
+
+.onix-home-locked .onix-home-balance-row {
+  margin-top: 14px !important;
+}
+
+.onix-home-locked .onix-home-balance-value {
+  margin-top: 10px !important;
+  font-size: clamp(2.35rem, 10.8vw, 3.65rem) !important;
+  line-height: 1 !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  flex: 0 0 auto !important;
+  margin-top: 16px !important;
+  width: min(60vw, 244px) !important;
+  height: min(60vw, 244px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  flex: 0 0 auto !important;
+  margin-top: 6px !important;
+  padding: 0 2px 6px !important;
+  width: 100% !important;
+}
+
+.onix-home-locked .onix-home-energy-text {
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin-top: 6px !important;
+  height: 8px !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 10px !important;
+  min-height: 48px !important;
+  height: 48px !important;
+}
+
+.onix-toast-layer {
+  top: calc(72px + env(safe-area-inset-top)) !important;
+  bottom: auto !important;
+  z-index: 1000000 !important;
+  pointer-events: none !important;
+}
+
+.onix-toast-layer > * {
+  pointer-events: auto !important;
+}
+
+.onix-modal-layer,
+.onix-home-locked .onix-modal-layer {
+  z-index: 1000001 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 18px calc(112px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-height: 760px) {
+  .oc-home-header-wrap {
+    height: 54px !important;
+    min-height: 54px !important;
+    max-height: 54px !important;
+  }
+
+  .oc-home-island {
+    height: 54px !important;
+    min-height: 54px !important;
+    max-height: 54px !important;
+    padding-top: 11px !important;
+  }
+
+  .oc-home-island-title {
+    font-size: 1.34rem !important;
+  }
+
+  .onix-home-locked .onix-home-screen {
+    height: calc(100dvh - 54px) !important;
+    max-height: calc(100dvh - 54px) !important;
+    margin-top: 10px !important;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .onix-home-locked .onix-home-hero-card {
+    min-height: 204px !important;
+    max-height: 214px !important;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    margin-top: 13px !important;
+    width: min(57vw, 232px) !important;
+    height: min(57vw, 232px) !important;
+  }
+
+  .onix-home-locked .onix-home-tap-button {
+    height: 46px !important;
+    min-height: 46px !important;
+  }
+}
 `;
 
     window.open(url, '_blank');
@@ -5826,12 +6094,16 @@ body.onix-body-home-lock {
           </div>
         ))}
       </div>
-      <div className="onix-mini-top">
-        <div className="onix-mini-island">
-          <span className="onix-mini-gem" aria-hidden="true" />
-          <span className="onix-mini-title">$ONIX COIN</span>
+      {activeTab === 'home' ? (
+        <div className="oc-home-header-wrap">
+          <div className="oc-home-island">
+            <span className="oc-home-island-gem" aria-hidden="true" />
+            <span className="oc-home-island-title">$ONIX COIN</span>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="oc-home-header-wrap oc-home-header-wrap--spacer" />
+      )}
 
       {activeTab !== 'home' && (
         <>
