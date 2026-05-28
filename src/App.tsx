@@ -1862,78 +1862,6 @@ body,
   min-height: 48px;
 }
 
-
-/* Step 21: iPhone-style compact camera header */
-.onix-dynamic-header {
-  margin-top: -16px !important;
-  padding: 18px 0 10px !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  background: transparent !important;
-  border-bottom: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-.onix-dynamic-island-brand {
-  min-width: 224px;
-  height: 56px;
-  padding: 0 18px 0 12px;
-  border-radius: 0 0 28px 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background:
-    radial-gradient(circle at 28% 42%, rgba(6, 182, 212, 0.20), transparent 34%),
-    radial-gradient(circle at 78% 18%, rgba(168, 85, 247, 0.22), transparent 42%),
-    linear-gradient(180deg, rgba(12, 17, 28, 0.98), rgba(8, 12, 22, 0.92));
-  border: 1px solid rgba(136, 92, 246, 0.30);
-  border-top: 0;
-  box-shadow:
-    0 14px 34px rgba(0, 0, 0, 0.34),
-    0 0 26px rgba(136, 92, 246, 0.16),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 0 22px rgba(136, 92, 246, 0.08);
-}
-
-.onix-dynamic-island-logo {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  filter:
-    drop-shadow(0 0 8px rgba(0, 229, 255, 0.66))
-    drop-shadow(0 0 12px rgba(136, 92, 246, 0.60));
-}
-
-.onix-dynamic-island-title {
-  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
-  font-size: 1.15rem;
-  line-height: 1;
-  font-weight: 900;
-  letter-spacing: 0.07em;
-  color: #F8FAFC;
-  text-shadow: 0 0 14px rgba(136, 92, 246, 0.44);
-  white-space: nowrap;
-}
-
-.onix-home-screen {
-  margin-top: 8px !important;
-}
-
-@media (max-width: 380px) {
-  .onix-dynamic-island-brand {
-    min-width: 206px;
-    height: 52px;
-    border-radius: 0 0 26px 26px;
-  }
-
-  .onix-dynamic-island-title {
-    font-size: 1.02rem;
-  }
-}
-
 @media (max-width: 380px) {
   .onix-nav {
     width: min(calc(100vw - 14px), 410px) !important;
@@ -1953,70 +1881,6 @@ body,
 
   .onix-app-bg {
     padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
-  }
-}
-
-
-/* Step 22: flush dynamic island header, remove old header edges */
-.onix-app-bg {
-  box-shadow: 0 0 72px rgba(91, 33, 246, 0.24) !important;
-}
-
-.onix-dynamic-header {
-  margin-top: 0 !important;
-  padding: 0 !important;
-  height: 58px !important;
-  min-height: 58px !important;
-  align-items: flex-start !important;
-  overflow: visible !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-bottom: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-.onix-dynamic-island-brand {
-  margin-top: -1px !important;
-  height: 58px !important;
-  min-width: 248px !important;
-  border-radius: 0 0 30px 30px !important;
-  border-top: 0 !important;
-  background:
-    radial-gradient(circle at 28% 38%, rgba(6, 182, 212, 0.22), transparent 34%),
-    radial-gradient(circle at 78% 12%, rgba(168, 85, 247, 0.24), transparent 42%),
-    linear-gradient(180deg, rgba(12, 17, 28, 1), rgba(8, 12, 22, 0.96)) !important;
-  box-shadow:
-    0 16px 34px rgba(0, 0, 0, 0.28),
-    0 0 24px rgba(136, 92, 246, 0.14),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 0 22px rgba(136, 92, 246, 0.09) !important;
-}
-
-.onix-dynamic-island-logo {
-  width: 28px !important;
-  height: 28px !important;
-}
-
-.onix-dynamic-island-title {
-  font-size: 1.18rem !important;
-  letter-spacing: 0.075em !important;
-}
-
-.onix-home-screen {
-  margin-top: 2px !important;
-}
-
-@media (max-width: 380px) {
-  .onix-dynamic-header {
-    height: 56px !important;
-    min-height: 56px !important;
-  }
-
-  .onix-dynamic-island-brand {
-    min-width: 226px !important;
-    height: 56px !important;
-    border-radius: 0 0 28px 28px !important;
   }
 }
 
@@ -4323,7 +4187,139 @@ function App() {
 
   const downloadUsersCsv = () => {
     const telegramId = getTelegramId();
-    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}`;
+    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}
+/* Step 23: fixed home island and no-scroll */
+.onix-home-locked {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.onix-home-locked::before,
+.onix-home-locked::after {
+  position: absolute;
+}
+
+.onix-header {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: center;
+  padding: 0 !important;
+  margin-top: -16px;
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.onix-island-header {
+  position: relative;
+  width: min(78vw, 298px);
+  min-height: 74px;
+  padding: 18px 20px 12px;
+  border-radius: 0 0 28px 28px;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(6, 182, 212, 0.18), transparent 36%),
+    radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.18), transparent 40%),
+    linear-gradient(180deg, rgba(10, 15, 28, 0.98), rgba(18, 16, 38, 0.95));
+  border-left: 1px solid rgba(136, 92, 246, 0.32);
+  border-right: 1px solid rgba(136, 92, 246, 0.32);
+  border-bottom: 1px solid rgba(136, 92, 246, 0.28);
+  box-shadow:
+    0 18px 34px rgba(0,0,0,0.32),
+    inset 0 0 26px rgba(136, 92, 246, 0.07);
+  overflow: hidden;
+}
+
+.onix-island-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 118px;
+  height: 22px;
+  border-radius: 0 0 18px 18px;
+  background: #0a0f17;
+  box-shadow:
+    inset 0 -1px 0 rgba(255,255,255,0.03),
+    0 8px 16px rgba(0,0,0,0.25);
+}
+
+.onix-island-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.onix-island-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(136, 92, 246, 0.48));
+}
+
+.onix-island-title {
+  font-size: clamp(1.55rem, 6vw, 2rem) !important;
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+}
+
+.onix-home-locked .onix-home-screen {
+  margin-top: 14px !important;
+  min-height: calc(100vh - 196px - env(safe-area-inset-bottom));
+  padding-bottom: calc(116px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  margin-top: 0;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  margin-top: 10px !important;
+  width: min(61vw, 248px) !important;
+  height: min(61vw, 248px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  margin-top: -4px;
+  padding-bottom: 8px;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 8px;
+  min-height: 46px;
+}
+
+.onix-home-locked .onix-nav {
+  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-width: 380px) {
+  .onix-island-header {
+    width: min(84vw, 286px);
+    min-height: 70px;
+    padding: 17px 16px 11px;
+  }
+
+  .onix-island-notch {
+    width: 104px;
+    height: 20px;
+  }
+
+  .onix-island-title {
+    font-size: 1.4rem !important;
+  }
+
+  .onix-home-locked .onix-home-screen {
+    margin-top: 12px !important;
+    min-height: calc(100vh - 190px - env(safe-area-inset-bottom));
+  }
+}
+`;
 
     window.open(url, '_blank');
   };
@@ -5021,7 +5017,7 @@ function App() {
   }
 
   return (
-    <div className="onix-app-bg min-h-screen text-white">
+    <div className={`onix-app-bg min-h-screen text-white ${activeTab === 'home' ? 'onix-home-locked' : ''}`}> 
       <style>{ONIX_THEME_STYLE}</style>
       <div className="fixed left-0 right-0 top-4 z-[100] flex flex-col items-center gap-2 px-4">
         {toastMessages.map((toast) => (
@@ -5039,10 +5035,13 @@ function App() {
           </div>
         ))}
       </div>
-      <div className="onix-header onix-dynamic-header sticky top-0 z-50">
-        <div className="onix-dynamic-island-brand">
-          <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-dynamic-island-logo" />
-          <span className="onix-dynamic-island-title">$ONIX COIN</span>
+      <div className="onix-header sticky top-0 z-50">
+        <div className="onix-island-header">
+          <div className="onix-island-notch" />
+          <div className="onix-island-content">
+            <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-island-logo" />
+            <h1 className="onix-brand-title onix-island-title font-black leading-none">$ONIX COIN</h1>
+          </div>
         </div>
       </div>
 
