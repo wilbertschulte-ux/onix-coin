@@ -1396,6 +1396,209 @@ body,
     linear-gradient(180deg, rgba(88, 28, 135, 0.32), rgba(8, 15, 23, 0.96)) !important;
 }
 
+
+/* Step 10: global visual refinement toward reference */
+.onix-app-bg {
+  isolation: isolate;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 50% -4%, rgba(168, 85, 247, 0.24), transparent 28%),
+    radial-gradient(circle at 100% 16%, rgba(6, 182, 212, 0.14), transparent 28%),
+    radial-gradient(circle at 0% 72%, rgba(91, 33, 246, 0.18), transparent 34%),
+    linear-gradient(180deg, #070b14 0%, #090f1d 44%, #050812 100%) !important;
+}
+
+.onix-app-bg::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+    radial-gradient(circle at 50% 22%, rgba(168,85,247,0.12), transparent 36%);
+  background-size: 42px 42px, 42px 42px, auto;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.75), rgba(0,0,0,0.06) 72%, transparent);
+}
+
+.onix-app-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+.onix-header {
+  background:
+    linear-gradient(135deg, rgba(17, 24, 39, 0.82), rgba(8, 15, 23, 0.94)) !important;
+  box-shadow:
+    0 14px 42px rgba(0,0,0,0.42),
+    0 0 26px rgba(136, 92, 246, 0.10),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+.onix-brand-mark {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 17px !important;
+}
+
+.onix-brand-img {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.onix-card,
+.onix-rank-panel,
+.onix-balance-panel,
+.onix-launch-card,
+.onix-boosts-screen > .rounded-3xl,
+.onix-wallet-screen > .rounded-3xl,
+.onix-profile-screen > div:first-child,
+.onix-tasks-screen > .rounded-3xl,
+.onix-social-screen > .rounded-3xl,
+.onix-launch-screen > .rounded-3xl {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.rounded-3xl,
+.rounded-2xl {
+  border-color: rgba(136, 92, 246, 0.22) !important;
+}
+
+.onix-app-bg button {
+  transition: transform 130ms ease, filter 130ms ease, box-shadow 130ms ease, border-color 130ms ease;
+}
+
+.onix-app-bg button:active {
+  transform: scale(0.975);
+  filter: brightness(1.12);
+}
+
+.onix-app-bg button:disabled {
+  transform: none !important;
+  filter: none !important;
+}
+
+.onix-balance-number,
+.onix-wallet-screen .text-5xl.font-bold.text-yellow-400 {
+  letter-spacing: -0.055em;
+}
+
+.onix-home-screen {
+  min-height: calc(100dvh - 248px);
+}
+
+.onix-home-screen .onix-tap-orb {
+  margin-left: auto;
+  margin-right: auto;
+  filter: drop-shadow(0 28px 42px rgba(0, 0, 0, 0.48));
+}
+
+.onix-tap-img {
+  transform-origin: center;
+}
+
+.onix-tap-orb:active .onix-tap-img {
+  transform: scale(0.965) rotate(-1deg);
+}
+
+.onix-nav {
+  background:
+    linear-gradient(135deg, rgba(12, 18, 32, 0.86), rgba(6, 10, 20, 0.94)) !important;
+  border-color: rgba(168, 85, 247, 0.34) !important;
+  box-shadow:
+    0 18px 54px rgba(0,0,0,0.58),
+    0 0 34px rgba(136, 92, 246, 0.18),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 0 24px rgba(6, 182, 212, 0.045) !important;
+}
+
+.onix-nav button {
+  min-width: 58px !important;
+  color: rgba(203, 213, 225, 0.78) !important;
+}
+
+.onix-nav button.onix-nav-active {
+  color: #ffffff !important;
+  border: 1px solid rgba(183, 249, 255, 0.22);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(183, 249, 255, 0.16), transparent 62%),
+    linear-gradient(135deg, rgba(6, 182, 212, 0.22), rgba(136, 92, 246, 0.34)) !important;
+}
+
+.onix-nav button span {
+  font-size: 10px !important;
+  letter-spacing: 0.01em;
+}
+
+.onix-boosts-screen,
+.onix-wallet-screen,
+.onix-profile-screen,
+.onix-tasks-screen,
+.onix-social-screen,
+.onix-launch-screen {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.onix-boosts-screen h2,
+.onix-wallet-screen h2,
+.onix-profile-screen h2,
+.onix-tasks-screen h2,
+.onix-social-screen h2,
+.onix-launch-screen h2 {
+  letter-spacing: 0.015em;
+}
+
+.onix-boosts-screen .space-y-4 > .rounded-3xl,
+.onix-wallet-screen .space-y-3 > .rounded-2xl,
+.onix-wallet-screen .space-y-4 > .rounded-2xl,
+.onix-tasks-screen .space-y-3 > .rounded-2xl,
+.onix-social-screen .space-y-3 > .rounded-2xl,
+.onix-launch-screen .space-y-3 > .rounded-2xl {
+  position: relative;
+  overflow: hidden;
+}
+
+.onix-boosts-screen .space-y-4 > .rounded-3xl::after,
+.onix-wallet-screen .space-y-3 > .rounded-2xl::after,
+.onix-wallet-screen .space-y-4 > .rounded-2xl::after,
+.onix-tasks-screen .space-y-3 > .rounded-2xl::after,
+.onix-social-screen .space-y-3 > .rounded-2xl::after,
+.onix-launch-screen .space-y-3 > .rounded-2xl::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.045) 42%, transparent 70%);
+  opacity: 0.45;
+}
+
+@media (max-width: 380px) {
+  .onix-nav {
+    width: min(calc(100vw - 14px), 410px) !important;
+    bottom: calc(7px + env(safe-area-inset-bottom)) !important;
+    padding: 5px !important;
+  }
+
+  .onix-nav button {
+    min-width: 54px !important;
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+
+  .onix-nav button span {
+    font-size: 9px !important;
+  }
+
+  .onix-app-bg {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 `;
 
 
