@@ -1599,6 +1599,174 @@ body,
   }
 }
 
+
+/* Step 11: closer reference spacing, cards, and mobile polish */
+.onix-app-bg {
+  isolation: isolate;
+}
+
+.onix-app-bg::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.22;
+  background:
+    linear-gradient(rgba(136,92,246,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6,182,212,0.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at 50% 32%, black 0 48%, transparent 78%);
+}
+
+.onix-app-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+.onix-header {
+  min-height: 70px;
+  padding: 10px 12px !important;
+}
+
+.onix-header .onix-brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 17px;
+}
+
+.onix-energy-pill {
+  border: 1px solid rgba(250,204,21,0.18);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(250,204,21,0.16), transparent 38%),
+    rgba(8, 15, 23, 0.74) !important;
+  box-shadow: 0 0 22px rgba(250, 204, 21, 0.10), inset 0 0 18px rgba(250,204,21,0.05);
+}
+
+.onix-home-hero-card {
+  transform: translateZ(0);
+}
+
+.onix-home-hero-card::after {
+  content: '';
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  right: -44px;
+  bottom: -54px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0,229,255,0.18), transparent 66%);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.onix-home-screen .onix-tap-orb {
+  filter: drop-shadow(0 26px 34px rgba(0,0,0,0.42)) drop-shadow(0 0 34px rgba(136,92,246,0.34));
+}
+
+.onix-home-tap-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.onix-home-tap-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 0 28%, rgba(255,255,255,0.20) 42%, transparent 58% 100%);
+  transform: translateX(-120%);
+  animation: onixButtonSheen 4.5s ease-in-out infinite;
+}
+
+@keyframes onixButtonSheen {
+  0%, 52% { transform: translateX(-120%); }
+  72%, 100% { transform: translateX(120%); }
+}
+
+.onix-boosts-screen,
+.onix-wallet-screen,
+.onix-profile-screen,
+.onix-social-screen {
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+.onix-boosts-screen > .rounded-3xl,
+.onix-wallet-screen > .rounded-3xl,
+.onix-profile-screen > div:first-child,
+.onix-social-screen > .rounded-3xl {
+  border-radius: 26px !important;
+  border-color: rgba(136, 92, 246, 0.34) !important;
+}
+
+.onix-boosts-screen .space-y-4 > .rounded-3xl,
+.onix-wallet-screen .space-y-3 > .rounded-2xl,
+.onix-wallet-screen .space-y-4 > .rounded-2xl,
+.onix-social-screen .rounded-2xl,
+.onix-profile-screen .rounded-2xl {
+  background:
+    radial-gradient(circle at 90% 12%, rgba(136,92,246,0.16), transparent 34%),
+    linear-gradient(145deg, rgba(17,24,39,0.86), rgba(8,15,23,0.96)) !important;
+  border: 1px solid rgba(136, 92, 246, 0.24) !important;
+  box-shadow: 0 16px 44px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+
+.onix-boosts-screen button.bg-yellow-400,
+.onix-wallet-screen button.bg-yellow-400,
+.onix-wallet-screen button.bg-emerald-500,
+.onix-wallet-screen button.bg-sky-500,
+.onix-social-screen button.bg-yellow-400,
+.onix-social-screen button.bg-emerald-500,
+.onix-social-screen button.bg-sky-500 {
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, #5B21F6 0%, #885CF6 48%, #A855F7 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 24px rgba(136,92,246,0.30), inset 0 1px 0 rgba(255,255,255,0.18) !important;
+}
+
+.onix-nav {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(136,92,246,0.22), transparent 44%),
+    rgba(8, 15, 23, 0.88) !important;
+  border: 1px solid rgba(136, 92, 246, 0.32) !important;
+  box-shadow: 0 -18px 44px rgba(0,0,0,0.42), 0 0 34px rgba(136,92,246,0.20), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+  backdrop-filter: blur(18px);
+}
+
+.onix-nav button {
+  color: rgba(226,232,240,0.72) !important;
+  transition: transform 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.onix-nav button:active {
+  transform: scale(0.96);
+}
+
+.onix-nav button.onix-nav-active {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.15), transparent 52%),
+    linear-gradient(145deg, rgba(91,33,246,0.96), rgba(168,85,247,0.84)) !important;
+  color: white !important;
+  box-shadow: 0 0 22px rgba(136,92,246,0.44), inset 0 1px 0 rgba(255,255,255,0.18) !important;
+}
+
+@media (max-width: 390px) {
+  .onix-home-balance-value {
+    font-size: clamp(1.85rem, 9.2vw, 2.65rem);
+  }
+
+  .onix-home-screen .onix-tap-orb {
+    width: min(68vw, 270px) !important;
+    height: min(68vw, 270px) !important;
+    margin-top: 20px !important;
+  }
+
+  .onix-nav button {
+    min-width: 56px !important;
+    font-size: 10px !important;
+  }
+}
+
 `;
 
 
