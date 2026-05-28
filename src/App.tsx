@@ -1862,6 +1862,78 @@ body,
   min-height: 48px;
 }
 
+
+/* Step 21: iPhone-style compact camera header */
+.onix-dynamic-header {
+  margin-top: -16px !important;
+  padding: 18px 0 10px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.onix-dynamic-island-brand {
+  min-width: 224px;
+  height: 56px;
+  padding: 0 18px 0 12px;
+  border-radius: 0 0 28px 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    radial-gradient(circle at 28% 42%, rgba(6, 182, 212, 0.20), transparent 34%),
+    radial-gradient(circle at 78% 18%, rgba(168, 85, 247, 0.22), transparent 42%),
+    linear-gradient(180deg, rgba(12, 17, 28, 0.98), rgba(8, 12, 22, 0.92));
+  border: 1px solid rgba(136, 92, 246, 0.30);
+  border-top: 0;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.34),
+    0 0 26px rgba(136, 92, 246, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 22px rgba(136, 92, 246, 0.08);
+}
+
+.onix-dynamic-island-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 8px rgba(0, 229, 255, 0.66))
+    drop-shadow(0 0 12px rgba(136, 92, 246, 0.60));
+}
+
+.onix-dynamic-island-title {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  color: #F8FAFC;
+  text-shadow: 0 0 14px rgba(136, 92, 246, 0.44);
+  white-space: nowrap;
+}
+
+.onix-home-screen {
+  margin-top: 8px !important;
+}
+
+@media (max-width: 380px) {
+  .onix-dynamic-island-brand {
+    min-width: 206px;
+    height: 52px;
+    border-radius: 0 0 26px 26px;
+  }
+
+  .onix-dynamic-island-title {
+    font-size: 1.02rem;
+  }
+}
+
 @media (max-width: 380px) {
   .onix-nav {
     width: min(calc(100vw - 14px), 410px) !important;
@@ -4903,14 +4975,10 @@ function App() {
           </div>
         ))}
       </div>
-      <div className="onix-header p-3 flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="onix-brand-mark">
-            <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-brand-img" />
-          </div>
-          <div>
-            <h1 className="onix-brand-title text-[2rem] font-black leading-none">$ONIX COIN</h1>
-          </div>
+      <div className="onix-header onix-dynamic-header sticky top-0 z-50">
+        <div className="onix-dynamic-island-brand">
+          <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-dynamic-island-logo" />
+          <span className="onix-dynamic-island-title">$ONIX COIN</span>
         </div>
       </div>
 
