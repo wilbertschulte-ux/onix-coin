@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Zap, Trophy, Home, Star, Wallet, UserCircle, Rocket } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
+import onixLogoCrystal from './assets/onix-logo-crystal.webp';
+import onixTapCrystal from './assets/onix-tap-crystal.webp';
 
 const tg = window.Telegram?.WebApp;
 
@@ -355,140 +357,6 @@ body {
 }
 
 `;
-
-
-type OnixCrystalProps = {
-  size?: number;
-  variant?: 'logo' | 'tap';
-};
-
-function OnixCrystal({ size = 44, variant = 'logo' }: OnixCrystalProps) {
-  const uid = `onixCrystal${variant}${size}`;
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 120 120"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={variant === 'tap' ? 'onix-crystal-svg onix-crystal-svg-tap' : 'onix-crystal-svg'}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={`${uid}Outer`} x1="16" y1="12" x2="104" y2="108">
-          <stop offset="0%" stopColor="#B7F9FF" />
-          <stop offset="18%" stopColor="#885CF6" />
-          <stop offset="52%" stopColor="#5B21F6" />
-          <stop offset="100%" stopColor="#06B6D4" />
-        </linearGradient>
-
-        <linearGradient id={`${uid}Left`} x1="22" y1="20" x2="60" y2="108">
-          <stop offset="0%" stopColor="#A855F7" />
-          <stop offset="46%" stopColor="#5B21F6" />
-          <stop offset="100%" stopColor="#1A1F2E" />
-        </linearGradient>
-
-        <linearGradient id={`${uid}Right`} x1="98" y1="18" x2="60" y2="108">
-          <stop offset="0%" stopColor="#B7F9FF" />
-          <stop offset="42%" stopColor="#06B6D4" />
-          <stop offset="100%" stopColor="#5B21F6" />
-        </linearGradient>
-
-        <linearGradient id={`${uid}Core`} x1="42" y1="32" x2="80" y2="86">
-          <stop offset="0%" stopColor="#B7F9FF" />
-          <stop offset="46%" stopColor="#00E5FF" />
-          <stop offset="100%" stopColor="#885CF6" />
-        </linearGradient>
-
-        <radialGradient id={`${uid}Glow`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.95" />
-          <stop offset="45%" stopColor="#885CF6" stopOpacity="0.45" />
-          <stop offset="100%" stopColor="#885CF6" stopOpacity="0" />
-        </radialGradient>
-
-        <filter id={`${uid}Shadow`} x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00E5FF" floodOpacity="0.55" />
-          <feDropShadow dx="0" dy="0" stdDeviation="9" floodColor="#885CF6" floodOpacity="0.55" />
-        </filter>
-      </defs>
-
-      <ellipse cx="60" cy="60" rx="42" ry="48" fill={`url(#${uid}Glow)`} opacity="0.45" />
-
-      <g filter={`url(#${uid}Shadow)`}>
-        <path
-          d="M60 5 L107 60 L60 115 L13 60 Z"
-          fill={`url(#${uid}Outer)`}
-          opacity="0.95"
-        />
-
-        <path
-          d="M60 5 L60 115 L13 60 Z"
-          fill={`url(#${uid}Left)`}
-          opacity="0.84"
-        />
-
-        <path
-          d="M60 5 L107 60 L60 115 Z"
-          fill={`url(#${uid}Right)`}
-          opacity="0.88"
-        />
-
-        <path
-          d="M60 17 L86 60 L60 103 L34 60 Z"
-          fill="#080F17"
-          opacity="0.42"
-        />
-
-        <path
-          d="M60 22 L79 60 L60 98 L41 60 Z"
-          fill={`url(#${uid}Core)`}
-          opacity="0.98"
-        />
-
-        <path
-          d="M60 22 L60 98 L41 60 Z"
-          fill="#885CF6"
-          opacity="0.55"
-        />
-
-        <path
-          d="M60 22 L79 60 L60 98 Z"
-          fill="#00E5FF"
-          opacity="0.55"
-        />
-
-        <path
-          d="M60 5 L86 60 L60 115 L34 60 Z"
-          stroke="#B7F9FF"
-          strokeOpacity="0.65"
-          strokeWidth="1.6"
-        />
-
-        <path
-          d="M13 60 L34 60 M86 60 L107 60 M60 5 L60 22 M60 98 L60 115"
-          stroke="#FFFFFF"
-          strokeOpacity="0.32"
-          strokeWidth="1.2"
-        />
-
-        <path
-          d="M31 31 L13 60 L31 89"
-          stroke="#A855F7"
-          strokeOpacity="0.8"
-          strokeWidth="2"
-        />
-
-        <path
-          d="M89 31 L107 60 L89 89"
-          stroke="#06B6D4"
-          strokeOpacity="0.75"
-          strokeWidth="2"
-        />
-      </g>
-    </svg>
-  );
-}
 
 
 type Tab = 'home' | 'boosts' | 'tasks' | 'friends' | 'wallet' | 'launch';
@@ -3510,7 +3378,7 @@ function App() {
       <div className="onix-header p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="onix-brand-mark">
-            <OnixCrystal size={46} variant="logo" />
+            <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-brand-img" />
           </div>
           <div>
             <h1 className="onix-brand-title text-2xl font-black">$ONIX coin</h1>
@@ -3595,7 +3463,7 @@ function App() {
             }`}
           >
             <div className="onix-crystal-shards" />
-            <OnixCrystal size={245} variant="tap" />
+            <img src={onixTapCrystal} alt="$ONIX tap crystal" className="onix-tap-img" draggable={false} />
             <span className="sr-only">$ONIX crystal</span>
 
             {floatingNumbers.map((num) => (
@@ -7232,4 +7100,52 @@ function AppWithBoundary() {
   );
 }
 
-export default AppWithBoundary;
+export default AppWithBoundary
+
+.onix-brand-img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  display: block;
+  filter:
+    drop-shadow(0 0 10px rgba(0, 229, 255, 0.65))
+    drop-shadow(0 0 18px rgba(136, 92, 246, 0.70));
+}
+
+.onix-tap-img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  display: block;
+  position: relative;
+  z-index: 3;
+  user-select: none;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 0 18px rgba(0, 229, 255, 0.82))
+    drop-shadow(0 0 38px rgba(136, 92, 246, 0.78));
+  animation: onixCrystalFloat 3.2s ease-in-out infinite;
+}
+
+.onix-tap-orb {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.22), transparent 26%),
+    radial-gradient(circle at 50% 55%, rgba(136, 92, 246, 0.28), transparent 52%),
+    rgba(8, 15, 23, 0.34) !important;
+  border: 0 !important;
+  box-shadow:
+    0 0 46px rgba(136, 92, 246, 0.58),
+    0 0 78px rgba(6, 182, 212, 0.24) !important;
+}
+
+.onix-tap-orb::before {
+  inset: 4px !important;
+  border: 2px solid rgba(136, 92, 246, 0.72) !important;
+}
+
+.onix-tap-orb::after {
+  inset: 24px !important;
+  border: 1px solid rgba(0, 229, 255, 0.38) !important;
+}
+
+;
