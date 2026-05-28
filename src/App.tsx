@@ -332,142 +332,26 @@ body {
 }
 
 
-.onix-home-shell {
-  position: relative;
-  padding: 22px 18px 32px;
-}
-
-.onix-hero-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 30px;
-  border: 1px solid rgba(136, 92, 246, 0.34);
-  background:
-    radial-gradient(circle at 20% 0%, rgba(136, 92, 246, 0.28), transparent 34%),
-    radial-gradient(circle at 90% 12%, rgba(6, 182, 212, 0.18), transparent 30%),
-    linear-gradient(145deg, rgba(17, 24, 39, 0.92), rgba(8, 15, 23, 0.98));
-  box-shadow:
-    0 20px 70px rgba(0, 0, 0, 0.50),
-    0 0 40px rgba(136, 92, 246, 0.16);
-}
-
-.onix-hero-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  opacity: 0.40;
-  pointer-events: none;
-  background:
-    linear-gradient(120deg, transparent 0 36%, rgba(0, 229, 255, 0.12) 42%, transparent 50%),
-    radial-gradient(circle at 80% 95%, rgba(136, 92, 246, 0.28), transparent 34%);
-}
-
-.onix-hero-title {
-  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
-  letter-spacing: 0.03em;
-  background: linear-gradient(90deg, #FFFFFF 0%, #B7F9FF 34%, #A855F7 78%);
-  -webkit-background-clip: text;
-  color: transparent;
-}
-
-.onix-chip {
-  border: 1px solid rgba(136, 92, 246, 0.30);
-  background: rgba(8, 15, 23, 0.64);
-  box-shadow: inset 0 0 18px rgba(136, 92, 246, 0.10);
-}
-
-.onix-stat-tile {
-  border: 1px solid rgba(136, 92, 246, 0.22);
-  background:
-    linear-gradient(145deg, rgba(17, 24, 39, 0.84), rgba(8, 15, 23, 0.90));
-  box-shadow: inset 0 0 18px rgba(6, 182, 212, 0.04);
-}
-
-.onix-tap-stage {
-  position: relative;
-  margin: 26px auto 0;
-  display: grid;
-  place-items: center;
-  min-height: 330px;
-}
-
-.onix-tap-stage::before {
-  content: '';
-  position: absolute;
-  width: min(82vw, 360px);
-  height: min(82vw, 360px);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 55%, rgba(0, 229, 255, 0.18), transparent 28%),
-    radial-gradient(circle at 50% 55%, rgba(136, 92, 246, 0.20), transparent 54%);
-  filter: blur(1px);
-}
-
-.onix-tap-stage::after {
-  content: '';
-  position: absolute;
-  bottom: 8px;
-  width: min(64vw, 280px);
-  height: 32px;
-  border-radius: 999px;
-  background: radial-gradient(ellipse, rgba(136, 92, 246, 0.35), transparent 70%);
-  filter: blur(10px);
-}
-
 .onix-tap-orb {
-  width: min(72vw, 292px) !important;
-  height: min(72vw, 292px) !important;
-  z-index: 2;
+  width: min(76vw, 330px) !important;
+  height: min(76vw, 330px) !important;
+  margin-top: 8px;
 }
 
 .onix-tap-orb .onix-crystal-svg-tap {
-  width: 72% !important;
-  height: 72% !important;
+  width: 76% !important;
+  height: 76% !important;
 }
 
-.onix-tap-label {
-  margin-top: 22px;
-  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+.onix-brand-mark {
+  flex-shrink: 0;
+}
+
+.onix-clean-home-note {
   letter-spacing: 0.18em;
-  color: #B7F9FF;
   text-shadow:
     0 0 12px rgba(6, 182, 212, 0.55),
     0 0 22px rgba(136, 92, 246, 0.35);
-}
-
-.onix-action-row button {
-  border: 1px solid rgba(136, 92, 246, 0.32);
-  background: rgba(8, 15, 23, 0.64);
-  box-shadow: inset 0 0 18px rgba(136, 92, 246, 0.10);
-}
-
-.onix-energy-bar {
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(6, 182, 212, 0.24);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.onix-energy-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #00E5FF, #06B6D4, #885CF6);
-  box-shadow: 0 0 18px rgba(6, 182, 212, 0.58);
-}
-
-@media (max-width: 420px) {
-  .onix-home-shell {
-    padding-left: 14px;
-    padding-right: 14px;
-  }
-
-  .onix-hero-card {
-    border-radius: 26px;
-  }
-
-  .onix-tap-stage {
-    min-height: 300px;
-  }
 }
 
 `;
@@ -2261,7 +2145,7 @@ function App() {
   };
 
   const getReferralShareText = () =>
-    'Присоединяйся к ONIX COIN ⚡ Получи стартовый бонус 15 000 ONIX!';
+    'Присоединяйся к $ONIX coin ⚡ Получи стартовый бонус 15 000 ONIX!';
 
   const showCopySuccess = () => {
     setCopySuccessVisible(true);
@@ -3626,7 +3510,7 @@ function App() {
       <div className="onix-header p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="onix-brand-mark">
-            <OnixCrystal size={42} variant="logo" />
+            <OnixCrystal size={46} variant="logo" />
           </div>
           <div>
             <h1 className="onix-brand-title text-2xl font-black">$ONIX coin</h1>
@@ -3702,191 +3586,67 @@ function App() {
         ))}
       </div>
 
-            {activeTab === 'home' && (
-        <div className="onix-home-shell">
-          <div className="onix-hero-card p-5">
-            <div className="relative z-10 flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="onix-brand-mark scale-90">
-                    <OnixCrystal size={42} variant="logo" />
-                  </div>
+      {activeTab === 'home' && (
+        <div className="flex flex-col items-center mt-8 relative">
+          <div
+            onClick={handleTap}
+            className={`onix-tap-orb h-64 w-64 sm:w-80 sm:h-80 rounded-full flex items-center justify-center cursor-pointer shadow-2xl transition-transform relative ${
+              isTapped ? 'scale-90' : ''
+            }`}
+          >
+            <div className="onix-crystal-shards" />
+            <OnixCrystal size={245} variant="tap" />
+            <span className="sr-only">$ONIX crystal</span>
 
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.34em] text-cyan-300">
-                      Telegram Mini App
-                    </p>
-                    <h2 className="onix-hero-title mt-1 text-3xl font-black">
-                      $ONIX coin
-                    </h2>
-                  </div>
-                </div>
-
-                <p className="max-w-[270px] text-sm leading-6 text-slate-300">
-                  Твой тап. Твой рост. Твоя Web3 tap economy.
-                </p>
+            {floatingNumbers.map((num) => (
+              <div
+                key={num.id}
+                className="onix-floating-number absolute text-3xl font-bold animate-float"
+                style={{ left: num.x - 20, top: num.y - 30 }}
+              >
+                +{num.value}
               </div>
-
-              <div className="onix-chip shrink-0 rounded-2xl px-3 py-2 text-right">
-                <p className="text-[10px] uppercase tracking-widest text-slate-500">
-                  Energy
-                </p>
-                <p className="font-bold text-cyan-200">
-                  ⚡ {Math.floor(energy)}/{maxEnergy}
-                </p>
-              </div>
-            </div>
-
-            <div className="relative z-10 mt-5 grid grid-cols-3 gap-3">
-              <div className="onix-stat-tile rounded-2xl p-3">
-                <p className="text-[10px] text-slate-500">Ранг</p>
-                <p className="mt-1 truncate font-bold text-white">
-                  {rankInfo.currentRank.name}
-                </p>
-              </div>
-
-              <div className="onix-stat-tile rounded-2xl p-3">
-                <p className="text-[10px] text-slate-500">За неделю</p>
-                <p className="mt-1 truncate font-bold text-cyan-200">
-                  +{formatOnix(weeklyEarned)}
-                </p>
-              </div>
-
-              <div className="onix-stat-tile rounded-2xl p-3">
-                <p className="text-[10px] text-slate-500">Топ</p>
-                <p className="mt-1 truncate font-bold text-purple-200">
-                  {currentUserPlace ? `#${currentUserPlace}` : '—'}
-                </p>
-              </div>
-            </div>
-
-            <div className="relative z-10 mt-5">
-              <div className="mb-2 flex justify-between text-xs">
-                <span className="text-slate-400">
-                  {rankInfo.nextRank ? `До ${rankInfo.nextRank.name}` : 'Максимальный ранг'}
-                </span>
-                <span className="text-cyan-200">
-                  {rankProgressText}
-                </span>
-              </div>
-
-              <div className="h-2 overflow-hidden rounded-full bg-slate-900/90">
-                <div
-                  className="onix-progress-fill h-full transition-all"
-                  style={{ width: `${Math.min(rankProgress, 100)}%` }}
-                />
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="mt-5 text-center">
-            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">
-              Баланс $ONIX
-            </p>
-
-            <p className="onix-balance-number mt-2 text-5xl font-black tracking-tighter sm:text-6xl">
-              {balance.toLocaleString('ru-RU')}
-            </p>
-
-            {isBoostActive && (
-              <p className="mt-2 text-sm font-bold text-cyan-300">
-                ⚡ Буст активен
-              </p>
-            )}
-          </div>
-
-          <div className="onix-tap-stage">
-            <div
-              onClick={handleTap}
-              className={`onix-tap-orb rounded-full flex items-center justify-center cursor-pointer shadow-2xl transition-transform relative ${
-                isTapped ? 'scale-90' : ''
-              }`}
-            >
-              <div className="onix-crystal-shards" />
-              <OnixCrystal size={220} variant="tap" />
-              <span className="sr-only">$ONIX crystal</span>
-
-              {floatingNumbers.map((num) => (
-                <div
-                  key={num.id}
-                  className="onix-floating-number absolute text-3xl font-bold animate-float"
-                  style={{ left: num.x - 20, top: num.y - 30 }}
-                >
-                  +{num.value}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="onix-tap-label text-center text-sm font-black">
+          <p className="onix-clean-home-note mt-8 text-center text-sm font-black text-cyan-200">
             {energy > 0 ? 'ТАПАЙ КРИСТАЛЛ' : 'ЭНЕРГИЯ ВОССТАНАВЛИВАЕТСЯ'}
           </p>
 
-          <div className="mt-5 rounded-3xl border border-cyan-400/20 bg-[#111827] p-4 shadow-xl">
-            <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="font-bold text-white">⚡ Энергия</span>
-              <span className="font-bold text-cyan-200">
-                {Math.floor(energy)} / {maxEnergy}
-              </span>
-            </div>
+          <div className="mt-8 w-full px-5">
+            <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 text-left shadow-xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
+                  🚀
+                </div>
 
-            <div className="onix-energy-bar h-3">
-              <div
-                className="onix-energy-bar-fill"
-                style={{ width: `${Math.min((energy / Math.max(maxEnergy, 1)) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="onix-action-row mt-5 grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setActiveTab('boosts')}
-              className="rounded-2xl py-4 text-sm font-bold text-cyan-200 active:scale-95"
-            >
-              ⚡ Улучшения
-            </button>
-
-            <button
-              onClick={() => setActiveTab('tasks')}
-              className="rounded-2xl py-4 text-sm font-bold text-purple-200 active:scale-95"
-            >
-              🏆 Задания
-            </button>
-          </div>
-
-          <div className="mt-5 rounded-3xl border border-purple-400/20 bg-[#111827] p-5 text-left shadow-xl">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="onix-brand-mark scale-75">
-                <OnixCrystal size={38} variant="logo" />
+                <div>
+                  <h2 className="text-xl font-bold text-white">$ONIX coin launch</h2>
+                  <p className="text-sm text-gray-400">
+                    Web3 tap economy, команды, сезоны и выводы
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h2 className="text-xl font-bold text-white">$ONIX coin launch</h2>
-                <p className="text-sm text-gray-400">
-                  Web3 tap economy, команды, сезоны и выводы
-                </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setActiveTab('launch')}
+                  className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-yellow-400 active:scale-95"
+                >
+                  FAQ / Roadmap
+                </button>
+
+                <button
+                  onClick={shareReferralLink}
+                  className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-sky-400 active:scale-95"
+                >
+                  Поделиться
+                </button>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setActiveTab('launch')}
-                className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-cyan-200 active:scale-95"
-              >
-                FAQ / Roadmap
-              </button>
-
-              <button
-                onClick={shareReferralLink}
-                className="rounded-2xl bg-[#0a0f1c] py-4 font-bold text-purple-200 active:scale-95"
-              >
-                Поделиться
-              </button>
             </div>
           </div>
         </div>
       )}
-
 
       {activeTab === 'launch' && (
         <div className="px-5 mt-8 space-y-5">
