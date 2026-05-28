@@ -2490,7 +2490,7 @@ function App() {
     return () => clearInterval(interval);
   }, [autoclickers, activeBoost, boostEndTime, maxEnergy, energyRecharge]);
 
-  const handleTap = async (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleTap = async (e: React.MouseEvent<HTMLElement>) => {
     const telegramId = getTelegramId();
 
     if (!telegramId) {
