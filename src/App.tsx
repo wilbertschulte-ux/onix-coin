@@ -2331,6 +2331,147 @@ body,
   text-shadow: 0 0 14px rgba(34, 197, 94, 0.20);
 }
 
+
+/* Step 17: screenshot correction pass */
+.onix-app-bg {
+  padding-bottom: calc(128px + env(safe-area-inset-bottom)) !important;
+}
+
+/* Secondary screens already have their own hero blocks, so remove the old global rank/balance stack. */
+.onix-rank-panel,
+.onix-balance-panel {
+  display: none !important;
+}
+
+.onix-header {
+  padding: 12px 14px !important;
+  border-radius: 0 0 22px 22px;
+}
+
+.onix-header .onix-brand-mark {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 20px !important;
+}
+
+.onix-header .onix-brand-title {
+  font-size: clamp(1.55rem, 7vw, 2.15rem) !important;
+  line-height: 0.95 !important;
+}
+
+.onix-header .onix-energy-pill {
+  min-width: 154px;
+  justify-content: center;
+  padding: 9px 14px !important;
+  border-radius: 999px !important;
+  background: rgba(8, 15, 23, 0.72) !important;
+  border-color: rgba(250, 204, 21, 0.24) !important;
+  font-size: 16px !important;
+}
+
+.onix-home-screen {
+  margin-top: 14px !important;
+  gap: 0 !important;
+}
+
+.onix-home-hero-card {
+  margin-inline: auto !important;
+}
+
+.onix-home-screen .onix-tap-orb {
+  width: min(62vw, 248px) !important;
+  height: min(62vw, 248px) !important;
+  margin-top: 18px !important;
+}
+
+.onix-home-energy-block {
+  width: min(calc(100vw - 42px), 372px) !important;
+  margin-top: 10px !important;
+  margin-bottom: 110px !important;
+  position: relative;
+  z-index: 3;
+}
+
+.onix-home-tap-button {
+  min-height: 52px !important;
+  margin-top: 10px !important;
+  font-size: 18px !important;
+}
+
+.onix-clean-home-note,
+.onix-home-screen .onix-launch-card {
+  display: none !important;
+}
+
+.onix-nav {
+  width: min(calc(100vw - 18px), 404px) !important;
+  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  z-index: 120 !important;
+  padding: 7px !important;
+}
+
+.onix-nav button {
+  min-height: 58px !important;
+  padding: 8px 4px 7px !important;
+  font-size: 10.5px !important;
+}
+
+.onix-nav button svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.onix-boosts-screen,
+.onix-wallet-screen,
+.onix-profile-screen,
+.onix-tasks-screen,
+.onix-social-screen,
+.onix-launch-screen {
+  margin-top: 16px !important;
+  padding-bottom: 126px !important;
+}
+
+.onix-boosts-screen > .rounded-3xl:first-child,
+.onix-wallet-reference,
+.onix-profile-reference {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 390px) {
+  .onix-header {
+    padding: 10px 12px !important;
+  }
+
+  .onix-header .onix-brand-mark {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .onix-header .onix-energy-pill {
+    min-width: 142px;
+    font-size: 15px !important;
+    padding-inline: 10px !important;
+  }
+
+  .onix-home-balance-value {
+    font-size: clamp(2.55rem, 13.5vw, 3.35rem) !important;
+  }
+
+  .onix-home-screen .onix-tap-orb {
+    width: min(60vw, 230px) !important;
+    height: min(60vw, 230px) !important;
+  }
+
+  .onix-home-energy-block {
+    margin-bottom: 112px !important;
+  }
+
+  .onix-nav button {
+    min-height: 56px !important;
+    font-size: 9.5px !important;
+  }
+}
+
 `;
 
 
