@@ -2472,6 +2472,189 @@ body,
   }
 }
 
+
+/* Step 18: Telegram screenshot exact spacing pass */
+.onix-header {
+  margin: 0 10px 0 !important;
+  padding: 10px 14px !important;
+  border-radius: 0 0 24px 24px !important;
+}
+
+.onix-header .onix-brand-mark {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 17px !important;
+}
+
+.onix-header .onix-brand-img {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.onix-header .onix-brand-title {
+  font-size: clamp(1.38rem, 6.2vw, 1.88rem) !important;
+  line-height: 0.92 !important;
+}
+
+.onix-header .text-\[10px\] {
+  font-size: 9px !important;
+  letter-spacing: 0.30em !important;
+}
+
+.onix-header .onix-energy-pill {
+  min-width: 138px !important;
+  min-height: 42px !important;
+  padding: 8px 12px !important;
+  font-size: 15px !important;
+}
+
+.onix-home-screen {
+  margin-top: 12px !important;
+}
+
+.onix-home-hero-card {
+  width: calc(100% - 20px) !important;
+  padding: 20px 18px 16px !important;
+  border-radius: 28px !important;
+}
+
+.onix-home-user-row {
+  margin-bottom: 18px !important;
+}
+
+.onix-home-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 15px !important;
+}
+
+.onix-home-rank-mark {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 15px !important;
+}
+
+.onix-home-username {
+  font-size: 18px !important;
+}
+
+.onix-home-title {
+  font-size: 12px !important;
+}
+
+.onix-home-balance-row {
+  margin-top: 12px !important;
+  margin-bottom: 14px !important;
+}
+
+.onix-home-balance-label {
+  font-size: 10px !important;
+  letter-spacing: 0.22em !important;
+}
+
+.onix-home-balance-value {
+  font-size: clamp(3.05rem, 13.5vw, 3.85rem) !important;
+  line-height: 0.92 !important;
+}
+
+.onix-home-balance-symbol {
+  margin-top: 8px !important;
+  min-width: 96px !important;
+  min-height: 34px !important;
+  font-size: 13px !important;
+}
+
+.onix-home-level-row {
+  margin-top: 14px !important;
+  padding: 10px 12px !important;
+  border-radius: 16px !important;
+}
+
+.onix-home-level-meta {
+  font-size: 10px !important;
+}
+
+.onix-home-screen .onix-tap-orb {
+  width: min(56vw, 230px) !important;
+  height: min(56vw, 230px) !important;
+  margin-top: 14px !important;
+}
+
+.onix-home-energy-block {
+  margin-top: 4px !important;
+  margin-bottom: 136px !important;
+}
+
+.onix-home-energy-text {
+  font-size: 11px !important;
+}
+
+.onix-home-tap-button {
+  min-height: 50px !important;
+  font-size: 17px !important;
+  border-radius: 17px !important;
+}
+
+.onix-boosts-screen,
+.onix-wallet-screen,
+.onix-profile-screen,
+.onix-tasks-screen,
+.onix-social-screen,
+.onix-launch-screen {
+  margin-top: 12px !important;
+  padding-bottom: 150px !important;
+}
+
+.onix-nav {
+  width: min(calc(100vw - 18px), 398px) !important;
+  padding: 6px !important;
+  border-radius: 24px !important;
+}
+
+.onix-nav button {
+  min-width: 58px !important;
+  min-height: 56px !important;
+  padding: 7px 3px 6px !important;
+}
+
+@media (max-width: 390px) {
+  .onix-header {
+    padding: 9px 12px !important;
+  }
+
+  .onix-header .onix-brand-mark {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .onix-header .onix-brand-img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .onix-header .onix-energy-pill {
+    min-width: 128px !important;
+    font-size: 14px !important;
+  }
+
+  .onix-home-hero-card {
+    padding: 18px 16px 15px !important;
+  }
+
+  .onix-home-balance-value {
+    font-size: clamp(2.72rem, 12.8vw, 3.35rem) !important;
+  }
+
+  .onix-home-screen .onix-tap-orb {
+    width: min(52vw, 210px) !important;
+    height: min(52vw, 210px) !important;
+  }
+
+  .onix-home-energy-block {
+    margin-bottom: 140px !important;
+  }
+}
+
 `;
 
 
