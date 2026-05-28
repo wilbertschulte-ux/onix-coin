@@ -1171,6 +1171,151 @@ body,
   display: none !important;
 }
 
+/* Step 19: Telegram home screen refinement */
+.onix-header {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.onix-brand-mark {
+  width: 84px;
+  height: 84px;
+}
+
+.onix-brand-img {
+  width: 58px;
+  height: 58px;
+}
+
+.onix-brand-title {
+  font-size: clamp(1.95rem, 7vw, 2.5rem) !important;
+  line-height: 0.88;
+  letter-spacing: 0.03em;
+}
+
+.onix-home-screen {
+  margin-top: 14px !important;
+}
+
+.onix-home-hero-card {
+  padding: 16px 16px 14px;
+  border-radius: 28px;
+}
+
+.onix-home-user-row {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.onix-home-name-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.onix-home-inline-badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(136, 92, 246, 0.34);
+  background: rgba(91, 33, 246, 0.18);
+  color: #DAD7FF;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.onix-home-title,
+.onix-home-rank-mark,
+.onix-home-level-row {
+  display: none !important;
+}
+
+.onix-home-mini-rank-row {
+  margin-top: 8px;
+}
+
+.onix-home-mini-rank-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #B9C2D3;
+}
+
+.onix-home-mini-rank-name {
+  color: #F5F8FF;
+  font-weight: 800;
+}
+
+.onix-home-mini-rank-meta {
+  color: #94A3B8;
+  text-align: right;
+}
+
+.onix-home-mini-track {
+  margin-top: 5px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(136, 92, 246, 0.14);
+}
+
+.onix-home-mini-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #885CF6, #A855F7, #06B6D4);
+  box-shadow: 0 0 12px rgba(136, 92, 246, 0.45);
+}
+
+.onix-home-balance-label {
+  margin-top: 14px;
+}
+
+.onix-home-balance-value {
+  margin-top: 6px;
+  font-size: clamp(2.45rem, 12vw, 4rem);
+  letter-spacing: -0.08em;
+}
+
+.onix-home-balance-symbol {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.onix-home-screen .onix-tap-orb {
+  margin-top: 18px !important;
+  width: min(66vw, 274px) !important;
+  height: min(66vw, 274px) !important;
+}
+
+.onix-home-energy-block {
+  margin-top: 2px;
+  padding: 0 4px 14px;
+}
+
+.onix-home-energy-text {
+  margin-top: 2px;
+}
+
+.onix-home-energy-track {
+  margin-top: 6px;
+}
+
+.onix-home-tap-button {
+  margin-top: 10px;
+  min-height: 50px;
+}
+
 @media (max-width: 380px) {
   .onix-home-hero-card {
     padding: 14px;
@@ -1596,1062 +1741,6 @@ body,
 
   .onix-app-bg {
     padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
-  }
-}
-
-
-/* Step 11: closer reference spacing, cards, and mobile polish */
-.onix-app-bg {
-  isolation: isolate;
-}
-
-.onix-app-bg::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.22;
-  background:
-    linear-gradient(rgba(136,92,246,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6,182,212,0.06) 1px, transparent 1px);
-  background-size: 34px 34px;
-  mask-image: radial-gradient(circle at 50% 32%, black 0 48%, transparent 78%);
-}
-
-.onix-app-bg > * {
-  position: relative;
-  z-index: 1;
-}
-
-.onix-header {
-  min-height: 70px;
-  padding: 10px 12px !important;
-}
-
-.onix-header .onix-brand-mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 17px;
-}
-
-.onix-energy-pill {
-  border: 1px solid rgba(250,204,21,0.18);
-  background:
-    radial-gradient(circle at 20% 20%, rgba(250,204,21,0.16), transparent 38%),
-    rgba(8, 15, 23, 0.74) !important;
-  box-shadow: 0 0 22px rgba(250, 204, 21, 0.10), inset 0 0 18px rgba(250,204,21,0.05);
-}
-
-.onix-home-hero-card {
-  transform: translateZ(0);
-}
-
-.onix-home-hero-card::after {
-  content: '';
-  position: absolute;
-  width: 130px;
-  height: 130px;
-  right: -44px;
-  bottom: -54px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(0,229,255,0.18), transparent 66%);
-  filter: blur(1px);
-  pointer-events: none;
-}
-
-.onix-home-screen .onix-tap-orb {
-  filter: drop-shadow(0 26px 34px rgba(0,0,0,0.42)) drop-shadow(0 0 34px rgba(136,92,246,0.34));
-}
-
-.onix-home-tap-button {
-  position: relative;
-  overflow: hidden;
-}
-
-.onix-home-tap-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 0 28%, rgba(255,255,255,0.20) 42%, transparent 58% 100%);
-  transform: translateX(-120%);
-  animation: onixButtonSheen 4.5s ease-in-out infinite;
-}
-
-@keyframes onixButtonSheen {
-  0%, 52% { transform: translateX(-120%); }
-  72%, 100% { transform: translateX(120%); }
-}
-
-.onix-boosts-screen,
-.onix-wallet-screen,
-.onix-profile-screen,
-.onix-social-screen {
-  padding-left: 14px !important;
-  padding-right: 14px !important;
-}
-
-.onix-boosts-screen > .rounded-3xl,
-.onix-wallet-screen > .rounded-3xl,
-.onix-profile-screen > div:first-child,
-.onix-social-screen > .rounded-3xl {
-  border-radius: 26px !important;
-  border-color: rgba(136, 92, 246, 0.34) !important;
-}
-
-.onix-boosts-screen .space-y-4 > .rounded-3xl,
-.onix-wallet-screen .space-y-3 > .rounded-2xl,
-.onix-wallet-screen .space-y-4 > .rounded-2xl,
-.onix-social-screen .rounded-2xl,
-.onix-profile-screen .rounded-2xl {
-  background:
-    radial-gradient(circle at 90% 12%, rgba(136,92,246,0.16), transparent 34%),
-    linear-gradient(145deg, rgba(17,24,39,0.86), rgba(8,15,23,0.96)) !important;
-  border: 1px solid rgba(136, 92, 246, 0.24) !important;
-  box-shadow: 0 16px 44px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04) !important;
-}
-
-.onix-boosts-screen button.bg-yellow-400,
-.onix-wallet-screen button.bg-yellow-400,
-.onix-wallet-screen button.bg-emerald-500,
-.onix-wallet-screen button.bg-sky-500,
-.onix-social-screen button.bg-yellow-400,
-.onix-social-screen button.bg-emerald-500,
-.onix-social-screen button.bg-sky-500 {
-  border-radius: 16px !important;
-  background: linear-gradient(135deg, #5B21F6 0%, #885CF6 48%, #A855F7 100%) !important;
-  color: white !important;
-  box-shadow: 0 0 24px rgba(136,92,246,0.30), inset 0 1px 0 rgba(255,255,255,0.18) !important;
-}
-
-.onix-nav {
-  background:
-    radial-gradient(circle at 50% 0%, rgba(136,92,246,0.22), transparent 44%),
-    rgba(8, 15, 23, 0.88) !important;
-  border: 1px solid rgba(136, 92, 246, 0.32) !important;
-  box-shadow: 0 -18px 44px rgba(0,0,0,0.42), 0 0 34px rgba(136,92,246,0.20), inset 0 1px 0 rgba(255,255,255,0.05) !important;
-  backdrop-filter: blur(18px);
-}
-
-.onix-nav button {
-  color: rgba(226,232,240,0.72) !important;
-  transition: transform 140ms ease, background 140ms ease, color 140ms ease;
-}
-
-.onix-nav button:active {
-  transform: scale(0.96);
-}
-
-.onix-nav button.onix-nav-active {
-  background:
-    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.15), transparent 52%),
-    linear-gradient(145deg, rgba(91,33,246,0.96), rgba(168,85,247,0.84)) !important;
-  color: white !important;
-  box-shadow: 0 0 22px rgba(136,92,246,0.44), inset 0 1px 0 rgba(255,255,255,0.18) !important;
-}
-
-@media (max-width: 390px) {
-  .onix-home-balance-value {
-    font-size: clamp(1.85rem, 9.2vw, 2.65rem);
-  }
-
-  .onix-home-screen .onix-tap-orb {
-    width: min(68vw, 270px) !important;
-    height: min(68vw, 270px) !important;
-    margin-top: 20px !important;
-  }
-
-  .onix-nav button {
-    min-width: 56px !important;
-    font-size: 10px !important;
-  }
-}
-
-
-/* Step 12: reference mobile shell + tighter ONIX header */
-.onix-app-bg {
-  max-width: 430px;
-  margin: 0 auto;
-  min-height: 100dvh;
-  box-shadow:
-    0 0 0 1px rgba(136, 92, 246, 0.16),
-    0 0 80px rgba(0, 0, 0, 0.65),
-    0 0 70px rgba(136, 92, 246, 0.10);
-}
-
-.onix-header {
-  position: sticky !important;
-  top: 0 !important;
-  border-radius: 0 0 26px 26px;
-  margin: 0 8px 4px;
-  background:
-    radial-gradient(circle at 18% 10%, rgba(0, 229, 255, 0.12), transparent 42%),
-    linear-gradient(180deg, rgba(8, 15, 23, 0.96), rgba(10, 15, 28, 0.78)) !important;
-  border-left: 1px solid rgba(136, 92, 246, 0.16);
-  border-right: 1px solid rgba(136, 92, 246, 0.16);
-  border-bottom: 1px solid rgba(136, 92, 246, 0.24);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.34), 0 0 26px rgba(136, 92, 246, 0.12);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-
-.onix-brand-title {
-  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif !important;
-  font-size: 21px !important;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-}
-
-.onix-brand-mark {
-  box-shadow:
-    0 0 28px rgba(136, 92, 246, 0.36),
-    0 0 18px rgba(0, 229, 255, 0.16),
-    inset 0 0 18px rgba(255, 255, 255, 0.05) !important;
-}
-
-.onix-home-hero-card {
-  margin-left: 2px;
-  margin-right: 2px;
-  border-radius: 28px !important;
-  padding: 15px 15px 16px !important;
-}
-
-.onix-home-balance-row {
-  margin-top: 2px;
-}
-
-.onix-home-balance-label {
-  margin-top: 14px !important;
-}
-
-.onix-home-level-row {
-  padding: 10px 11px 11px;
-  border-radius: 18px;
-  background: rgba(2, 6, 23, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.045);
-}
-
-.onix-home-screen .onix-tap-orb {
-  margin-top: 22px !important;
-  width: min(69vw, 286px) !important;
-  height: min(69vw, 286px) !important;
-}
-
-.onix-home-energy-block {
-  padding-left: 4px !important;
-  padding-right: 4px !important;
-}
-
-.onix-home-tap-button {
-  min-height: 56px !important;
-  border-radius: 20px !important;
-  font-size: 18px;
-}
-
-.onix-boosts-screen > .rounded-3xl,
-.onix-wallet-screen > .rounded-3xl,
-.onix-profile-screen > div:first-child,
-.onix-tasks-screen > .rounded-3xl,
-.onix-social-screen > .rounded-3xl,
-.onix-launch-screen > .rounded-3xl {
-  border-radius: 28px !important;
-}
-
-.onix-boosts-screen .rounded-2xl,
-.onix-wallet-screen .rounded-2xl,
-.onix-profile-screen .rounded-2xl,
-.onix-tasks-screen .rounded-2xl,
-.onix-social-screen .rounded-2xl,
-.onix-launch-screen .rounded-2xl {
-  border-radius: 20px !important;
-}
-
-.onix-nav {
-  width: min(calc(100vw - 18px), 412px) !important;
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%);
-  border-radius: 24px !important;
-  gap: 3px !important;
-}
-
-.onix-nav button {
-  min-width: 0 !important;
-  padding: 9px 5px 8px !important;
-  border-radius: 18px !important;
-}
-
-.onix-nav button svg {
-  width: 19px !important;
-  height: 19px !important;
-}
-
-.onix-nav button.onix-nav-active {
-  transform: translateY(-1px);
-}
-
-@media (min-width: 431px) {
-  body {
-    background:
-      radial-gradient(circle at 50% 8%, rgba(136, 92, 246, 0.20), transparent 34%),
-      linear-gradient(180deg, #020617 0%, #050914 100%);
-  }
-}
-
-@media (max-width: 360px) {
-  .onix-brand-title {
-    font-size: 18px !important;
-  }
-
-  .onix-header .text-\[10px\] {
-    letter-spacing: 0.22em !important;
-  }
-
-  .onix-energy-pill {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    font-size: 12px !important;
-  }
-
-  .onix-home-screen .onix-tap-orb {
-    width: min(66vw, 246px) !important;
-    height: min(66vw, 246px) !important;
-  }
-
-  .onix-nav button span,
-  .onix-nav button {
-    font-size: 9px !important;
-  }
-}
-
-
-/* Step 13: exact Tap screen pass */
-.onix-home-screen {
-  margin-top: 10px !important;
-  padding-inline: 2px;
-}
-
-.onix-home-hero-card {
-  padding: 14px 14px 15px !important;
-  border-radius: 30px !important;
-  border-color: rgba(0, 229, 255, 0.22) !important;
-  background:
-    radial-gradient(circle at 84% 14%, rgba(168, 85, 247, 0.36), transparent 30%),
-    radial-gradient(circle at 12% 0%, rgba(0, 229, 255, 0.18), transparent 34%),
-    linear-gradient(155deg, rgba(17, 24, 39, 0.94), rgba(7, 12, 24, 0.98) 62%, rgba(10, 15, 28, 0.96)) !important;
-  box-shadow:
-    0 20px 54px rgba(0, 0, 0, 0.44),
-    0 0 42px rgba(136, 92, 246, 0.20),
-    inset 0 0 42px rgba(0, 229, 255, 0.045) !important;
-}
-
-.onix-home-hero-card::after {
-  content: '';
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.68), rgba(168, 85, 247, 0.58), transparent);
-  opacity: 0.8;
-}
-
-.onix-home-user-row {
-  padding: 4px 4px 8px;
-}
-
-.onix-home-avatar {
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 17px !important;
-}
-
-.onix-home-rank-mark {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 15px !important;
-}
-
-.onix-home-username {
-  font-size: 16px !important;
-  letter-spacing: -0.01em;
-}
-
-.onix-home-title {
-  display: inline-flex;
-  margin-top: 5px !important;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(136, 92, 246, 0.14);
-  border: 1px solid rgba(168, 85, 247, 0.22);
-  color: #D8B4FE !important;
-  font-size: 10px !important;
-  line-height: 1;
-}
-
-.onix-home-balance-label {
-  margin-top: 10px !important;
-  color: #AAB7CC !important;
-}
-
-.onix-home-balance-value {
-  margin-top: 2px !important;
-  font-size: clamp(2.35rem, 11.5vw, 3.25rem) !important;
-  letter-spacing: -0.075em !important;
-}
-
-.onix-home-balance-symbol {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  min-width: 86px;
-  margin: 5px auto 0 !important;
-  padding: 5px 13px;
-  border-radius: 999px;
-  background: rgba(250, 204, 21, 0.10);
-  border: 1px solid rgba(250, 204, 21, 0.22);
-  box-shadow: 0 0 18px rgba(250, 204, 21, 0.12);
-}
-
-.onix-home-level-row {
-  margin-top: 12px !important;
-  padding: 9px 10px 10px !important;
-  background:
-    radial-gradient(circle at 10% 50%, rgba(0, 229, 255, 0.07), transparent 42%),
-    rgba(2, 6, 23, 0.38) !important;
-}
-
-.onix-home-level-meta {
-  font-size: 10px !important;
-}
-
-.onix-home-level-track {
-  height: 7px !important;
-}
-
-.onix-home-screen .onix-tap-orb {
-  width: min(68vw, 272px) !important;
-  height: min(68vw, 272px) !important;
-  margin-top: 18px !important;
-  border-width: 1px !important;
-  box-shadow:
-    0 0 30px rgba(136, 92, 246, 0.62),
-    0 0 70px rgba(0, 229, 255, 0.22),
-    inset 0 0 34px rgba(168, 85, 247, 0.20) !important;
-}
-
-.onix-home-screen .onix-tap-orb::before {
-  inset: -8px !important;
-  opacity: 0.84;
-}
-
-.onix-home-screen .onix-tap-orb::after {
-  inset: 18px !important;
-  opacity: 0.88;
-}
-
-.onix-home-screen .onix-tap-img {
-  width: 75% !important;
-  height: 75% !important;
-}
-
-.onix-home-energy-block {
-  margin-top: 7px !important;
-}
-
-.onix-home-energy-text {
-  justify-content: space-between !important;
-  padding-inline: 5px;
-  font-size: 11px !important;
-}
-
-.onix-home-energy-track {
-  height: 8px !important;
-  margin-top: 7px !important;
-}
-
-.onix-home-tap-button {
-  min-height: 54px !important;
-  margin-top: 12px !important;
-  border-radius: 19px !important;
-  background:
-    linear-gradient(135deg, #4216D6 0%, #7C3AED 44%, #A855F7 78%, #06B6D4 132%) !important;
-  box-shadow:
-    0 0 28px rgba(136, 92, 246, 0.50),
-    0 12px 28px rgba(20, 8, 58, 0.36),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
-}
-
-.onix-home-tap-button::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  border-radius: inherit;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
-  opacity: 0.58;
-  pointer-events: none;
-}
-
-@media (max-width: 380px) {
-  .onix-home-screen {
-    margin-top: 7px !important;
-  }
-
-  .onix-home-balance-value {
-    font-size: clamp(2.08rem, 10.7vw, 2.78rem) !important;
-  }
-
-  .onix-home-screen .onix-tap-orb {
-    width: min(64vw, 240px) !important;
-    height: min(64vw, 240px) !important;
-    margin-top: 14px !important;
-  }
-
-  .onix-home-tap-button {
-    min-height: 50px !important;
-    margin-top: 10px !important;
-  }
-}
-
-
-/* Step 15: wallet reference exact pass */
-.onix-wallet-reference {
-  padding-top: 2px;
-}
-
-.onix-wallet-hero,
-.onix-wallet-panel,
-.onix-wallet-stat {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(6, 182, 212, 0.16);
-  background:
-    radial-gradient(circle at 16% 0%, rgba(6, 182, 212, 0.16), transparent 38%),
-    radial-gradient(circle at 88% 10%, rgba(168, 85, 247, 0.18), transparent 34%),
-    linear-gradient(145deg, rgba(17, 24, 39, 0.82), rgba(8, 15, 23, 0.96));
-  box-shadow:
-    0 18px 46px rgba(0, 0, 0, 0.34),
-    inset 0 0 28px rgba(136, 92, 246, 0.08);
-  backdrop-filter: blur(18px);
-}
-
-.onix-wallet-hero::before,
-.onix-wallet-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(115deg, rgba(255,255,255,0.08), transparent 34%),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 22px);
-  opacity: 0.35;
-}
-
-.onix-wallet-hero > *,
-.onix-wallet-panel > *,
-.onix-wallet-stat > * {
-  position: relative;
-  z-index: 1;
-}
-
-.onix-wallet-icon {
-  background:
-    radial-gradient(circle at 50% 35%, rgba(255,255,255,0.32), transparent 26%),
-    linear-gradient(145deg, rgba(0, 229, 255, 0.26), rgba(136, 92, 246, 0.34));
-  border: 1px solid rgba(6, 182, 212, 0.32);
-  box-shadow:
-    0 0 24px rgba(6, 182, 212, 0.24),
-    inset 0 0 20px rgba(255, 255, 255, 0.08);
-}
-
-.onix-wallet-balance-card {
-  border: 1px solid rgba(250, 204, 21, 0.16);
-  background:
-    radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.16), transparent 34%),
-    radial-gradient(circle at 90% 90%, rgba(6, 182, 212, 0.14), transparent 36%),
-    rgba(0, 0, 0, 0.22);
-  box-shadow:
-    inset 0 0 28px rgba(250, 204, 21, 0.08),
-    0 0 26px rgba(136, 92, 246, 0.12);
-}
-
-.onix-wallet-stat {
-  min-height: 92px;
-  transition: transform 160ms ease, border-color 160ms ease;
-}
-
-.onix-wallet-stat:active,
-.onix-wallet-row:active {
-  transform: scale(0.98);
-}
-
-.onix-wallet-progress {
-  background: linear-gradient(90deg, #06B6D4, #A855F7, #FACC15);
-  box-shadow: 0 0 18px rgba(6, 182, 212, 0.45);
-}
-
-.onix-wallet-chartbar {
-  background: linear-gradient(180deg, #FACC15, #A855F7 62%, #06B6D4);
-  box-shadow: 0 0 14px rgba(250, 204, 21, 0.32);
-}
-
-.onix-wallet-row {
-  border: 1px solid rgba(6, 182, 212, 0.12);
-  background: rgba(0, 0, 0, 0.22);
-  box-shadow: inset 0 0 18px rgba(136, 92, 246, 0.05);
-}
-
-.onix-wallet-withdraw.bg-yellow-400 {
-  background: linear-gradient(135deg, #FACC15, #06B6D4) !important;
-  box-shadow: 0 0 24px rgba(250, 204, 21, 0.22), 0 0 30px rgba(6, 182, 212, 0.18);
-}
-
-@media (max-width: 390px) {
-  .onix-wallet-balance-card .text-\[44px\] {
-    font-size: 36px !important;
-  }
-}
-
-/* Step 16: profile reference pass */
-.onix-social-screen {
-  position: relative;
-}
-
-.onix-social-screen > div:first-child {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(168, 85, 247, 0.42) !important;
-  background:
-    radial-gradient(circle at 18% 6%, rgba(168, 85, 247, 0.34), transparent 26%),
-    radial-gradient(circle at 88% 10%, rgba(6, 182, 212, 0.16), transparent 30%),
-    linear-gradient(145deg, rgba(15, 17, 28, 0.96), rgba(7, 10, 18, 0.98)) !important;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.035) inset,
-    0 26px 80px rgba(91, 33, 246, 0.24),
-    0 0 42px rgba(6, 182, 212, 0.08) !important;
-}
-
-.onix-social-screen > div:first-child::before {
-  content: '';
-  position: absolute;
-  inset: -35%;
-  pointer-events: none;
-  background:
-    linear-gradient(115deg, transparent 34%, rgba(255, 255, 255, 0.07), transparent 48%),
-    radial-gradient(circle, rgba(168, 85, 247, 0.14) 0 1px, transparent 1px);
-  background-size: auto, 26px 26px;
-  opacity: 0.78;
-}
-
-.onix-social-screen > div:first-child > * {
-  position: relative;
-  z-index: 1;
-}
-
-.onix-social-screen > div:first-child > div:first-child {
-  width: 86px !important;
-  height: 86px !important;
-  border: 1px solid rgba(168, 85, 247, 0.7) !important;
-  background:
-    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.96), rgba(168, 85, 247, 0.68) 30%, rgba(91, 33, 246, 0.28) 55%, rgba(6, 182, 212, 0.12) 75%),
-    #0a0f1c !important;
-  color: #f8fafc !important;
-  box-shadow:
-    0 0 30px rgba(168, 85, 247, 0.58),
-    0 0 46px rgba(6, 182, 212, 0.18),
-    inset 0 0 20px rgba(255, 255, 255, 0.08) !important;
-}
-
-.onix-social-screen h2 {
-  font-family: 'Orbitron', sans-serif !important;
-  letter-spacing: 0.03em;
-  text-transform: none;
-  text-shadow: 0 0 18px rgba(168, 85, 247, 0.42);
-}
-
-.onix-social-screen > div:first-child > p:nth-of-type(1) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 120px;
-  margin-top: 8px !important;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(168, 85, 247, 0.36);
-  background: rgba(136, 92, 246, 0.12);
-  color: #d8b4fe !important;
-  font-weight: 800;
-}
-
-.onix-social-screen .rounded-2xl,
-.onix-social-screen .rounded-3xl {
-  border-color: rgba(136, 92, 246, 0.28) !important;
-  background:
-    linear-gradient(145deg, rgba(15, 17, 28, 0.9), rgba(7, 10, 18, 0.92)) !important;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.025) inset,
-    0 16px 44px rgba(2, 6, 23, 0.34) !important;
-}
-
-.onix-social-screen .grid > div {
-  border: 1px solid rgba(136, 92, 246, 0.20) !important;
-}
-
-.onix-social-screen .h-3 {
-  height: 7px !important;
-  background: rgba(15, 23, 42, 0.95) !important;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
-}
-
-.onix-social-screen .h-3 > div,
-.onix-social-screen .h-2 > div {
-  background: linear-gradient(90deg, #06b6d4, #885cf6, #a855f7) !important;
-  box-shadow: 0 0 18px rgba(168, 85, 247, 0.55);
-}
-
-.onix-social-screen button:not(:disabled) {
-  border: 1px solid rgba(168, 85, 247, 0.34) !important;
-  background: linear-gradient(135deg, rgba(91, 33, 246, 0.92), rgba(168, 85, 247, 0.92)) !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 20px rgba(136, 92, 246, 0.30) !important;
-}
-
-.onix-social-screen input {
-  border: 1px solid rgba(136, 92, 246, 0.24) !important;
-  background: rgba(5, 8, 15, 0.78) !important;
-}
-
-.onix-social-screen .text-yellow-400 {
-  color: #facc15 !important;
-  text-shadow: 0 0 14px rgba(250, 204, 21, 0.18);
-}
-
-.onix-social-screen .text-emerald-400 {
-  color: #22c55e !important;
-  text-shadow: 0 0 14px rgba(34, 197, 94, 0.20);
-}
-
-
-/* Step 17: screenshot correction pass */
-.onix-app-bg {
-  padding-bottom: calc(128px + env(safe-area-inset-bottom)) !important;
-}
-
-/* Secondary screens already have their own hero blocks, so remove the old global rank/balance stack. */
-.onix-rank-panel,
-.onix-balance-panel {
-  display: none !important;
-}
-
-.onix-header {
-  padding: 12px 14px !important;
-  border-radius: 0 0 22px 22px;
-}
-
-.onix-header .onix-brand-mark {
-  width: 58px !important;
-  height: 58px !important;
-  border-radius: 20px !important;
-}
-
-.onix-header .onix-brand-title {
-  font-size: clamp(1.55rem, 7vw, 2.15rem) !important;
-  line-height: 0.95 !important;
-}
-
-.onix-header .onix-energy-pill {
-  min-width: 154px;
-  justify-content: center;
-  padding: 9px 14px !important;
-  border-radius: 999px !important;
-  background: rgba(8, 15, 23, 0.72) !important;
-  border-color: rgba(250, 204, 21, 0.24) !important;
-  font-size: 16px !important;
-}
-
-.onix-home-screen {
-  margin-top: 14px !important;
-  gap: 0 !important;
-}
-
-.onix-home-hero-card {
-  margin-inline: auto !important;
-}
-
-.onix-home-screen .onix-tap-orb {
-  width: min(62vw, 248px) !important;
-  height: min(62vw, 248px) !important;
-  margin-top: 18px !important;
-}
-
-.onix-home-energy-block {
-  width: min(calc(100vw - 42px), 372px) !important;
-  margin-top: 10px !important;
-  margin-bottom: 110px !important;
-  position: relative;
-  z-index: 3;
-}
-
-.onix-home-tap-button {
-  min-height: 52px !important;
-  margin-top: 10px !important;
-  font-size: 18px !important;
-}
-
-.onix-clean-home-note,
-.onix-home-screen .onix-launch-card {
-  display: none !important;
-}
-
-.onix-nav {
-  width: min(calc(100vw - 18px), 404px) !important;
-  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
-  z-index: 120 !important;
-  padding: 7px !important;
-}
-
-.onix-nav button {
-  min-height: 58px !important;
-  padding: 8px 4px 7px !important;
-  font-size: 10.5px !important;
-}
-
-.onix-nav button svg {
-  width: 20px !important;
-  height: 20px !important;
-}
-
-.onix-boosts-screen,
-.onix-wallet-screen,
-.onix-profile-screen,
-.onix-tasks-screen,
-.onix-social-screen,
-.onix-launch-screen {
-  margin-top: 16px !important;
-  padding-bottom: 126px !important;
-}
-
-.onix-boosts-screen > .rounded-3xl:first-child,
-.onix-wallet-reference,
-.onix-profile-reference {
-  margin-top: 0 !important;
-}
-
-@media (max-width: 390px) {
-  .onix-header {
-    padding: 10px 12px !important;
-  }
-
-  .onix-header .onix-brand-mark {
-    width: 52px !important;
-    height: 52px !important;
-  }
-
-  .onix-header .onix-energy-pill {
-    min-width: 142px;
-    font-size: 15px !important;
-    padding-inline: 10px !important;
-  }
-
-  .onix-home-balance-value {
-    font-size: clamp(2.55rem, 13.5vw, 3.35rem) !important;
-  }
-
-  .onix-home-screen .onix-tap-orb {
-    width: min(60vw, 230px) !important;
-    height: min(60vw, 230px) !important;
-  }
-
-  .onix-home-energy-block {
-    margin-bottom: 112px !important;
-  }
-
-  .onix-nav button {
-    min-height: 56px !important;
-    font-size: 9.5px !important;
-  }
-}
-
-
-/* Step 18: Telegram screenshot exact spacing pass */
-.onix-header {
-  margin: 0 10px 0 !important;
-  padding: 10px 14px !important;
-  border-radius: 0 0 24px 24px !important;
-}
-
-.onix-header .onix-brand-mark {
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 17px !important;
-}
-
-.onix-header .onix-brand-img {
-  width: 44px !important;
-  height: 44px !important;
-}
-
-.onix-header .onix-brand-title {
-  font-size: clamp(1.38rem, 6.2vw, 1.88rem) !important;
-  line-height: 0.92 !important;
-}
-
-.onix-header .text-\[10px\] {
-  font-size: 9px !important;
-  letter-spacing: 0.30em !important;
-}
-
-.onix-header .onix-energy-pill {
-  min-width: 138px !important;
-  min-height: 42px !important;
-  padding: 8px 12px !important;
-  font-size: 15px !important;
-}
-
-.onix-home-screen {
-  margin-top: 12px !important;
-}
-
-.onix-home-hero-card {
-  width: calc(100% - 20px) !important;
-  padding: 20px 18px 16px !important;
-  border-radius: 28px !important;
-}
-
-.onix-home-user-row {
-  margin-bottom: 18px !important;
-}
-
-.onix-home-avatar {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 15px !important;
-}
-
-.onix-home-rank-mark {
-  width: 46px !important;
-  height: 46px !important;
-  border-radius: 15px !important;
-}
-
-.onix-home-username {
-  font-size: 18px !important;
-}
-
-.onix-home-title {
-  font-size: 12px !important;
-}
-
-.onix-home-balance-row {
-  margin-top: 12px !important;
-  margin-bottom: 14px !important;
-}
-
-.onix-home-balance-label {
-  font-size: 10px !important;
-  letter-spacing: 0.22em !important;
-}
-
-.onix-home-balance-value {
-  font-size: clamp(3.05rem, 13.5vw, 3.85rem) !important;
-  line-height: 0.92 !important;
-}
-
-.onix-home-balance-symbol {
-  margin-top: 8px !important;
-  min-width: 96px !important;
-  min-height: 34px !important;
-  font-size: 13px !important;
-}
-
-.onix-home-level-row {
-  margin-top: 14px !important;
-  padding: 10px 12px !important;
-  border-radius: 16px !important;
-}
-
-.onix-home-level-meta {
-  font-size: 10px !important;
-}
-
-.onix-home-screen .onix-tap-orb {
-  width: min(56vw, 230px) !important;
-  height: min(56vw, 230px) !important;
-  margin-top: 14px !important;
-}
-
-.onix-home-energy-block {
-  margin-top: 4px !important;
-  margin-bottom: 136px !important;
-}
-
-.onix-home-energy-text {
-  font-size: 11px !important;
-}
-
-.onix-home-tap-button {
-  min-height: 50px !important;
-  font-size: 17px !important;
-  border-radius: 17px !important;
-}
-
-.onix-boosts-screen,
-.onix-wallet-screen,
-.onix-profile-screen,
-.onix-tasks-screen,
-.onix-social-screen,
-.onix-launch-screen {
-  margin-top: 12px !important;
-  padding-bottom: 150px !important;
-}
-
-.onix-nav {
-  width: min(calc(100vw - 18px), 398px) !important;
-  padding: 6px !important;
-  border-radius: 24px !important;
-}
-
-.onix-nav button {
-  min-width: 58px !important;
-  min-height: 56px !important;
-  padding: 7px 3px 6px !important;
-}
-
-@media (max-width: 390px) {
-  .onix-header {
-    padding: 9px 12px !important;
-  }
-
-  .onix-header .onix-brand-mark {
-    width: 46px !important;
-    height: 46px !important;
-  }
-
-  .onix-header .onix-brand-img {
-    width: 40px !important;
-    height: 40px !important;
-  }
-
-  .onix-header .onix-energy-pill {
-    min-width: 128px !important;
-    font-size: 14px !important;
-  }
-
-  .onix-home-hero-card {
-    padding: 18px 16px 15px !important;
-  }
-
-  .onix-home-balance-value {
-    font-size: clamp(2.72rem, 12.8vw, 3.35rem) !important;
-  }
-
-  .onix-home-screen .onix-tap-orb {
-    width: min(52vw, 210px) !important;
-    height: min(52vw, 210px) !important;
-  }
-
-  .onix-home-energy-block {
-    margin-bottom: 140px !important;
   }
 }
 
@@ -5674,24 +4763,14 @@ function App() {
           </div>
         ))}
       </div>
-      <div className="onix-header p-4 flex justify-between items-center sticky top-0 z-50">
+      <div className="onix-header p-3 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="onix-brand-mark">
             <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-brand-img" />
           </div>
           <div>
-            <h1 className="onix-brand-title text-2xl font-black">$ONIX coin</h1>
-            <p className="text-[10px] uppercase tracking-[0.32em] text-cyan-300">
-              Web3 tap economy
-            </p>
+            <h1 className="onix-brand-title text-[2rem] font-black leading-none">$ONIX COIN</h1>
           </div>
-        </div>
-
-        <div className="onix-energy-pill flex items-center gap-2 px-4 py-1 rounded-full">
-          <Zap className="w-5 h-5 text-yellow-400" />
-          <span>
-            {Math.floor(energy)}/{maxEnergy}
-          </span>
         </div>
       </div>
 
@@ -5761,43 +4840,38 @@ function App() {
       {activeTab === 'home' && (
         <div className="onix-home-screen flex flex-col items-center mt-8 relative">
           <div className="onix-home-hero-card">
-            <div className="onix-home-user-row flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="onix-home-avatar">
-                  <img src={onixLogoCrystal} alt="$ONIX user badge" draggable={false} />
-                </div>
-                <div className="min-w-0">
-                  <p className="onix-home-username truncate">{username}</p>
-                  <p className="onix-home-title truncate">{selectedTitle || rankInfo.currentRank.name}</p>
-                </div>
+            <div className="onix-home-user-row flex items-start gap-3">
+              <div className="onix-home-avatar shrink-0">
+                <img src={onixLogoCrystal} alt="$ONIX user badge" draggable={false} />
               </div>
-
-              <div className="onix-home-rank-mark">
-                <img src={onixLogoCrystal} alt="$ONIX rank" draggable={false} />
+              <div className="min-w-0 flex-1">
+                <div className="onix-home-name-badge-row">
+                  <p className="onix-home-username truncate">{username}</p>
+                  <span className="onix-home-inline-badge">{selectedTitle || rankInfo.currentRank.name}</span>
+                </div>
+                <div className="onix-home-mini-rank-row">
+                  <div className="onix-home-mini-rank-head">
+                    <span className="onix-home-mini-rank-name">{rankInfo.currentRank.name}</span>
+                    <span className="onix-home-mini-rank-meta">
+                      {rankInfo.nextRank
+                        ? `${rankProgressText} до ${rankInfo.nextRank.name}`
+                        : 'Максимальный ранг'}
+                    </span>
+                  </div>
+                  <div className="onix-home-mini-track">
+                    <div
+                      className="onix-home-mini-fill"
+                      style={{ width: `${Math.min(rankProgress, 100)}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="onix-home-balance-row">
               <p className="onix-home-balance-label">Баланс $ONIX</p>
               <p className="onix-home-balance-value">{balance.toLocaleString('ru-RU')}</p>
-              <p className="onix-home-balance-symbol">ONIX</p>
-            </div>
-
-            <div className="onix-home-level-row">
-              <div className="onix-home-level-meta">
-                <span>Ранг {rankInfo.currentRank.name}</span>
-                <span>
-                  {rankInfo.nextRank
-                    ? `${rankProgressText} до ${rankInfo.nextRank.name}`
-                    : 'Максимальный ранг'}
-                </span>
-              </div>
-              <div className="onix-home-level-track">
-                <div
-                  className="onix-home-level-fill"
-                  style={{ width: `${Math.min(rankProgress, 100)}%` }}
-                />
-              </div>
+              <p className="onix-home-balance-symbol">$ONIX</p>
             </div>
           </div>
           <div
@@ -6382,25 +5456,9 @@ function App() {
           </div>
 
           <div className={boostSubTab === 'upgrades' ? '' : 'hidden'}>
-            <div className="mb-4 flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-purple-200/70">
-                  ONIX Lab
-                </p>
-                <h2 className="mt-1 text-2xl font-black text-white drop-shadow-[0_0_16px_rgba(168,85,247,0.45)]">
-                  Улучшения
-                </h2>
-              </div>
+            <h2 className="text-2xl font-bold mb-4">⬆️ Апгрейды</h2>
 
-              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-right shadow-[0_0_24px_rgba(34,211,238,0.12)]">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-100/70">Баланс</p>
-                <p className="text-sm font-black text-cyan-100">
-                  {formatOnix(balance)}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
+            <div className="space-y-4">
               {upgradeCards.map((upgrade) => {
                 const canBuy = balance >= upgrade.cost;
                 const progressToBuy = Math.min((balance / upgrade.cost) * 100, 100);
@@ -6408,93 +5466,88 @@ function App() {
                 return (
                   <div
                     key={upgrade.type}
-                    className="group relative overflow-hidden rounded-[28px] border border-violet-300/18 bg-[linear-gradient(145deg,rgba(23,18,46,0.96),rgba(8,13,31,0.98))] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                    className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl"
                   >
-                    <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-purple-500/20 blur-2xl" />
-                    <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl" />
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-2xl">
+                          {upgrade.icon}
+                        </div>
 
-                    <div className="relative flex items-start gap-3">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px] border border-yellow-200/35 bg-[radial-gradient(circle_at_30%_20%,#fff7ad,#f6b72d_48%,#7c3aed_100%)] text-2xl shadow-[0_0_28px_rgba(250,204,21,0.22)]">
-                        {upgrade.icon}
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {upgrade.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {upgrade.description}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <h3 className="truncate text-lg font-black text-white">
-                              {upgrade.title}
-                            </h3>
-                            <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-300/78">
-                              {upgrade.description}
-                            </p>
-                          </div>
+                      <div className="rounded-2xl bg-[#0a0f1c] px-3 py-2 text-right">
+                        <p className="text-xs text-gray-400">Уровень</p>
+                        <p className="font-bold text-yellow-400">
+                          {upgrade.level}
+                        </p>
+                      </div>
+                    </div>
 
-                          <div className="shrink-0 rounded-2xl border border-purple-300/20 bg-black/24 px-3 py-2 text-right">
-                            <p className="text-[10px] uppercase tracking-[0.16em] text-purple-100/60">LVL</p>
-                            <p className="text-base font-black text-yellow-300">
-                              {upgrade.level}
-                            </p>
-                          </div>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">
+                          {upgrade.currentLabel}
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-white">
+                          {upgrade.currentValue}
+                        </p>
+                      </div>
 
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          <div className="rounded-2xl border border-white/7 bg-white/[0.045] p-3">
-                            <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">
-                              {upgrade.currentLabel}
-                            </p>
-                            <p className="mt-1 text-sm font-black text-white">
-                              {upgrade.currentValue}
-                            </p>
-                          </div>
+                      <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                        <p className="text-xs text-gray-400">
+                          {upgrade.nextLabel}
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-emerald-400">
+                          {upgrade.nextValue}
+                        </p>
+                      </div>
+                    </div>
 
-                          <div className="rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.055] p-3">
-                            <p className="text-[10px] uppercase tracking-[0.14em] text-emerald-100/65">
-                              {upgrade.nextLabel}
-                            </p>
-                            <p className="mt-1 text-sm font-black text-emerald-300">
-                              {upgrade.nextValue}
-                            </p>
-                          </div>
-                        </div>
+                    <div className="mt-4 rounded-2xl bg-[#0a0f1c] p-4">
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="text-gray-400">
+                          Цена: {upgrade.cost.toLocaleString('ru-RU')} ONIX
+                        </span>
 
-                        <div className="mt-3 rounded-2xl border border-cyan-300/12 bg-black/26 p-3">
-                          <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-                            <span className="font-bold text-slate-300">
-                              {upgrade.cost.toLocaleString('ru-RU')} ONIX
-                            </span>
+                        <span
+                          className={
+                            canBuy
+                              ? 'font-bold text-emerald-400'
+                              : 'font-bold text-gray-400'
+                          }
+                        >
+                          {canBuy
+                            ? 'Можно купить'
+                            : `Не хватает ${(upgrade.cost - balance).toLocaleString(
+                                'ru-RU'
+                              )}`}
+                        </span>
+                      </div>
 
-                            <span
-                              className={
-                                canBuy
-                                  ? 'font-black text-emerald-300'
-                                  : 'font-bold text-slate-500'
-                              }
-                            >
-                              {canBuy
-                                ? 'Готово к покупке'
-                                : `Нужно ещё ${(upgrade.cost - balance).toLocaleString(
-                                    'ru-RU'
-                                  )}`}
-                            </span>
-                          </div>
-
-                          <div className="h-2.5 overflow-hidden rounded-full bg-slate-950/80 ring-1 ring-white/5">
-                            <div
-                              className="h-full rounded-full bg-[linear-gradient(90deg,#7c3aed,#22d3ee,#facc15)] shadow-[0_0_16px_rgba(34,211,238,0.35)] transition-all"
-                              style={{ width: `${progressToBuy}%` }}
-                            />
-                          </div>
-                        </div>
+                      <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-yellow-400 transition-all"
+                          style={{ width: `${progressToBuy}%` }}
+                        />
                       </div>
                     </div>
 
                     <button
                       onClick={() => buyUpgrade(upgrade.type)}
                       disabled={!canBuy}
-                      className={`relative mt-4 w-full overflow-hidden rounded-2xl py-3.5 text-base font-black transition active:scale-[0.98] ${
+                      className={`mt-4 w-full rounded-2xl py-4 text-lg font-bold transition ${
                         canBuy
-                          ? 'border border-yellow-200/40 bg-[linear-gradient(135deg,#facc15,#f97316)] text-slate-950 shadow-[0_0_26px_rgba(250,204,21,0.26)]'
-                          : 'border border-white/8 bg-white/[0.055] text-slate-500 cursor-not-allowed'
+                          ? 'bg-yellow-400 text-black active:scale-95'
+                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                       }`}
                     >
                       {canBuy ? 'Купить улучшение' : 'Недостаточно ONIX'}
@@ -7831,125 +6884,124 @@ function App() {
       )}
 
       {activeTab === 'wallet' && (
-        <div className="onix-wallet-screen onix-wallet-reference px-5 mt-6 space-y-4">
-          <div className="onix-wallet-hero rounded-[32px] border border-cyan-300/20 bg-[#111827] p-5 shadow-xl">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="onix-wallet-icon flex h-14 w-14 items-center justify-center rounded-2xl text-3xl">
-                  💎
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.26em] text-cyan-200/80">
-                    ONIX Vault
-                  </p>
-                  <h2 className="mt-1 text-2xl font-black text-white">Кошелёк</h2>
-                  <p className="text-xs text-slate-400">Баланс, выводы и история</p>
-                </div>
+        <div className="onix-wallet-screen px-5 mt-8 space-y-5">
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 shadow-xl">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-400 text-3xl">
+                💼
               </div>
 
-              <div className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-violet-100">
-                Secure
+              <div>
+                <h2 className="text-2xl font-bold text-white">Кошелёк</h2>
+                <p className="text-sm text-gray-400">
+                  Баланс, выводы и экономика аккаунта
+                </p>
               </div>
             </div>
 
-            <div className="onix-wallet-balance-card mt-5 rounded-[28px] p-5 text-center">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">Текущий баланс</p>
-              <p className="onix-balance-number mt-2 text-[44px] font-black leading-none">
+            <div className="rounded-3xl bg-[#0a0f1c] p-5 text-center">
+              <p className="text-sm text-gray-400">Текущий баланс</p>
+              <p className="mt-2 text-5xl font-bold text-yellow-400">
                 {formatOnix(balance)}
               </p>
-              <p className="mt-2 text-lg font-black text-emerald-300">
+              <p className="mt-2 text-lg font-bold text-emerald-400">
                 ≈ {balanceInEur.toLocaleString('ru-RU', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })} €
               </p>
+            </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2 text-left">
-                <div className="rounded-2xl border border-cyan-300/10 bg-black/20 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Курс</p>
-                  <p className="mt-1 text-xs font-black text-white">
-                    1000 ONIX = {economyConfig.onixEurPer1000.toLocaleString('ru-RU')}€
-                  </p>
-                </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Всего заработано</p>
+                <p className="mt-1 text-sm font-bold text-yellow-400">
+                  {formatOnix(totalEarned)}
+                </p>
+              </div>
 
-                <div className="rounded-2xl border border-violet-300/10 bg-black/20 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Мин. вывод</p>
-                  <p className="mt-1 text-xs font-black text-yellow-200">
-                    {minWithdrawOnix.toLocaleString('ru-RU')} ONIX
-                  </p>
-                </div>
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">За неделю</p>
+                <p className="mt-1 text-sm font-bold text-emerald-400">
+                  +{formatOnix(weeklyEarned)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Доходы в истории</p>
+                <p className="mt-1 text-sm font-bold text-emerald-400">
+                  +{formatOnix(walletIncomeTotal)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Расходы в истории</p>
+                <p className="mt-1 text-sm font-bold text-red-400">
+                  -{formatOnix(walletExpenseTotal)}
+                </p>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="onix-wallet-stat rounded-3xl p-4">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Всего заработано</p>
-              <p className="mt-2 text-base font-black text-yellow-200">{formatOnix(totalEarned)}</p>
-            </div>
-
-            <div className="onix-wallet-stat rounded-3xl p-4">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">За неделю</p>
-              <p className="mt-2 text-base font-black text-emerald-300">+{formatOnix(weeklyEarned)}</p>
-            </div>
-
-            <div className="onix-wallet-stat rounded-3xl p-4">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Доходы</p>
-              <p className="mt-2 text-base font-black text-emerald-300">+{formatOnix(walletIncomeTotal)}</p>
-            </div>
-
-            <div className="onix-wallet-stat rounded-3xl p-4">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Расходы</p>
-              <p className="mt-2 text-base font-black text-red-300">-{formatOnix(walletExpenseTotal)}</p>
-            </div>
-          </div>
-
-          <div className="onix-wallet-panel rounded-[30px] p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-black text-white">Вывод средств</h3>
-                <p className="text-xs text-slate-400">Прогресс до минимальной суммы</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Курс</p>
+                <p className="mt-1 text-sm font-bold text-white">
+                  1000 ONIX = {economyConfig.onixEurPer1000.toLocaleString('ru-RU')}€
+                </p>
               </div>
-              <span className="rounded-full border border-yellow-300/20 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-200">
-                {withdrawProgress.toFixed(1)}%
-              </span>
+
+              <div className="rounded-2xl bg-[#0a0f1c] p-4">
+                <p className="text-xs text-gray-400">Минимальный вывод</p>
+                <p className="mt-1 text-sm font-bold text-yellow-400">
+                  {minWithdrawOnix.toLocaleString('ru-RU')} ONIX
+                </p>
+              </div>
             </div>
 
-            <div className="h-3 overflow-hidden rounded-full border border-cyan-300/10 bg-black/30">
-              <div
-                className="onix-wallet-progress h-full rounded-full transition-all"
-                style={{ width: `${withdrawProgress}%` }}
-              />
-            </div>
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+                <span className="text-gray-400">Прогресс до вывода</span>
+                <span className="font-bold text-yellow-400">
+                  {withdrawProgress.toFixed(1)}%
+                </span>
+              </div>
 
-            <div className="mt-3 flex items-center justify-between gap-3 text-xs">
-              <span className="text-slate-400">
+              <div className="h-3 overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  style={{ width: `${withdrawProgress}%` }}
+                />
+              </div>
+
+              <p className="mt-3 text-sm text-gray-400">
                 {canWithdraw
                   ? 'Минимальная сумма набрана'
                   : `Осталось ${formatOnix(leftToWithdraw)} ONIX`}
-              </span>
-              <span className="font-bold text-slate-500">
-                Pending: {formatOnix(walletPendingWithdrawal)}
-              </span>
+              </p>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Pending-заявки: {formatOnix(walletPendingWithdrawal)} ONIX
+              </p>
             </div>
 
-            <div className="mt-5 rounded-3xl border border-violet-300/10 bg-black/20 p-4">
-              <p className="text-sm font-black text-white">🛡 Антибот-проверка</p>
-              <p className="mt-1 text-xs text-slate-500">Перед созданием заявки введите ONIX.</p>
+            <div className="mt-5 rounded-2xl bg-[#0a0f1c] p-4">
+              <p className="text-sm font-bold text-white">🛡 Антибот-проверка</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Перед созданием заявки введите ONIX.
+              </p>
 
               <input
                 value={withdrawalCheck}
                 onChange={(event) => setWithdrawalCheck(event.target.value)}
                 placeholder="Введите ONIX"
-                className="mt-3 w-full rounded-2xl border border-cyan-300/10 bg-[#080f17]/80 px-4 py-3 text-center text-sm font-black uppercase tracking-[0.22em] text-white outline-none"
+                className="mt-3 w-full rounded-2xl bg-[#111827] px-4 py-3 text-sm text-white outline-none"
               />
             </div>
 
             <button
               onClick={requestWithdrawal}
               disabled={!canWithdraw || isWithdrawalLoading}
-              className={`onix-wallet-withdraw mt-4 w-full rounded-2xl py-4 text-base font-black active:scale-95 ${
+              className={`mt-5 w-full rounded-2xl py-4 text-lg font-bold active:scale-95 ${
                 canWithdraw
                   ? 'bg-yellow-400 text-black'
                   : 'bg-gray-700 text-gray-400 cursor-not-allowed'
@@ -7963,57 +7015,59 @@ function App() {
             </button>
           </div>
 
-          <div className="onix-wallet-panel rounded-[30px] p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-black text-white">📈 График заработка</h3>
-                <p className="text-xs text-slate-400">Доходы за последние 7 дней</p>
-              </div>
-            </div>
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <h3 className="text-xl font-bold text-white">📈 График заработка</h3>
+            <p className="mt-1 text-sm text-gray-400">Доходы за последние 7 дней</p>
 
-            <div className="flex h-36 items-end gap-2 rounded-3xl border border-cyan-300/10 bg-black/20 p-4">
+            <div className="mt-5 flex h-40 items-end gap-2 rounded-2xl bg-[#0a0f1c] p-4">
               {earningChartDays.map((item) => (
                 <div key={item.key} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                   <div className="flex w-full flex-1 items-end">
                     <div
-                      className="onix-wallet-chartbar w-full rounded-t-xl transition-all"
+                      className="w-full rounded-t-xl bg-yellow-400 transition-all"
                       style={{
                         height: `${Math.max((item.amount / maxChartAmount) * 100, item.amount > 0 ? 8 : 2)}%`,
                       }}
                     />
                   </div>
-                  <p className="text-[10px] text-slate-500">{item.label}</p>
+                  <p className="text-[10px] text-gray-500">{item.label}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="onix-wallet-panel rounded-[30px] p-5">
-            <h3 className="text-lg font-black text-white">💸 Заявки на вывод</h3>
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
+            <h3 className="text-xl font-bold text-white">💸 Заявки на вывод</h3>
 
             {withdrawalRequests.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {withdrawalRequests.slice(0, 5).map((request, index) => (
                   <div
                     key={`${request.createdAt}-${index}`}
-                    className="onix-wallet-row rounded-2xl p-4"
+                    className="rounded-2xl bg-[#0a0f1c] p-4"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="font-black text-white">{formatOnix(request.amount)} ONIX</p>
-                        <p className="text-xs text-slate-400">≈ {formatOnix(request.eurAmount)} €</p>
+                        <p className="font-bold text-white">
+                          {formatOnix(request.amount)} ONIX
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          ≈ {formatOnix(request.eurAmount)} €
+                        </p>
                         {request.adminComment && (
-                          <p className="mt-1 text-xs text-slate-500">{request.adminComment}</p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {request.adminComment}
+                          </p>
                         )}
                       </div>
 
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-black ${
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
                           request.status === 'approved'
-                            ? 'bg-emerald-500/10 text-emerald-300'
+                            ? 'bg-emerald-500/10 text-emerald-400'
                             : request.status === 'rejected'
-                            ? 'bg-red-500/10 text-red-300'
-                            : 'bg-yellow-400/10 text-yellow-200'
+                            ? 'bg-red-500/10 text-red-400'
+                            : 'bg-yellow-400/10 text-yellow-400'
                         }`}
                       >
                         {request.status === 'approved'
@@ -8027,18 +7081,22 @@ function App() {
                 ))}
               </div>
             ) : (
-              <div className="mt-4 rounded-2xl border border-cyan-300/10 bg-black/20 p-5 text-center">
-                <p className="font-black text-slate-300">Заявок пока нет</p>
-                <p className="mt-1 text-sm text-slate-500">Когда вы создадите заявку, она появится здесь.</p>
+              <div className="mt-4 rounded-2xl bg-[#0a0f1c] p-5 text-center">
+                <p className="font-bold text-gray-300">Заявок пока нет</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Когда вы создадите заявку, она появится здесь.
+                </p>
               </div>
             )}
           </div>
 
-          <div className="onix-wallet-panel rounded-[30px] p-5">
+          <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-5 shadow-xl">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-black text-white">🧾 История операций</h3>
-                <p className="text-xs text-slate-400">{filteredTransactions.length} операций</p>
+                <h3 className="text-xl font-bold text-white">🧾 История операций</h3>
+                <p className="text-sm text-gray-400">
+                  {filteredTransactions.length} операций
+                </p>
               </div>
             </div>
 
@@ -8047,10 +7105,10 @@ function App() {
                 <button
                   key={filter.id}
                   onClick={() => setTransactionFilter(filter.id)}
-                  className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ${
+                  className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${
                     transactionFilter === filter.id
-                      ? 'bg-cyan-300 text-[#080f17]'
-                      : 'border border-violet-300/10 bg-black/20 text-slate-400'
+                      ? 'bg-yellow-400 text-black'
+                      : 'bg-[#0a0f1c] text-gray-400'
                   }`}
                 >
                   {filter.label}
@@ -8066,35 +7124,49 @@ function App() {
                   return (
                     <div
                       key={`${transaction.createdAt || index}-${index}`}
-                      className="onix-wallet-row flex items-center justify-between gap-3 rounded-2xl p-3"
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-[#0a0f1c] p-3"
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/10 bg-black/20 text-xl">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-xl">
                           {getTransactionIcon(transaction.type)}
                         </div>
 
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-black text-white">{transaction.title || 'Операция'}</p>
-                          <p className="text-xs text-slate-500">{formatTransactionTime(transaction.createdAt)}</p>
+                          <p className="truncate text-sm font-bold text-white">
+                            {transaction.title || 'Операция'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatTransactionTime(transaction.createdAt)}
+                          </p>
                         </div>
                       </div>
 
-                      <p className={`shrink-0 text-sm font-black ${isIncome ? 'text-emerald-300' : 'text-red-300'}`}>
-                        {isIncome ? '+' : ''}{formatOnix(transaction.amount)} ONIX
+                      <p
+                        className={`shrink-0 text-sm font-bold ${
+                          isIncome ? 'text-emerald-400' : 'text-red-400'
+                        }`}
+                      >
+                        {isIncome ? '+' : ''}
+                        {formatOnix(transaction.amount)} ONIX
                       </p>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="rounded-2xl border border-cyan-300/10 bg-black/20 p-5 text-center">
-                <p className="font-black text-slate-300">Операций нет</p>
-                <p className="mt-1 text-sm text-slate-500">Попробуйте выбрать другой фильтр.</p>
+              <div className="rounded-2xl bg-[#0a0f1c] p-5 text-center">
+                <p className="font-bold text-gray-300">Операций нет</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Попробуйте выбрать другой фильтр.
+                </p>
               </div>
             )}
           </div>
         </div>
       )}
+
+
+
 
 
 
