@@ -4918,6 +4918,198 @@ body.onix-body-home-lock {
     height: min(57vw, 232px) !important;
   }
 }
+
+/* Step 29: repair compact header after hard lock */
+.onix-clean-header-wrap,
+.onix-clean-island,
+.onix-clean-island-logo,
+.onix-clean-island-title,
+.onix-home-locked .onix-clean-header-wrap,
+.onix-home-locked .onix-clean-island,
+.onix-home-locked .onix-clean-island-logo,
+.onix-home-locked .onix-clean-island-title {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+}
+
+.onix-mini-top {
+  position: relative !important;
+  z-index: 90 !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  margin: -8px 0 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.onix-mini-top::before,
+.onix-mini-top::after {
+  display: none !important;
+  content: none !important;
+}
+
+.onix-mini-island {
+  width: min(72vw, 286px) !important;
+  height: 62px !important;
+  min-height: 62px !important;
+  max-height: 62px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding: 15px 18px 10px !important;
+  margin: 0 auto !important;
+  border-radius: 0 0 28px 28px !important;
+  border-left: 1px solid rgba(136, 92, 246, 0.32) !important;
+  border-right: 1px solid rgba(136, 92, 246, 0.32) !important;
+  border-bottom: 1px solid rgba(136, 92, 246, 0.32) !important;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(6, 182, 212, 0.18), transparent 38%),
+    radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(8, 15, 23, 0.98), rgba(17, 18, 40, 0.96)) !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.30),
+    inset 0 0 22px rgba(136, 92, 246, 0.08) !important;
+  overflow: hidden !important;
+}
+
+.onix-mini-island::before,
+.onix-mini-island::after {
+  display: none !important;
+  content: none !important;
+}
+
+.onix-mini-gem {
+  width: 21px !important;
+  height: 21px !important;
+  flex: 0 0 21px !important;
+  transform: rotate(45deg) !important;
+  border: 1px solid rgba(181, 122, 255, 0.95) !important;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.95) 0 10%, transparent 11% 100%),
+    radial-gradient(circle at 60% 60%, #06B6D4 0 22%, #885CF6 23% 58%, rgba(8, 15, 23, 0.96) 59% 100%) !important;
+  box-shadow:
+    0 0 10px rgba(6, 182, 212, 0.50),
+    0 0 16px rgba(136, 92, 246, 0.55) !important;
+}
+
+.onix-mini-title {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif !important;
+  font-size: clamp(1.45rem, 5.4vw, 1.84rem) !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.045em !important;
+  color: #fff !important;
+  white-space: nowrap !important;
+  text-shadow: 0 0 18px rgba(136, 92, 246, 0.40) !important;
+}
+
+.onix-home-locked .onix-mini-top {
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+}
+
+.onix-home-locked .onix-home-screen {
+  height: calc(100dvh - 64px) !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 64px) !important;
+  margin-top: 14px !important;
+  padding: 0 14px calc(122px + env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  min-height: 220px !important;
+  max-height: 230px !important;
+  padding: 18px 16px 16px !important;
+  margin: 0 !important;
+  border-radius: 28px !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  margin-top: 18px !important;
+  width: min(60vw, 246px) !important;
+  height: min(60vw, 246px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  margin-top: 7px !important;
+  padding-bottom: 0 !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 10px !important;
+  min-height: 50px !important;
+}
+
+.onix-toast-layer,
+.onix-home-locked .onix-toast-layer {
+  position: fixed !important;
+  top: calc(64px + env(safe-area-inset-top)) !important;
+  bottom: auto !important;
+  z-index: 100000 !important;
+}
+
+.onix-modal-layer,
+.onix-home-locked .onix-modal-layer {
+  z-index: 100001 !important;
+  align-items: center !important;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-height: 760px) {
+  .onix-mini-top,
+  .onix-home-locked .onix-mini-top {
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+  }
+
+  .onix-mini-island {
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    padding-top: 13px !important;
+  }
+
+  .onix-mini-title {
+    font-size: 1.36rem !important;
+  }
+
+  .onix-home-locked .onix-home-screen {
+    height: calc(100dvh - 58px) !important;
+    max-height: calc(100dvh - 58px) !important;
+    margin-top: 12px !important;
+    padding-bottom: calc(116px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .onix-home-locked .onix-home-hero-card {
+    min-height: 206px !important;
+    max-height: 216px !important;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    margin-top: 14px !important;
+    width: min(57vw, 230px) !important;
+    height: min(57vw, 230px) !important;
+  }
+}
 `;
 
     window.open(url, '_blank');
@@ -5634,10 +5826,10 @@ body.onix-body-home-lock {
           </div>
         ))}
       </div>
-      <div className="onix-clean-header-wrap">
-        <div className="onix-clean-island">
-          <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-clean-island-logo" />
-          <h1 className="onix-clean-island-title">$ONIX COIN</h1>
+      <div className="onix-mini-top">
+        <div className="onix-mini-island">
+          <span className="onix-mini-gem" aria-hidden="true" />
+          <span className="onix-mini-title">$ONIX COIN</span>
         </div>
       </div>
 
