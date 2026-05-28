@@ -2211,6 +2211,126 @@ body,
     font-size: 36px !important;
   }
 }
+
+/* Step 16: profile reference pass */
+.onix-social-screen {
+  position: relative;
+}
+
+.onix-social-screen > div:first-child {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(168, 85, 247, 0.42) !important;
+  background:
+    radial-gradient(circle at 18% 6%, rgba(168, 85, 247, 0.34), transparent 26%),
+    radial-gradient(circle at 88% 10%, rgba(6, 182, 212, 0.16), transparent 30%),
+    linear-gradient(145deg, rgba(15, 17, 28, 0.96), rgba(7, 10, 18, 0.98)) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+    0 26px 80px rgba(91, 33, 246, 0.24),
+    0 0 42px rgba(6, 182, 212, 0.08) !important;
+}
+
+.onix-social-screen > div:first-child::before {
+  content: '';
+  position: absolute;
+  inset: -35%;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 34%, rgba(255, 255, 255, 0.07), transparent 48%),
+    radial-gradient(circle, rgba(168, 85, 247, 0.14) 0 1px, transparent 1px);
+  background-size: auto, 26px 26px;
+  opacity: 0.78;
+}
+
+.onix-social-screen > div:first-child > * {
+  position: relative;
+  z-index: 1;
+}
+
+.onix-social-screen > div:first-child > div:first-child {
+  width: 86px !important;
+  height: 86px !important;
+  border: 1px solid rgba(168, 85, 247, 0.7) !important;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.96), rgba(168, 85, 247, 0.68) 30%, rgba(91, 33, 246, 0.28) 55%, rgba(6, 182, 212, 0.12) 75%),
+    #0a0f1c !important;
+  color: #f8fafc !important;
+  box-shadow:
+    0 0 30px rgba(168, 85, 247, 0.58),
+    0 0 46px rgba(6, 182, 212, 0.18),
+    inset 0 0 20px rgba(255, 255, 255, 0.08) !important;
+}
+
+.onix-social-screen h2 {
+  font-family: 'Orbitron', sans-serif !important;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  text-shadow: 0 0 18px rgba(168, 85, 247, 0.42);
+}
+
+.onix-social-screen > div:first-child > p:nth-of-type(1) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  margin-top: 8px !important;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 85, 247, 0.36);
+  background: rgba(136, 92, 246, 0.12);
+  color: #d8b4fe !important;
+  font-weight: 800;
+}
+
+.onix-social-screen .rounded-2xl,
+.onix-social-screen .rounded-3xl {
+  border-color: rgba(136, 92, 246, 0.28) !important;
+  background:
+    linear-gradient(145deg, rgba(15, 17, 28, 0.9), rgba(7, 10, 18, 0.92)) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+    0 16px 44px rgba(2, 6, 23, 0.34) !important;
+}
+
+.onix-social-screen .grid > div {
+  border: 1px solid rgba(136, 92, 246, 0.20) !important;
+}
+
+.onix-social-screen .h-3 {
+  height: 7px !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
+}
+
+.onix-social-screen .h-3 > div,
+.onix-social-screen .h-2 > div {
+  background: linear-gradient(90deg, #06b6d4, #885cf6, #a855f7) !important;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.55);
+}
+
+.onix-social-screen button:not(:disabled) {
+  border: 1px solid rgba(168, 85, 247, 0.34) !important;
+  background: linear-gradient(135deg, rgba(91, 33, 246, 0.92), rgba(168, 85, 247, 0.92)) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(136, 92, 246, 0.30) !important;
+}
+
+.onix-social-screen input {
+  border: 1px solid rgba(136, 92, 246, 0.24) !important;
+  background: rgba(5, 8, 15, 0.78) !important;
+}
+
+.onix-social-screen .text-yellow-400 {
+  color: #facc15 !important;
+  text-shadow: 0 0 14px rgba(250, 204, 21, 0.18);
+}
+
+.onix-social-screen .text-emerald-400 {
+  color: #22c55e !important;
+  text-shadow: 0 0 14px rgba(34, 197, 94, 0.20);
+}
+
 `;
 
 
