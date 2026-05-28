@@ -849,6 +849,104 @@ body,
   }
 }
 
+
+/* Step 5: ONIX profile screen polish */
+.onix-profile-screen {
+  padding-top: 6px;
+  padding-bottom: 18px;
+}
+
+.onix-profile-screen > div:first-child {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.24), transparent 34%),
+    radial-gradient(circle at 12% 18%, rgba(6, 182, 212, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.92), rgba(8, 15, 23, 0.96)) !important;
+  border-color: rgba(168, 85, 247, 0.34) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.45),
+    0 0 42px rgba(136, 92, 246, 0.18),
+    inset 0 0 34px rgba(6, 182, 212, 0.06) !important;
+}
+
+.onix-profile-screen > div:first-child::before {
+  content: '';
+  position: absolute;
+  inset: -80px -70px auto auto;
+  width: 190px;
+  height: 190px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.18), transparent 68%);
+  pointer-events: none;
+}
+
+.onix-profile-screen > div:first-child::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.55), rgba(168, 85, 247, 0.5), transparent);
+  pointer-events: none;
+}
+
+.onix-profile-screen > div:first-child > div:first-child {
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(250, 204, 21, 0.95), rgba(168, 85, 247, 0.4) 58%, rgba(6, 182, 212, 0.14) 100%) !important;
+  color: #080F17 !important;
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  box-shadow:
+    0 0 28px rgba(250, 204, 21, 0.25),
+    0 0 38px rgba(168, 85, 247, 0.28),
+    inset 0 0 22px rgba(255, 255, 255, 0.22);
+}
+
+.onix-profile-screen h2 {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 22px rgba(168, 85, 247, 0.45);
+}
+
+.onix-profile-screen .rounded-2xl,
+.onix-profile-screen .rounded-3xl {
+  border: 1px solid rgba(136, 92, 246, 0.18);
+  box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.025);
+}
+
+.onix-profile-screen .rounded-2xl {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.74), rgba(8, 15, 23, 0.92)) !important;
+}
+
+.onix-profile-screen .grid > div {
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, 0.8), rgba(8, 15, 23, 0.92)) !important;
+  border: 1px solid rgba(6, 182, 212, 0.12);
+}
+
+.onix-profile-screen .h-3 {
+  height: 10px !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.onix-profile-screen .h-3 > div {
+  background: linear-gradient(90deg, #885CF6, #00E5FF, #FACC15) !important;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.35);
+}
+
+.onix-profile-screen button:not(:disabled) {
+  box-shadow: 0 0 18px rgba(136, 92, 246, 0.12);
+}
+
+.onix-profile-screen input {
+  border: 1px solid rgba(136, 92, 246, 0.22);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.18);
+}
+
 `;
 
 
@@ -5189,7 +5287,7 @@ function App() {
       )}
 
       {activeTab === 'friends' && (
-        <div className="px-5 mt-8 space-y-5">
+        <div className="onix-profile-screen px-5 mt-8 space-y-5">
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 text-center shadow-xl">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
               👤
