@@ -1924,6 +1924,195 @@ body,
   }
 }
 
+
+/* Step 13: exact Tap screen pass */
+.onix-home-screen {
+  margin-top: 10px !important;
+  padding-inline: 2px;
+}
+
+.onix-home-hero-card {
+  padding: 14px 14px 15px !important;
+  border-radius: 30px !important;
+  border-color: rgba(0, 229, 255, 0.22) !important;
+  background:
+    radial-gradient(circle at 84% 14%, rgba(168, 85, 247, 0.36), transparent 30%),
+    radial-gradient(circle at 12% 0%, rgba(0, 229, 255, 0.18), transparent 34%),
+    linear-gradient(155deg, rgba(17, 24, 39, 0.94), rgba(7, 12, 24, 0.98) 62%, rgba(10, 15, 28, 0.96)) !important;
+  box-shadow:
+    0 20px 54px rgba(0, 0, 0, 0.44),
+    0 0 42px rgba(136, 92, 246, 0.20),
+    inset 0 0 42px rgba(0, 229, 255, 0.045) !important;
+}
+
+.onix-home-hero-card::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.68), rgba(168, 85, 247, 0.58), transparent);
+  opacity: 0.8;
+}
+
+.onix-home-user-row {
+  padding: 4px 4px 8px;
+}
+
+.onix-home-avatar {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 17px !important;
+}
+
+.onix-home-rank-mark {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 15px !important;
+}
+
+.onix-home-username {
+  font-size: 16px !important;
+  letter-spacing: -0.01em;
+}
+
+.onix-home-title {
+  display: inline-flex;
+  margin-top: 5px !important;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(136, 92, 246, 0.14);
+  border: 1px solid rgba(168, 85, 247, 0.22);
+  color: #D8B4FE !important;
+  font-size: 10px !important;
+  line-height: 1;
+}
+
+.onix-home-balance-label {
+  margin-top: 10px !important;
+  color: #AAB7CC !important;
+}
+
+.onix-home-balance-value {
+  margin-top: 2px !important;
+  font-size: clamp(2.35rem, 11.5vw, 3.25rem) !important;
+  letter-spacing: -0.075em !important;
+}
+
+.onix-home-balance-symbol {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 86px;
+  margin: 5px auto 0 !important;
+  padding: 5px 13px;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.10);
+  border: 1px solid rgba(250, 204, 21, 0.22);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.12);
+}
+
+.onix-home-level-row {
+  margin-top: 12px !important;
+  padding: 9px 10px 10px !important;
+  background:
+    radial-gradient(circle at 10% 50%, rgba(0, 229, 255, 0.07), transparent 42%),
+    rgba(2, 6, 23, 0.38) !important;
+}
+
+.onix-home-level-meta {
+  font-size: 10px !important;
+}
+
+.onix-home-level-track {
+  height: 7px !important;
+}
+
+.onix-home-screen .onix-tap-orb {
+  width: min(68vw, 272px) !important;
+  height: min(68vw, 272px) !important;
+  margin-top: 18px !important;
+  border-width: 1px !important;
+  box-shadow:
+    0 0 30px rgba(136, 92, 246, 0.62),
+    0 0 70px rgba(0, 229, 255, 0.22),
+    inset 0 0 34px rgba(168, 85, 247, 0.20) !important;
+}
+
+.onix-home-screen .onix-tap-orb::before {
+  inset: -8px !important;
+  opacity: 0.84;
+}
+
+.onix-home-screen .onix-tap-orb::after {
+  inset: 18px !important;
+  opacity: 0.88;
+}
+
+.onix-home-screen .onix-tap-img {
+  width: 75% !important;
+  height: 75% !important;
+}
+
+.onix-home-energy-block {
+  margin-top: 7px !important;
+}
+
+.onix-home-energy-text {
+  justify-content: space-between !important;
+  padding-inline: 5px;
+  font-size: 11px !important;
+}
+
+.onix-home-energy-track {
+  height: 8px !important;
+  margin-top: 7px !important;
+}
+
+.onix-home-tap-button {
+  min-height: 54px !important;
+  margin-top: 12px !important;
+  border-radius: 19px !important;
+  background:
+    linear-gradient(135deg, #4216D6 0%, #7C3AED 44%, #A855F7 78%, #06B6D4 132%) !important;
+  box-shadow:
+    0 0 28px rgba(136, 92, 246, 0.50),
+    0 12px 28px rgba(20, 8, 58, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.onix-home-tap-button::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+@media (max-width: 380px) {
+  .onix-home-screen {
+    margin-top: 7px !important;
+  }
+
+  .onix-home-balance-value {
+    font-size: clamp(2.08rem, 10.7vw, 2.78rem) !important;
+  }
+
+  .onix-home-screen .onix-tap-orb {
+    width: min(64vw, 240px) !important;
+    height: min(64vw, 240px) !important;
+    margin-top: 14px !important;
+  }
+
+  .onix-home-tap-button {
+    min-height: 50px !important;
+    margin-top: 10px !important;
+  }
+}
+
 `;
 
 
