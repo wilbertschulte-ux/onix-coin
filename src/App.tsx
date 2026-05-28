@@ -4449,7 +4449,199 @@ function App() {
 
   const downloadUsersCsv = () => {
     const telegramId = getTelegramId();
-    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}`;
+    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}
+
+/* Step 27: hard fix home scroll, header edges and notification layers */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+.onix-toast-layer {
+  top: calc(70px + env(safe-area-inset-top)) !important;
+  z-index: 260 !important;
+  pointer-events: none;
+}
+
+.onix-toast-layer > * {
+  pointer-events: auto;
+}
+
+.onix-home-locked {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  min-height: 100dvh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+  overscroll-behavior: none !important;
+}
+
+.onix-home-locked * {
+  overscroll-behavior: none !important;
+}
+
+.onix-home-locked .onix-header {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  overflow: visible !important;
+}
+
+.onix-home-locked .onix-header::before,
+.onix-home-locked .onix-header::after {
+  display: none !important;
+  content: none !important;
+}
+
+.onix-home-locked .onix-island-header {
+  width: min(74vw, 292px) !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  margin: 0 auto !important;
+  padding: 12px 18px 10px !important;
+  border-radius: 0 0 28px 28px !important;
+  border-top: 0 !important;
+  border-left: 1px solid rgba(136, 92, 246, 0.30) !important;
+  border-right: 1px solid rgba(136, 92, 246, 0.30) !important;
+  border-bottom: 1px solid rgba(136, 92, 246, 0.30) !important;
+  box-shadow:
+    0 14px 30px rgba(0,0,0,0.34),
+    inset 0 0 22px rgba(136, 92, 246, 0.07) !important;
+}
+
+.onix-home-locked .onix-island-header::before,
+.onix-home-locked .onix-island-header::after {
+  display: none !important;
+  content: none !important;
+}
+
+.onix-home-locked .onix-island-logo {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.onix-home-locked .onix-island-title {
+  font-size: clamp(1.45rem, 5.5vw, 1.9rem) !important;
+}
+
+.onix-home-locked .onix-home-screen {
+  position: relative !important;
+  height: calc(100dvh - 64px) !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 64px) !important;
+  margin-top: 16px !important;
+  padding: 0 14px calc(120px + env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  flex: 0 0 auto !important;
+  min-height: 218px !important;
+  max-height: 228px !important;
+  padding: 18px 16px 16px !important;
+  border-radius: 28px !important;
+  overflow: hidden !important;
+}
+
+.onix-home-locked .onix-home-balance-row {
+  margin-top: 12px !important;
+}
+
+.onix-home-locked .onix-home-balance-value {
+  margin-top: 12px !important;
+  font-size: clamp(2.45rem, 11.7vw, 3.85rem) !important;
+  line-height: 0.95 !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  flex: 0 0 auto !important;
+  margin-top: 18px !important;
+  width: min(61vw, 248px) !important;
+  height: min(61vw, 248px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  flex: 0 0 auto !important;
+  margin-top: 8px !important;
+  padding: 0 2px 0 !important;
+}
+
+.onix-home-locked .onix-home-energy-text {
+  font-size: 11px !important;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin-top: 6px !important;
+  height: 8px !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 10px !important;
+  min-height: 50px !important;
+}
+
+.onix-home-locked .onix-nav {
+  bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  z-index: 220 !important;
+}
+
+.onix-home-locked .onix-floating-number {
+  z-index: 240 !important;
+}
+
+@media (max-height: 760px) {
+  .onix-home-locked .onix-home-screen {
+    margin-top: 14px !important;
+    padding-bottom: calc(114px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .onix-home-locked .onix-home-hero-card {
+    min-height: 202px !important;
+    max-height: 212px !important;
+    padding: 16px 15px 14px !important;
+  }
+
+  .onix-home-locked .onix-home-balance-value {
+    font-size: clamp(2.25rem, 11vw, 3.55rem) !important;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    margin-top: 14px !important;
+    width: min(58vw, 235px) !important;
+    height: min(58vw, 235px) !important;
+  }
+
+  .onix-home-locked .onix-home-energy-block {
+    margin-top: 6px !important;
+  }
+
+  .onix-home-locked .onix-home-tap-button {
+    min-height: 48px !important;
+  }
+}
+`;
 
     window.open(url, '_blank');
   };
@@ -5149,7 +5341,7 @@ function App() {
   return (
     <div className={`onix-app-bg min-h-screen text-white ${activeTab === 'home' ? 'onix-home-locked' : ''}`}> 
       <style>{ONIX_THEME_STYLE}</style>
-      <div className="fixed left-0 right-0 top-4 z-[240] flex flex-col items-center gap-2 px-4">
+      <div className="onix-toast-layer fixed left-0 right-0 top-4 z-[240] flex flex-col items-center gap-2 px-4">
         {toastMessages.map((toast) => (
           <div
             key={toast.id}
@@ -8836,7 +9028,7 @@ function App() {
       )}
 
       {rewardPopupVisible && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4">
+        <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-sm rounded-3xl border border-yellow-400/30 bg-[#111827] p-6 text-center shadow-2xl">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
               🎉
