@@ -947,6 +947,252 @@ body,
   box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.18);
 }
 
+
+/* Step 6: reference-style home / tap screen */
+.onix-home-screen {
+  margin-top: 14px !important;
+  gap: 0;
+}
+
+.onix-home-hero-card {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(136, 92, 246, 0.34);
+  border-radius: 26px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(168, 85, 247, 0.34), transparent 34%),
+    radial-gradient(circle at 15% 25%, rgba(6, 182, 212, 0.14), transparent 32%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.88), rgba(8, 15, 23, 0.98));
+  box-shadow:
+    0 24px 68px rgba(0, 0, 0, 0.42),
+    0 0 38px rgba(136, 92, 246, 0.16),
+    inset 0 0 32px rgba(136, 92, 246, 0.07);
+}
+
+.onix-home-hero-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(110deg, transparent 0 32%, rgba(255, 255, 255, 0.055) 46%, transparent 60% 100%),
+    radial-gradient(circle at 72% 48%, rgba(0, 229, 255, 0.12), transparent 34%);
+  pointer-events: none;
+}
+
+.onix-home-user-row,
+.onix-home-balance-row,
+.onix-home-level-row {
+  position: relative;
+  z-index: 2;
+}
+
+.onix-home-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.22), transparent 60%),
+    linear-gradient(145deg, rgba(15, 23, 42, 0.94), rgba(8, 15, 23, 0.98));
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  box-shadow:
+    0 0 24px rgba(136, 92, 246, 0.44),
+    inset 0 0 18px rgba(6, 182, 212, 0.08);
+}
+
+.onix-home-avatar img,
+.onix-home-rank-mark img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.65));
+}
+
+.onix-home-rank-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.24), transparent 62%),
+    rgba(8, 15, 23, 0.74);
+  border: 1px solid rgba(136, 92, 246, 0.38);
+  box-shadow: 0 0 24px rgba(136, 92, 246, 0.28);
+}
+
+.onix-home-username {
+  font-size: 15px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.onix-home-title {
+  margin-top: 3px;
+  font-size: 11px;
+  color: #A855F7;
+  font-weight: 700;
+}
+
+.onix-home-balance-label {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #94A3B8;
+}
+
+.onix-home-balance-value {
+  margin-top: 4px;
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  font-size: clamp(2rem, 10vw, 3.05rem);
+  line-height: 1;
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  background: linear-gradient(90deg, #FFFFFF, #B7F9FF 34%, #A855F7 78%, #FACC15 100%);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 34px rgba(136, 92, 246, 0.20);
+}
+
+.onix-home-balance-symbol {
+  margin-top: 2px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: #FACC15;
+  letter-spacing: 0.08em;
+}
+
+.onix-home-level-row {
+  margin-top: 14px;
+}
+
+.onix-home-level-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: #CBD5E1;
+  font-weight: 700;
+}
+
+.onix-home-level-track {
+  margin-top: 8px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(136, 92, 246, 0.12);
+}
+
+.onix-home-level-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #885CF6, #A855F7, #06B6D4);
+  box-shadow: 0 0 18px rgba(136, 92, 246, 0.55);
+}
+
+.onix-home-screen .onix-tap-orb {
+  margin-top: 26px !important;
+  width: min(72vw, 300px) !important;
+  height: min(72vw, 300px) !important;
+}
+
+.onix-home-energy-block {
+  width: 100%;
+  margin-top: 8px;
+  padding: 0 8px;
+}
+
+.onix-home-energy-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #DDEBFF;
+}
+
+.onix-home-energy-text strong {
+  color: #FACC15;
+}
+
+.onix-home-energy-track {
+  margin-top: 8px;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(6, 182, 212, 0.18);
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.26);
+}
+
+.onix-home-energy-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #06B6D4, #00E5FF, #885CF6);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.45);
+}
+
+.onix-home-tap-button {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, #5B21F6 0%, #885CF6 48%, #A855F7 100%);
+  color: #ffffff;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  box-shadow:
+    0 0 28px rgba(136, 92, 246, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.onix-home-tap-button:active {
+  transform: scale(0.98);
+  filter: brightness(1.12);
+}
+
+.onix-home-screen .onix-clean-home-note {
+  display: none !important;
+}
+
+.onix-home-screen .onix-launch-card {
+  display: none !important;
+}
+
+@media (max-width: 380px) {
+  .onix-home-hero-card {
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .onix-home-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .onix-home-rank-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .onix-home-screen .onix-tap-orb {
+    width: min(70vw, 270px) !important;
+    height: min(70vw, 270px) !important;
+  }
+}
+
 `;
 
 
@@ -3987,6 +4233,8 @@ function App() {
         </div>
       </div>
 
+      {activeTab !== 'home' && (
+        <>
       <div className="onix-rank-panel px-5 pt-4">
         <div className="flex justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -4021,6 +4269,9 @@ function App() {
         )}
       </div>
 
+        </>
+      )}
+
       <div className="onix-nav flex">
         {[
           { id: 'home', label: 'Главная', icon: Home },
@@ -4047,6 +4298,46 @@ function App() {
 
       {activeTab === 'home' && (
         <div className="onix-home-screen flex flex-col items-center mt-8 relative">
+          <div className="onix-home-hero-card">
+            <div className="onix-home-user-row flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="onix-home-avatar">
+                  <img src={onixLogoCrystal} alt="$ONIX user badge" draggable={false} />
+                </div>
+                <div className="min-w-0">
+                  <p className="onix-home-username truncate">{username}</p>
+                  <p className="onix-home-title truncate">{selectedTitle || rankInfo.currentRank.name}</p>
+                </div>
+              </div>
+
+              <div className="onix-home-rank-mark">
+                <img src={onixLogoCrystal} alt="$ONIX rank" draggable={false} />
+              </div>
+            </div>
+
+            <div className="onix-home-balance-row">
+              <p className="onix-home-balance-label">Баланс $ONIX</p>
+              <p className="onix-home-balance-value">{balance.toLocaleString('ru-RU')}</p>
+              <p className="onix-home-balance-symbol">ONIX</p>
+            </div>
+
+            <div className="onix-home-level-row">
+              <div className="onix-home-level-meta">
+                <span>Ранг {rankInfo.currentRank.name}</span>
+                <span>
+                  {rankInfo.nextRank
+                    ? `${rankProgressText} до ${rankInfo.nextRank.name}`
+                    : 'Максимальный ранг'}
+                </span>
+              </div>
+              <div className="onix-home-level-track">
+                <div
+                  className="onix-home-level-fill"
+                  style={{ width: `${Math.min(rankProgress, 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
           <div
             onClick={handleTap}
             className={`onix-tap-orb h-64 w-64 sm:w-80 sm:h-80 rounded-full flex items-center justify-center cursor-pointer shadow-2xl transition-transform relative ${
@@ -4066,6 +4357,27 @@ function App() {
                 +{num.value}
               </div>
             ))}
+          </div>
+
+          <div className="onix-home-energy-block">
+            <div className="onix-home-energy-text">
+              <Zap className="h-4 w-4 text-yellow-400" />
+              <span><strong>{Math.floor(energy).toLocaleString('ru-RU')}</strong> / {maxEnergy.toLocaleString('ru-RU')}</span>
+              <span className="text-slate-400">{energy >= maxEnergy ? 'Энергия полная' : 'Восстановление'}</span>
+            </div>
+            <div className="onix-home-energy-track">
+              <div
+                className="onix-home-energy-fill"
+                style={{ width: `${Math.min((energy / Math.max(maxEnergy, 1)) * 100, 100)}%` }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleTap}
+              className="onix-home-tap-button"
+            >
+              ⚡ ТАП!
+            </button>
           </div>
 
           <p className="onix-clean-home-note mt-8 text-center text-sm font-black text-cyan-200">
