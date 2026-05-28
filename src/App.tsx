@@ -5404,6 +5404,42 @@ body.oc-lock-home-scroll {
 .onix-home-locked [class*="toast"] {
   z-index: 9999 !important;
 }
+
+/* Step 32: raise tap button above nav */
+.onix-home-locked .onix-home-energy-block {
+  margin-top: -12px !important;
+  padding-bottom: 30px !important;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin-top: 5px !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 6px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  transform: translateY(-10px) !important;
+}
+
+.onix-home-locked .onix-home-tap-button:active {
+  transform: translateY(-10px) scale(0.98) !important;
+}
+
+@media (max-width: 380px) {
+  .onix-home-locked .onix-home-energy-block {
+    margin-top: -14px !important;
+    padding-bottom: 32px !important;
+  }
+
+  .onix-home-locked .onix-home-tap-button {
+    transform: translateY(-12px) !important;
+  }
+
+  .onix-home-locked .onix-home-tap-button:active {
+    transform: translateY(-12px) scale(0.98) !important;
+  }
+}
 `;
 
     window.open(url, '_blank');
