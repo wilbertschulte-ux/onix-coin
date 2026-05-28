@@ -356,6 +356,54 @@ body {
     0 0 22px rgba(136, 92, 246, 0.35);
 }
 
+
+
+.onix-brand-img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  display: block;
+  filter:
+    drop-shadow(0 0 10px rgba(0, 229, 255, 0.65))
+    drop-shadow(0 0 18px rgba(136, 92, 246, 0.70));
+}
+
+.onix-tap-img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  display: block;
+  position: relative;
+  z-index: 3;
+  user-select: none;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 0 18px rgba(0, 229, 255, 0.82))
+    drop-shadow(0 0 38px rgba(136, 92, 246, 0.78));
+  animation: onixCrystalFloat 3.2s ease-in-out infinite;
+}
+
+.onix-tap-orb {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.22), transparent 26%),
+    radial-gradient(circle at 50% 55%, rgba(136, 92, 246, 0.28), transparent 52%),
+    rgba(8, 15, 23, 0.34) !important;
+  border: 0 !important;
+  box-shadow:
+    0 0 46px rgba(136, 92, 246, 0.58),
+    0 0 78px rgba(6, 182, 212, 0.24) !important;
+}
+
+.onix-tap-orb::before {
+  inset: 4px !important;
+  border: 2px solid rgba(136, 92, 246, 0.72) !important;
+}
+
+.onix-tap-orb::after {
+  inset: 24px !important;
+  border: 1px solid rgba(0, 229, 255, 0.38) !important;
+}
+
 `;
 
 
@@ -7100,52 +7148,4 @@ function AppWithBoundary() {
   );
 }
 
-export default AppWithBoundary
-
-.onix-brand-img {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-  display: block;
-  filter:
-    drop-shadow(0 0 10px rgba(0, 229, 255, 0.65))
-    drop-shadow(0 0 18px rgba(136, 92, 246, 0.70));
-}
-
-.onix-tap-img {
-  width: 88%;
-  height: 88%;
-  object-fit: contain;
-  display: block;
-  position: relative;
-  z-index: 3;
-  user-select: none;
-  pointer-events: none;
-  filter:
-    drop-shadow(0 0 18px rgba(0, 229, 255, 0.82))
-    drop-shadow(0 0 38px rgba(136, 92, 246, 0.78));
-  animation: onixCrystalFloat 3.2s ease-in-out infinite;
-}
-
-.onix-tap-orb {
-  background:
-    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.22), transparent 26%),
-    radial-gradient(circle at 50% 55%, rgba(136, 92, 246, 0.28), transparent 52%),
-    rgba(8, 15, 23, 0.34) !important;
-  border: 0 !important;
-  box-shadow:
-    0 0 46px rgba(136, 92, 246, 0.58),
-    0 0 78px rgba(6, 182, 212, 0.24) !important;
-}
-
-.onix-tap-orb::before {
-  inset: 4px !important;
-  border: 2px solid rgba(136, 92, 246, 0.72) !important;
-}
-
-.onix-tap-orb::after {
-  inset: 24px !important;
-  border: 1px solid rgba(0, 229, 255, 0.38) !important;
-}
-
-;
+export default AppWithBoundary;
