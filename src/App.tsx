@@ -1956,6 +1956,70 @@ body,
   }
 }
 
+
+/* Step 22: flush dynamic island header, remove old header edges */
+.onix-app-bg {
+  box-shadow: 0 0 72px rgba(91, 33, 246, 0.24) !important;
+}
+
+.onix-dynamic-header {
+  margin-top: 0 !important;
+  padding: 0 !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  align-items: flex-start !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.onix-dynamic-island-brand {
+  margin-top: -1px !important;
+  height: 58px !important;
+  min-width: 248px !important;
+  border-radius: 0 0 30px 30px !important;
+  border-top: 0 !important;
+  background:
+    radial-gradient(circle at 28% 38%, rgba(6, 182, 212, 0.22), transparent 34%),
+    radial-gradient(circle at 78% 12%, rgba(168, 85, 247, 0.24), transparent 42%),
+    linear-gradient(180deg, rgba(12, 17, 28, 1), rgba(8, 12, 22, 0.96)) !important;
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.28),
+    0 0 24px rgba(136, 92, 246, 0.14),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 22px rgba(136, 92, 246, 0.09) !important;
+}
+
+.onix-dynamic-island-logo {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.onix-dynamic-island-title {
+  font-size: 1.18rem !important;
+  letter-spacing: 0.075em !important;
+}
+
+.onix-home-screen {
+  margin-top: 2px !important;
+}
+
+@media (max-width: 380px) {
+  .onix-dynamic-header {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .onix-dynamic-island-brand {
+    min-width: 226px !important;
+    height: 56px !important;
+    border-radius: 0 0 28px 28px !important;
+  }
+}
+
 `;
 
 
