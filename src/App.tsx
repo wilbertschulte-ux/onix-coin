@@ -1193,6 +1193,113 @@ body,
   }
 }
 
+
+/* Step 8: team / friends screen polish */
+.onix-social-screen {
+  padding-top: 6px;
+  padding-bottom: 22px;
+}
+
+.onix-social-screen > .rounded-3xl {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(6, 182, 212, 0.12), transparent 32%),
+    radial-gradient(circle at 86% 8%, rgba(168, 85, 247, 0.20), transparent 34%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.90), rgba(8, 15, 23, 0.96)) !important;
+  border-color: rgba(136, 92, 246, 0.26) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.42),
+    0 0 34px rgba(136, 92, 246, 0.14),
+    inset 0 0 32px rgba(6, 182, 212, 0.04) !important;
+}
+
+.onix-social-screen > .rounded-3xl::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.48), rgba(168, 85, 247, 0.48), transparent);
+  pointer-events: none;
+}
+
+.onix-social-screen h2,
+.onix-social-screen h3,
+.onix-social-screen h4 {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 18px rgba(136, 92, 246, 0.32);
+}
+
+.onix-social-screen .rounded-2xl,
+.onix-social-screen .rounded-3xl {
+  border: 1px solid rgba(136, 92, 246, 0.18);
+}
+
+.onix-social-screen .rounded-2xl.bg-\[\#0a0f1c\],
+.onix-social-screen .rounded-2xl.bg-\[\#111827\] {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(8, 15, 23, 0.94)) !important;
+  box-shadow: inset 0 0 22px rgba(255, 255, 255, 0.025);
+}
+
+.onix-social-screen .grid.grid-cols-3 > div,
+.onix-social-screen .grid.grid-cols-2 > div {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.12), transparent 55%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.82), rgba(8, 15, 23, 0.94)) !important;
+  border: 1px solid rgba(6, 182, 212, 0.12);
+}
+
+.onix-social-screen .h-3,
+.onix-social-screen .h-2 {
+  background: rgba(15, 23, 42, 0.94) !important;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.onix-social-screen .h-3 > div,
+.onix-social-screen .h-2 > div {
+  background: linear-gradient(90deg, #885CF6, #00E5FF, #FACC15) !important;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.32);
+}
+
+.onix-social-screen input {
+  background: rgba(8, 15, 23, 0.82) !important;
+  border: 1px solid rgba(136, 92, 246, 0.28);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.22);
+}
+
+.onix-social-screen button.bg-yellow-400,
+.onix-social-screen button.bg-emerald-500,
+.onix-social-screen button.bg-sky-500 {
+  background: linear-gradient(135deg, #5B21F6, #885CF6, #A855F7) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 22px rgba(136, 92, 246, 0.30);
+}
+
+.onix-social-screen .text-yellow-400 {
+  color: #FACC15 !important;
+  text-shadow: 0 0 14px rgba(250, 204, 21, 0.18);
+}
+
+.onix-social-screen .text-emerald-400 {
+  color: #22C55E !important;
+  text-shadow: 0 0 14px rgba(34, 197, 94, 0.14);
+}
+
+@media (max-width: 380px) {
+  .onix-social-screen {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .onix-social-screen > .rounded-3xl {
+    padding: 16px !important;
+  }
+}
+
 `;
 
 
@@ -5599,7 +5706,7 @@ function App() {
       )}
 
       {activeTab === 'friends' && (
-        <div className="onix-profile-screen px-5 mt-8 space-y-5">
+        <div className="onix-social-screen px-5 mt-8 space-y-5">
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 text-center shadow-xl">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl">
               👤
