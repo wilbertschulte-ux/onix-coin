@@ -729,6 +729,126 @@ body,
   }
 }
 
+/* Step 4: wallet screen polish */
+.onix-wallet-screen {
+  margin-top: 16px !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  padding-bottom: 24px;
+}
+
+.onix-wallet-screen > .rounded-3xl,
+.onix-wallet-screen .rounded-3xl.border,
+.onix-wallet-screen .rounded-2xl {
+  border-color: rgba(136, 92, 246, 0.24) !important;
+}
+
+.onix-wallet-screen > .rounded-3xl {
+  background:
+    radial-gradient(circle at 80% 0%, rgba(136, 92, 246, 0.26), transparent 34%),
+    radial-gradient(circle at 8% 18%, rgba(6, 182, 212, 0.14), transparent 30%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.84), rgba(8, 15, 23, 0.96)) !important;
+  box-shadow:
+    0 18px 54px rgba(0,0,0,0.42),
+    0 0 34px rgba(136, 92, 246, 0.10),
+    inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
+.onix-wallet-screen h2 {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 18px rgba(136, 92, 246, 0.30);
+}
+
+.onix-wallet-screen .rounded-3xl.bg-\[\#0a0f1c\] {
+  border: 1px solid rgba(6, 182, 212, 0.20);
+  background:
+    radial-gradient(circle at 72% 20%, rgba(250, 204, 21, 0.10), transparent 26%),
+    radial-gradient(circle at 30% 0%, rgba(136, 92, 246, 0.20), transparent 36%),
+    rgba(8, 15, 23, 0.86) !important;
+  box-shadow:
+    0 0 30px rgba(6, 182, 212, 0.08),
+    inset 0 0 28px rgba(136, 92, 246, 0.08);
+}
+
+.onix-wallet-screen .rounded-2xl.bg-\[\#0a0f1c\] {
+  background: rgba(8, 15, 23, 0.76) !important;
+  box-shadow: inset 0 0 18px rgba(136, 92, 246, 0.05);
+}
+
+.onix-wallet-screen .text-yellow-400 {
+  color: #FACC15 !important;
+  text-shadow: 0 0 16px rgba(250, 204, 21, 0.12);
+}
+
+.onix-wallet-screen .text-5xl.font-bold.text-yellow-400 {
+  font-family: 'Orbitron', 'Exo 2', system-ui, sans-serif;
+  background: linear-gradient(90deg, #FFFFFF, #B7F9FF 38%, #A855F7 76%, #FACC15);
+  -webkit-background-clip: text;
+  color: transparent !important;
+  text-shadow: none;
+}
+
+.onix-wallet-screen input,
+.onix-wallet-screen textarea,
+.onix-wallet-screen select {
+  border-color: rgba(136, 92, 246, 0.22) !important;
+  background: rgba(8, 15, 23, 0.78) !important;
+  box-shadow: inset 0 0 18px rgba(136, 92, 246, 0.06);
+}
+
+.onix-wallet-screen button.bg-yellow-400,
+.onix-wallet-screen button.bg-emerald-500,
+.onix-wallet-screen button.bg-sky-500 {
+  background: linear-gradient(135deg, #06B6D4 0%, #885CF6 48%, #A855F7 100%) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 22px rgba(136, 92, 246, 0.34),
+    inset 0 1px 0 rgba(255,255,255,0.22) !important;
+}
+
+.onix-wallet-screen button:disabled {
+  border: 1px solid rgba(148, 163, 184, 0.10);
+  background: rgba(31, 41, 55, 0.78) !important;
+}
+
+.onix-wallet-screen .h-3.overflow-hidden.rounded-full,
+.onix-wallet-screen .h-2.overflow-hidden.rounded-full {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid rgba(136, 92, 246, 0.12);
+}
+
+.onix-wallet-screen .h-full.rounded-full.bg-yellow-400,
+.onix-wallet-screen .h-full.rounded-full.bg-emerald-400 {
+  background: linear-gradient(90deg, #06B6D4, #885CF6, #A855F7) !important;
+  box-shadow: 0 0 16px rgba(136, 92, 246, 0.52);
+}
+
+.onix-wallet-screen .space-y-3 > .rounded-2xl,
+.onix-wallet-screen .space-y-4 > .rounded-2xl {
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.onix-wallet-screen .space-y-3 > .rounded-2xl:active,
+.onix-wallet-screen .space-y-4 > .rounded-2xl:active {
+  transform: scale(0.99);
+}
+
+@media (max-width: 380px) {
+  .onix-wallet-screen {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .onix-wallet-screen > .rounded-3xl {
+    padding: 16px !important;
+  }
+
+  .onix-wallet-screen .text-5xl.font-bold.text-yellow-400 {
+    font-size: 2.35rem !important;
+  }
+}
+
 `;
 
 
@@ -5818,7 +5938,7 @@ function App() {
       )}
 
       {activeTab === 'wallet' && (
-        <div className="px-5 mt-8 space-y-5">
+        <div className="onix-wallet-screen px-5 mt-8 space-y-5">
           <div className="rounded-3xl border border-yellow-400/20 bg-[#111827] p-6 shadow-xl">
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-400 text-3xl">
