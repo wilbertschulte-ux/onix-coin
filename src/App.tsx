@@ -1884,6 +1884,151 @@ body,
   }
 }
 
+
+/* Step 24: clean flush island header + locked home screen */
+.onix-home-locked {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.onix-home-locked .onix-app-bg {
+  overflow: hidden;
+}
+
+.onix-header {
+  top: 0 !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
+  min-height: 58px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.onix-island-header {
+  position: relative;
+  width: min(76vw, 292px);
+  min-height: 62px;
+  padding: 12px 18px 11px;
+  border-radius: 0 0 26px 26px;
+  background:
+    radial-gradient(circle at 22% 6%, rgba(6, 182, 212, 0.18), transparent 34%),
+    radial-gradient(circle at 78% 0%, rgba(168, 85, 247, 0.18), transparent 40%),
+    linear-gradient(180deg, rgba(8, 15, 23, 0.98), rgba(16, 16, 36, 0.96));
+  border-left: 1px solid rgba(136, 92, 246, 0.32);
+  border-right: 1px solid rgba(136, 92, 246, 0.32);
+  border-bottom: 1px solid rgba(136, 92, 246, 0.28);
+  box-shadow:
+    0 14px 30px rgba(0,0,0,0.34),
+    0 0 22px rgba(136, 92, 246, 0.10),
+    inset 0 0 22px rgba(136, 92, 246, 0.07);
+  overflow: hidden;
+}
+
+.onix-island-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+}
+
+.onix-island-logo {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 9px rgba(0, 229, 255, 0.52))
+    drop-shadow(0 0 13px rgba(136, 92, 246, 0.46));
+}
+
+.onix-island-title {
+  font-size: clamp(1.45rem, 5.5vw, 1.9rem) !important;
+  line-height: 0.9;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.onix-home-locked .onix-home-screen {
+  margin-top: 12px !important;
+  height: calc(100vh - 170px - env(safe-area-inset-bottom));
+  padding-left: 14px;
+  padding-right: 14px;
+  padding-bottom: calc(106px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  margin-top: 0 !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  margin-top: 12px !important;
+  width: min(63vw, 256px) !important;
+  height: min(63vw, 256px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  margin-top: -3px !important;
+  padding: 0 2px 10px;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin-top: 5px !important;
+  height: 8px;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  margin-top: 8px !important;
+  min-height: 48px;
+}
+
+.onix-home-locked .onix-nav {
+  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-height: 760px) {
+  .onix-header {
+    min-height: 54px;
+  }
+
+  .onix-island-header {
+    min-height: 56px;
+    padding-top: 10px;
+    padding-bottom: 9px;
+  }
+
+  .onix-island-logo {
+    width: 22px;
+    height: 22px;
+  }
+
+  .onix-island-title {
+    font-size: 1.35rem !important;
+  }
+
+  .onix-home-locked .onix-home-screen {
+    margin-top: 10px !important;
+    height: calc(100vh - 158px - env(safe-area-inset-bottom));
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    width: min(59vw, 236px) !important;
+    height: min(59vw, 236px) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .onix-island-header {
+    width: min(82vw, 282px);
+  }
+}
+
 `;
 
 
@@ -4187,139 +4332,7 @@ function App() {
 
   const downloadUsersCsv = () => {
     const telegramId = getTelegramId();
-    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}
-/* Step 23: fixed home island and no-scroll */
-.onix-home-locked {
-  height: 100vh;
-  overflow: hidden;
-}
-
-.onix-home-locked::before,
-.onix-home-locked::after {
-  position: absolute;
-}
-
-.onix-header {
-  position: sticky;
-  top: 0;
-  z-index: 70;
-  display: flex;
-  justify-content: center;
-  padding: 0 !important;
-  margin-top: -16px;
-  background: transparent !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-.onix-island-header {
-  position: relative;
-  width: min(78vw, 298px);
-  min-height: 74px;
-  padding: 18px 20px 12px;
-  border-radius: 0 0 28px 28px;
-  background:
-    radial-gradient(circle at 15% 18%, rgba(6, 182, 212, 0.18), transparent 36%),
-    radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.18), transparent 40%),
-    linear-gradient(180deg, rgba(10, 15, 28, 0.98), rgba(18, 16, 38, 0.95));
-  border-left: 1px solid rgba(136, 92, 246, 0.32);
-  border-right: 1px solid rgba(136, 92, 246, 0.32);
-  border-bottom: 1px solid rgba(136, 92, 246, 0.28);
-  box-shadow:
-    0 18px 34px rgba(0,0,0,0.32),
-    inset 0 0 26px rgba(136, 92, 246, 0.07);
-  overflow: hidden;
-}
-
-.onix-island-notch {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 118px;
-  height: 22px;
-  border-radius: 0 0 18px 18px;
-  background: #0a0f17;
-  box-shadow:
-    inset 0 -1px 0 rgba(255,255,255,0.03),
-    0 8px 16px rgba(0,0,0,0.25);
-}
-
-.onix-island-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.onix-island-logo {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 12px rgba(136, 92, 246, 0.48));
-}
-
-.onix-island-title {
-  font-size: clamp(1.55rem, 6vw, 2rem) !important;
-  line-height: 0.9;
-  letter-spacing: 0.04em;
-}
-
-.onix-home-locked .onix-home-screen {
-  margin-top: 14px !important;
-  min-height: calc(100vh - 196px - env(safe-area-inset-bottom));
-  padding-bottom: calc(116px + env(safe-area-inset-bottom));
-  overflow: hidden;
-}
-
-.onix-home-locked .onix-home-hero-card {
-  margin-top: 0;
-}
-
-.onix-home-locked .onix-home-screen .onix-tap-orb {
-  margin-top: 10px !important;
-  width: min(61vw, 248px) !important;
-  height: min(61vw, 248px) !important;
-}
-
-.onix-home-locked .onix-home-energy-block {
-  margin-top: -4px;
-  padding-bottom: 8px;
-}
-
-.onix-home-locked .onix-home-tap-button {
-  margin-top: 8px;
-  min-height: 46px;
-}
-
-.onix-home-locked .onix-nav {
-  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
-}
-
-@media (max-width: 380px) {
-  .onix-island-header {
-    width: min(84vw, 286px);
-    min-height: 70px;
-    padding: 17px 16px 11px;
-  }
-
-  .onix-island-notch {
-    width: 104px;
-    height: 20px;
-  }
-
-  .onix-island-title {
-    font-size: 1.4rem !important;
-  }
-
-  .onix-home-locked .onix-home-screen {
-    margin-top: 12px !important;
-    min-height: calc(100vh - 190px - env(safe-area-inset-bottom));
-  }
-}
-`;
+    const url = `${API_URL}/admin-export-users.csv?telegramId=${encodeURIComponent(telegramId)}`;
 
     window.open(url, '_blank');
   };
@@ -5037,7 +5050,6 @@ function App() {
       </div>
       <div className="onix-header sticky top-0 z-50">
         <div className="onix-island-header">
-          <div className="onix-island-notch" />
           <div className="onix-island-content">
             <img src={onixLogoCrystal} alt="$ONIX logo" className="onix-island-logo" />
             <h1 className="onix-brand-title onix-island-title font-black leading-none">$ONIX COIN</h1>
