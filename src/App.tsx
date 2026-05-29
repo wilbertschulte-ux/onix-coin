@@ -5440,6 +5440,76 @@ body.oc-lock-home-scroll {
     transform: translateY(-42px) scale(0.98) !important;
   }
 }
+
+
+/* Step 34: force CTA block above bottom navigation */
+.onix-home-locked .onix-home-energy-block {
+  position: fixed !important;
+  left: 22px !important;
+  right: 22px !important;
+  bottom: calc(118px + env(safe-area-inset-bottom)) !important;
+  z-index: 88 !important;
+  width: auto !important;
+  max-width: 430px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+
+.onix-home-locked .onix-home-energy-text {
+  justify-content: center !important;
+  margin: 0 0 6px 0 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin-top: 0 !important;
+  height: 8px !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  margin: 12px 0 0 0 !important;
+  transform: none !important;
+  z-index: 88 !important;
+}
+
+.onix-home-locked .onix-home-tap-button:active {
+  transform: scale(0.98) !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  margin-bottom: 116px !important;
+}
+
+.onix-home-locked .onix-nav {
+  z-index: 120 !important;
+}
+
+@media (max-height: 760px) {
+  .onix-home-locked .onix-home-energy-block {
+    bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+    left: 20px !important;
+    right: 20px !important;
+  }
+
+  .onix-home-locked .onix-home-tap-button {
+    height: 46px !important;
+    min-height: 46px !important;
+    margin-top: 10px !important;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    margin-bottom: 104px !important;
+  }
+}
 `;
 
     window.open(url, '_blank');
