@@ -5405,10 +5405,10 @@ body.oc-lock-home-scroll {
   z-index: 9999 !important;
 }
 
-/* Step 32: raise tap button above nav */
+/* Step 33: raise tap button higher above nav */
 .onix-home-locked .onix-home-energy-block {
-  margin-top: -12px !important;
-  padding-bottom: 30px !important;
+  margin-top: -18px !important;
+  padding-bottom: 72px !important;
 }
 
 .onix-home-locked .onix-home-energy-track {
@@ -5416,28 +5416,28 @@ body.oc-lock-home-scroll {
 }
 
 .onix-home-locked .onix-home-tap-button {
-  margin-top: 6px !important;
+  margin-top: 4px !important;
   height: 48px !important;
   min-height: 48px !important;
-  transform: translateY(-10px) !important;
+  transform: translateY(-38px) !important;
 }
 
 .onix-home-locked .onix-home-tap-button:active {
-  transform: translateY(-10px) scale(0.98) !important;
+  transform: translateY(-38px) scale(0.98) !important;
 }
 
 @media (max-width: 380px) {
   .onix-home-locked .onix-home-energy-block {
-    margin-top: -14px !important;
-    padding-bottom: 32px !important;
+    margin-top: -20px !important;
+    padding-bottom: 76px !important;
   }
 
   .onix-home-locked .onix-home-tap-button {
-    transform: translateY(-12px) !important;
+    transform: translateY(-42px) !important;
   }
 
   .onix-home-locked .onix-home-tap-button:active {
-    transform: translateY(-12px) scale(0.98) !important;
+    transform: translateY(-42px) scale(0.98) !important;
   }
 }
 `;
