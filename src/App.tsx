@@ -2908,6 +2908,35 @@ class AppErrorBoundary extends React.Component<
 
 
 function App() {
+  useEffect(() => {
+    const updateViewportVars = () => {
+      const viewportHeight = Math.floor(
+        tg?.viewportHeight || window.visualViewport?.height || window.innerHeight
+      );
+      const stableViewportHeight = Math.floor(
+        tg?.stableViewportHeight || viewportHeight
+      );
+      const windowHeight = Math.floor(window.innerHeight || viewportHeight);
+      const viewportDiff = Math.max(0, windowHeight - viewportHeight);
+
+      document.documentElement.style.setProperty('--oc-app-height', `${viewportHeight}px`);
+      document.documentElement.style.setProperty('--oc-stable-height', `${stableViewportHeight}px`);
+      document.documentElement.style.setProperty('--oc-window-height', `${windowHeight}px`);
+      document.documentElement.style.setProperty('--oc-viewport-diff', `${viewportDiff}px`);
+    };
+
+    updateViewportVars();
+    window.addEventListener('resize', updateViewportVars);
+    window.visualViewport?.addEventListener('resize', updateViewportVars);
+    tg?.onEvent?.('viewportChanged', updateViewportVars);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportVars);
+      window.visualViewport?.removeEventListener('resize', updateViewportVars);
+      tg?.offEvent?.('viewportChanged', updateViewportVars);
+    };
+  }, []);
+
   const [balance, setBalance] = useState(0);
   const [economyConfig, setEconomyConfig] = useState<EconomyConfig>({
     onixEurPer1000: DEFAULT_ONIX_EUR_PER_1000,
@@ -5508,6 +5537,191 @@ body.oc-lock-home-scroll {
 
   .onix-home-locked .onix-home-screen .onix-tap-orb {
     margin-bottom: 104px !important;
+  }
+}
+
+/* Step 35: Telegram viewport based home layout */
+:root {
+  --oc-app-height: 100dvh;
+  --oc-nav-height: 96px;
+  --oc-nav-gap: 22px;
+  --oc-cta-height: 70px;
+}
+
+html.onix-html-home-lock,
+body.onix-body-home-lock,
+html.oc-lock-home-scroll,
+body.oc-lock-home-scroll {
+  height: var(--oc-app-height) !important;
+  max-height: var(--oc-app-height) !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+body.onix-body-home-lock {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+}
+
+.onix-home-locked {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: auto !important;
+  width: 100vw !important;
+  height: var(--oc-app-height) !important;
+  min-height: var(--oc-app-height) !important;
+  max-height: var(--oc-app-height) !important;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+  touch-action: none !important;
+}
+
+.onix-home-locked .onix-toast-layer,
+.onix-toast-layer {
+  position: fixed !important;
+  top: calc(72px + env(safe-area-inset-top)) !important;
+  bottom: auto !important;
+  z-index: 2147483000 !important;
+  pointer-events: none !important;
+}
+
+.onix-toast-layer > * {
+  pointer-events: auto !important;
+}
+
+.onix-home-locked .onix-modal-layer,
+.onix-modal-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147482999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 18px 18px calc(132px + env(safe-area-inset-bottom)) !important;
+}
+
+.onix-home-locked .onix-nav {
+  position: absolute !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  z-index: 500 !important;
+  max-width: 430px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.onix-home-locked .onix-home-screen {
+  position: relative !important;
+  height: var(--oc-app-height) !important;
+  max-height: var(--oc-app-height) !important;
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  padding: 64px 14px calc(210px + env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.onix-home-locked .onix-home-hero-card {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 212px !important;
+  max-height: 222px !important;
+  padding: 18px 16px 16px !important;
+  margin: 0 !important;
+  border-radius: 28px !important;
+}
+
+.onix-home-locked .onix-home-screen .onix-tap-orb {
+  flex: 0 0 auto !important;
+  margin-top: 16px !important;
+  margin-bottom: 0 !important;
+  width: min(59vw, 242px) !important;
+  height: min(59vw, 242px) !important;
+}
+
+.onix-home-locked .onix-home-energy-block {
+  position: absolute !important;
+  left: 22px !important;
+  right: 22px !important;
+  bottom: calc(var(--oc-nav-height) + var(--oc-nav-gap) + env(safe-area-inset-bottom)) !important;
+  z-index: 490 !important;
+  width: auto !important;
+  max-width: 430px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+
+.onix-home-locked .onix-home-energy-text {
+  justify-content: center !important;
+  margin: 0 0 7px 0 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.onix-home-locked .onix-home-energy-track {
+  margin: 0 !important;
+  height: 8px !important;
+}
+
+.onix-home-locked .onix-home-tap-button {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  margin: 13px 0 0 !important;
+  transform: none !important;
+  z-index: 490 !important;
+}
+
+.onix-home-locked .onix-home-tap-button:active {
+  transform: scale(0.98) !important;
+}
+
+@media (max-height: 760px) {
+  :root {
+    --oc-nav-height: 98px;
+    --oc-nav-gap: 28px;
+  }
+
+  .onix-home-locked .onix-home-screen {
+    padding-top: 62px !important;
+    padding-bottom: calc(220px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .onix-home-locked .onix-home-hero-card {
+    min-height: 198px !important;
+    max-height: 208px !important;
+    padding: 16px 15px 14px !important;
+  }
+
+  .onix-home-locked .onix-home-balance-value {
+    font-size: clamp(2.15rem, 10.2vw, 3.35rem) !important;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    margin-top: 12px !important;
+    width: min(54vw, 220px) !important;
+    height: min(54vw, 220px) !important;
+  }
+}
+
+@media (min-height: 830px) {
+  :root {
+    --oc-nav-gap: 26px;
+  }
+
+  .onix-home-locked .onix-home-screen .onix-tap-orb {
+    width: min(62vw, 258px) !important;
+    height: min(62vw, 258px) !important;
   }
 }
 `;
